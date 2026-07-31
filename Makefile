@@ -1,4 +1,4 @@
-.PHONY: help sync-site start stop restart status
+.PHONY: help repos build-apps sync-site start stop restart status
 
 PORT ?= 8000
 HOST ?= 127.0.0.1
@@ -8,23 +8,41 @@ LOG  := .server.log
 help:
 	@echo "Local preview server for seap-udea.github.io"
 	@echo ""
+	@echo "  make repos      - Refresh repos.json + papers.json from GitHub"
+	@echo "  make build-apps - Build Next.js apps under apps/"
 	@echo "  make sync-site  - Assemble public files into $(SITE)/"
-	@echo "  make start      - Start http://$(HOST):$(PORT) (from $(SITE)/)"
+	@echo "  make start      - Build apps (if needed), assemble $(SITE)/, start server"
 	@echo "  make stop       - Stop the server on port $(PORT)"
 	@echo "  make restart    - Restart the local server"
 	@echo "  make status     - Show whether a server is listening on $(PORT)"
 	@echo ""
 	@echo "  PORT=3000 make start   - Use another port"
 
+repos:
+	@python3 bin/build_repos.py
+
+build-apps:
+	@echo "▶  Building Lighting Black Holes…"
+	@cd apps/lighting-black-holes && npm ci && npm run build
+	@echo "✓  Apps built"
+
 sync-site:
 	@test -f index.html || { echo "index.html not found. Run from the repository root."; exit 1; }
+	@test -f repos.json || { echo "repos.json missing. Run: make repos"; exit 1; }
+	@test -f papers.json || { echo "papers.json missing. Run: make repos"; exit 1; }
+	@test -f apps/lighting-black-holes/out/index.html || $(MAKE) build-apps
 	@rm -rf $(SITE)
-	@mkdir -p $(SITE)
+	@mkdir -p $(SITE)/apps
 	@cp index.html $(SITE)/
+	@cp repos.json $(SITE)/
+	@cp papers.json $(SITE)/
 	@cp -r css $(SITE)/css
 	@cp -r js $(SITE)/js
+	@cp -r assets $(SITE)/assets
+	@cp -r apps/lighting-black-holes/out $(SITE)/apps/lighting-black-holes
 	@touch $(SITE)/.nojekyll
 	@echo "✓  Site ready in $(SITE)/"
+	@echo "   App:  http://$(HOST):$(PORT)/apps/lighting-black-holes/"
 
 start: sync-site
 	@if lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
@@ -39,6 +57,7 @@ start: sync-site
 	@if lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
 		echo "Started. Stop with: make stop"; \
 		echo "  Home: http://$(HOST):$(PORT)/"; \
+		echo "  App:  http://$(HOST):$(PORT)/apps/lighting-black-holes/"; \
 	else \
 		echo "Failed to start server on port $(PORT)."; \
 		[ -f $(LOG) ] && cat $(LOG); \

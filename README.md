@@ -23,12 +23,31 @@ make help
 
 Use another port with `PORT=3000 make start`.
 
+## Interactive apps
+
+Apps live under `apps/` and are built as static exports in CI.
+
+- [Lighting Black Holes](https://seap-udea.github.io/apps/lighting-black-holes/) — black-hole light visualization
+
+Locally:
+
+```bash
+make build-apps   # npm ci && next build
+make start        # serves _site including /apps/lighting-black-holes/
+```
+
 ## Deployment
 
 The site is published with **GitHub Actions** (same pattern as [drz-academy.github.io](https://github.com/drz-academy/drz-academy.github.io)):
 
-1. On every push to `main`, `.github/workflows/deploy.yml` assembles `_site/` and deploys it to GitHub Pages.
+1. On every push to `main`, `.github/workflows/deploy.yml` builds Next.js apps, assembles `_site/`, and deploys to GitHub Pages.
 2. You can also run it manually: **Actions → Deploy to GitHub Pages → Run workflow**.
+
+Featured repositories are driven by `repos.json` (`featured: true`, in file order). Refresh metadata with:
+
+```bash
+make repos
+```
 
 Public URL: https://seap-udea.github.io
 

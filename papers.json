@@ -1,0 +1,59 @@
+[
+  {
+    "title": "The bright side of the light curve: A general photometric model of non-transiting exorings",
+    "authors": "Zuluaga, Sucerquia, Alvarado-Montes",
+    "year": 2022,
+    "venue": "Astronomy and Computing",
+    "doi": "10.1016/j.ascom.2022.100623",
+    "url": "https://doi.org/10.1016/j.ascom.2022.100623",
+    "repos": [
+      "pryngles"
+    ]
+  },
+  {
+    "title": "A general polarimetric model for transiting and nontransiting ringed exoplanets",
+    "authors": "Veenstra, Zuluaga, Alvarado-Montes, Sucerquia",
+    "year": 2024,
+    "venue": "Astronomy & Astrophysics",
+    "doi": "10.1051/0004-6361/202347194",
+    "url": "https://doi.org/10.1051/0004-6361/202347194",
+    "repos": [
+      "pryngles"
+    ]
+  },
+  {
+    "title": "Scattered light may reveal the existence of ringed exoplanets",
+    "authors": "Sucerquia, Alvarado-Montes, Zuluaga, Montesinos",
+    "year": 2020,
+    "venue": "MNRAS Letters",
+    "doi": "10.1093/mnrasl/slaa080",
+    "url": "https://doi.org/10.1093/mnrasl/slaa080",
+    "repos": [
+      "pryngles"
+    ]
+  },
+  {
+    "title": "A general method for assessing the origin of interstellar small bodies: the case of 1I/2017 U1 ('Oumuamua)",
+    "authors": "Zuluaga, Sanchez-Hernandez, Sucerquia, Ferrin",
+    "year": 2018,
+    "venue": "arXiv",
+    "doi": null,
+    "arxiv": "1711.09397",
+    "url": "https://arxiv.org/abs/1711.09397",
+    "repos": [
+      "iWander"
+    ]
+  },
+  {
+    "title": "Conditions for visual and high-resolution bistatic radar observations of Apophis in 2029",
+    "authors": "Vallejo, Zuluaga, Chaparro",
+    "year": 2022,
+    "venue": "arXiv",
+    "doi": null,
+    "arxiv": "2201.12205",
+    "url": "https://arxiv.org/abs/2201.12205",
+    "repos": [
+      "Apophis2029"
+    ]
+  }
+]

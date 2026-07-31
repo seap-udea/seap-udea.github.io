@@ -6,7 +6,10 @@
   <meta name="description" content="Solar, Earth and Planetary Physics Group (SEAP) at Universidad de Antioquia — open-source research software and educational resources.">
   <meta name="author" content="Jorge I. Zuluaga">
   <title>SEAP-UdeA — Solar, Earth and Planetary Physics Group</title>
-  <link rel="icon" href="https://avatars.githubusercontent.com/u/11349479?v=4" type="image/png">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/favicon.png" sizes="32x32">
+  <link rel="icon" type="image/webp" href="assets/favicon-32.webp" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.webp">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -17,12 +20,15 @@
         ☰
       </button>
       <a class="brand" href="#top">
-        <img class="brand-mark" src="https://avatars.githubusercontent.com/u/11349479?v=4" alt="" width="32" height="32">
-        SEAP-UdeA
+        <img class="brand-logo" src="assets/logo-seap-header.webp" alt="SEAP — Solar, Earth &amp; Planetary Physics" width="310" height="94">
       </a>
       <nav class="header-nav" id="header-nav" aria-label="Primary">
         <a href="#about">About</a>
+        <a href="#developer">Developer</a>
+        <a href="#apps">Apps</a>
         <a href="#repositories">Repositories</a>
+        <a href="#forked">Forks</a>
+        <a href="#papers">Papers</a>
         <a href="#contributors">Contributors</a>
         <a href="#contact">Contact</a>
         <a href="https://github.com/seap-udea" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -34,18 +40,18 @@
     <aside class="sidebar" aria-label="Profile">
       <div class="profile-card">
         <img
-          class="avatar"
-          src="https://avatars.githubusercontent.com/u/11349479?s=460&v=4"
-          alt="SEAP-UdeA avatar"
-          width="296"
-          height="296"
+          class="sidebar-logo"
+          src="assets/logo-seap-sidebar.webp"
+          alt="SEAP — Solar, Earth and Planetary Physics Group"
+          width="600"
+          height="456"
         >
         <div class="profile-details">
           <h1 class="profile-name">Solar, Earth and Planetary Physics Group</h1>
           <p class="profile-login">seap-udea</p>
           <p class="profile-bio">Research group at Universidad de Antioquia focused on planetary sciences, celestial mechanics, and computational astrophysics.</p>
           <p class="stats">
-            <span><strong>70+</strong> public repositories</span>
+            <span><strong>80+</strong> public repositories</span>
             <span>·</span>
             <span><strong>Medellín</strong>, Colombia</span>
           </p>
@@ -60,7 +66,7 @@
             </li>
             <li>
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7.775 3.275a.75.75 0 0 0 1.06 1.06l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 0 1 0-2.83l2.5-2.5a2 2 0 0 1 2.83 0 .75.75 0 0 0 1.06-1.06 3.5 3.5 0 0 0-4.95 0l-2.5 2.5a3.5 3.5 0 0 0 4.95 4.95l1.25-1.25a.75.75 0 0 0-1.06-1.06l-1.25 1.25a2 2 0 0 1-2.83 0Z"></path></svg>
-              <a href="http://astronomia-udea.co" target="_blank" rel="noopener noreferrer">astronomia-udea.co</a>
+              <a href="https://jorgezuluaga.github.io" target="_blank" rel="noopener noreferrer">jorgezuluaga.github.io</a>
             </li>
             <li>
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.2.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
@@ -74,7 +80,11 @@
         <h2>On this page</h2>
         <ul>
           <li><a href="#about" class="nav-link">About the group</a></li>
+          <li><a href="#developer" class="nav-link">Lead developer</a></li>
+          <li><a href="#apps" class="nav-link">Interactive apps</a></li>
           <li><a href="#repositories" class="nav-link">Featured repositories</a></li>
+          <li><a href="#forked" class="nav-link">Forked repositories</a></li>
+          <li><a href="#papers" class="nav-link">Papers</a></li>
           <li><a href="#contributors" class="nav-link">Contributors</a></li>
           <li><a href="#contact" class="nav-link">Contact</a></li>
         </ul>
@@ -111,169 +121,111 @@
         </div>
       </section>
 
+      <section class="section" id="developer">
+        <div class="section-header">
+          <h2>Lead developer</h2>
+        </div>
+        <div class="developer-card">
+          <img
+            class="developer-photo"
+            src="assets/jorge-zuluaga.webp"
+            alt="Jorge I. Zuluaga"
+            width="480"
+            height="757"
+          >
+          <div class="developer-body">
+            <h3 class="developer-name">Jorge I. Zuluaga</h3>
+            <p class="developer-role">Full Professor, University of Antioquia · Lead developer of SEAP</p>
+            <p class="developer-lead">
+              Physicist and PhD in Physics, senior lecturer and researcher in astrophysics and astrobiology.
+            </p>
+            <p>
+              His work combines research in planetary science and astrobiology, high-performance scientific
+              software and computing, and science communication in astronomy and physics. He has led research
+              groups, projects, and academic programs — including the undergraduate program in Astronomy and
+              diplomas in astronomy and physics — and has published on exoplanets, exomoons, planetary magnetic
+              fields, orbital dynamics, and meteoroids.
+            </p>
+            <p>
+              Most of the open-source software published under
+              <a href="https://github.com/seap-udea" target="_blank" rel="noopener noreferrer">seap-udea</a>
+              was created or curated by him for teaching, research, and public outreach.
+            </p>
+            <ul class="developer-links">
+              <li>
+                <a href="https://jorgezuluaga.github.io" target="_blank" rel="noopener noreferrer">jorgezuluaga.github.io</a>
+              </li>
+              <li>
+                <a href="https://orcid.org/0000-0002-6140-3116" target="_blank" rel="noopener noreferrer">ORCID</a>
+              </li>
+              <li>
+                <a href="mailto:jorge.zuluaga@udea.edu.co">jorge.zuluaga@udea.edu.co</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="apps">
+        <div class="section-header">
+          <h2>Interactive apps</h2>
+        </div>
+        <p class="section-intro">
+          Browser-based simulations hosted on this site. More apps can be added under
+          <code>apps/</code> and published with the same GitHub Actions workflow.
+        </p>
+        <div class="apps-grid">
+          <article class="app-card">
+            <h3 class="app-title">Lighting Black Holes</h3>
+            <p class="app-desc">
+              Interactive visualization of light and matter around black holes. Explore how spacetime
+              curvature bends light paths and shapes what an observer can see.
+            </p>
+            <div class="app-tags">
+              <span class="tag">Astrophysics</span>
+              <span class="tag">Next.js</span>
+              <span class="tag">WebGL</span>
+            </div>
+            <a class="app-link" href="apps/lighting-black-holes/">Open app →</a>
+          </article>
+        </div>
+      </section>
+
       <section class="section" id="repositories">
         <div class="section-header">
-          <h2>Featured repositories <span class="count">12</span></h2>
+          <h2>Featured repositories <span class="count" id="featured-count">0</span></h2>
           <a href="https://github.com/seap-udea?tab=repositories" target="_blank" rel="noopener noreferrer">View all on GitHub →</a>
         </div>
-        <div class="repo-grid">
+        <div class="repo-grid" id="featured-repos">
+          <p class="repo-loading">Loading featured repositories…</p>
+        </div>
+        <p class="section-footer-link">
+          <a href="https://github.com/seap-udea?tab=repositories" target="_blank" rel="noopener noreferrer">View all on GitHub →</a>
+        </p>
+      </section>
 
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/AIsteroid" target="_blank" rel="noopener noreferrer">AIsteroid</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Artificial Intelligence in the Search for Asteroids.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#DA5B0B"></span> Jupyter Notebook</span>
-              <span>★ 8</span>
-            </div>
-          </article>
+      <section class="section" id="forked">
+        <div class="section-header">
+          <h2>Forked repositories <span class="count" id="forked-count">0</span></h2>
+        </div>
+        <p class="section-intro">
+          Collaboration forks under <a href="https://github.com/seap-udea" target="_blank" rel="noopener noreferrer">seap-udea</a>
+          — projects developed with partners and then mirrored or extended by the group.
+        </p>
+        <div class="repo-grid" id="forked-repos">
+          <p class="repo-loading">Loading forked repositories…</p>
+        </div>
+      </section>
 
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/MontuPython" target="_blank" rel="noopener noreferrer">MontuPython</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Astronomical ephemeris for the ancient world.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#e34c26"></span> HTML</span>
-              <span>★ 3</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/pryngles" target="_blank" rel="noopener noreferrer">pryngles</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">PlanetaRY spaNGLES — simulation tools for planetary rings and related phenomena.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#DA5B0B"></span> Jupyter Notebook</span>
-              <span>exoplanets · rings</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/pymcel" target="_blank" rel="noopener noreferrer">pymcel</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Utilities for celestial mechanics (teaching and research).</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#DA5B0B"></span> Jupyter Notebook</span>
-              <span>★ 4</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/fargopy" target="_blank" rel="noopener noreferrer">fargopy</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">A Python wrapping to FARGO3D for protoplanetary disk simulations.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#DA5B0B"></span> Jupyter Notebook</span>
-              <span>★ 1</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/GravRay" target="_blank" rel="noopener noreferrer">GravRay</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Gravitational raytracing around compact objects.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#e34c26"></span> HTML</span>
-              <span>★ 4</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/Relatividad-Zuluaga" target="_blank" rel="noopener noreferrer">Relatividad-Zuluaga</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Open textbook on relativity and gravitation.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#e34c26"></span> HTML</span>
-              <span>★ 4</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/PythonChallenges" target="_blank" rel="noopener noreferrer">PythonChallenges</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Workshop seminar: Python for Astronomy at Universidad de Antioquia.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#3572A5"></span> Python</span>
-              <span>★ 4</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/Apophis2029" target="_blank" rel="noopener noreferrer">Apophis2029</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Tools and analyses for the Apophis close approach in 2029.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#DA5B0B"></span> Jupyter Notebook</span>
-              <span>★ 3</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/tQuakes" target="_blank" rel="noopener noreferrer">tQuakes</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Earthquakes and tides — tools exploring connections between seismic activity and tidal forces.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#3572A5"></span> Python</span>
-              <span>★ 3</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/jSpice" target="_blank" rel="noopener noreferrer">jSpice</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">SPICE-enabled JavaScript library for high-precision astronomical calculations in the browser.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#3572A5"></span> Python</span>
-              <span>★ 2</span>
-            </div>
-          </article>
-
-          <article class="repo-card">
-            <div class="repo-top">
-              <svg class="repo-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.5H2A1.5 1.5 0 0 1 2 2.5h10.5Z"></path></svg>
-              <a class="repo-name" href="https://github.com/seap-udea/MPCDatabase" target="_blank" rel="noopener noreferrer">MPCDatabase</a>
-              <span class="repo-badge">Public</span>
-            </div>
-            <p class="repo-desc">Tools and database utilities for Minor Planet Center data.</p>
-            <div class="repo-meta">
-              <span class="lang"><span class="lang-dot" style="background:#3572A5"></span> Python</span>
-              <span>★ 3</span>
-            </div>
-          </article>
-
+      <section class="section" id="papers">
+        <div class="section-header">
+          <h2>Papers about SEAP-UdeA repos <span class="count" id="papers-count">0</span></h2>
+        </div>
+        <p class="section-intro">
+          Selected publications that introduce or apply software and methods associated with SEAP repositories.
+        </p>
+        <div class="papers-list" id="papers-list">
+          <p class="repo-loading">Loading papers…</p>
         </div>
       </section>
 
@@ -286,13 +238,13 @@
         </p>
         <div class="contrib-grid">
 
-          <a class="contrib-card" href="https://github.com/JorgeZuluaga" target="_blank" rel="noopener noreferrer">
+          <div class="contrib-card">
             <img class="contrib-avatar" src="https://avatars.githubusercontent.com/u/4194943?v=4" alt="" width="40" height="40">
             <div class="contrib-info">
               <div class="contrib-name">Jorge I. Zuluaga</div>
-              <div class="contrib-login">@JorgeZuluaga</div>
+              <div class="contrib-login">Lead developer</div>
             </div>
-          </a>
+          </div>
 
           <a class="contrib-card" href="https://github.com/Numpaque4" target="_blank" rel="noopener noreferrer">
             <img class="contrib-avatar" src="https://avatars.githubusercontent.com/u/89326906?v=4" alt="" width="40" height="40">
@@ -368,6 +320,7 @@
 
         </div>
       </section>
+
     </main>
   </div>
 
@@ -382,7 +335,7 @@
           <a href="mailto:jorge.zuluaga@udea.edu.co">jorge.zuluaga@udea.edu.co</a>
         </p>
         <p>
-          <a href="https://github.com/JorgeZuluaga" target="_blank" rel="noopener noreferrer">github.com/JorgeZuluaga</a>
+          <a href="https://jorgezuluaga.github.io" target="_blank" rel="noopener noreferrer">jorgezuluaga.github.io</a>
         </p>
       </div>
       <div class="footer-block">
@@ -390,9 +343,6 @@
         <p>Solar, Earth and Planetary Physics Group (SEAP)</p>
         <p>
           <a href="https://github.com/seap-udea" target="_blank" rel="noopener noreferrer">github.com/seap-udea</a>
-        </p>
-        <p>
-          <a href="http://astronomia-udea.co" target="_blank" rel="noopener noreferrer">astronomia-udea.co</a>
         </p>
         <p>Medellín, Colombia</p>
       </div>

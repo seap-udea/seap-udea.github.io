@@ -5,6 +5,11 @@ context/**
 # Assembled site (built locally / by CI)
 _site/
 
+# App build artifacts (also ignored via apps/*/.gitignore)
+apps/*/node_modules/
+apps/*/.next/
+apps/*/out/
+
 # OS / editor
 .DS_Store
 Thumbs.db
