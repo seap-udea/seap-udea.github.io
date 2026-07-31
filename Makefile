@@ -25,13 +25,18 @@ repos:
 build-apps:
 	@echo "▶  Building Lighting Black Holes…"
 	@cd apps/lighting-black-holes && npm ci && npm run build
+	@echo "▶  Building Cloud Academy…"
+	@cd apps/cloud_academy && npm ci --legacy-peer-deps && npm run build
 	@echo "✓  Apps built"
 
 sync-site:
 	@test -f index.html || { echo "index.html not found. Run from the repository root."; exit 1; }
 	@test -f repos.json || { echo "repos.json missing. Run: make repos"; exit 1; }
 	@test -f papers.json || { echo "papers.json missing. Run: make repos"; exit 1; }
-	@test -f apps/lighting-black-holes/out/index.html || $(MAKE) build-apps
+	@missing=0; \
+	test -f apps/lighting-black-holes/out/index.html || missing=1; \
+	test -f apps/cloud_academy/out/index.html || missing=1; \
+	if [ "$$missing" = 1 ]; then $(MAKE) build-apps; fi
 	@rm -rf $(SITE)
 	@mkdir -p $(SITE)/apps
 	@cp index.html $(SITE)/
@@ -41,9 +46,11 @@ sync-site:
 	@cp -r js $(SITE)/js
 	@cp -r assets $(SITE)/assets
 	@cp -r apps/lighting-black-holes/out $(SITE)/apps/lighting-black-holes
+	@cp -r apps/cloud_academy/out $(SITE)/apps/cloud_academy
 	@touch $(SITE)/.nojekyll
 	@echo "✓  Site ready in $(SITE)/"
-	@echo "   App:  http://$(HOST):$(PORT)/apps/lighting-black-holes/"
+	@echo "   Apps: http://$(HOST):$(PORT)/apps/lighting-black-holes/"
+	@echo "         http://$(HOST):$(PORT)/apps/cloud_academy/"
 
 start: sync-site
 	@if lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
@@ -59,6 +66,7 @@ start: sync-site
 		echo "Started. Stop with: make stop"; \
 		echo "  Home: http://$(HOST):$(PORT)/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/lighting-black-holes/"; \
+		echo "  App:  http://$(HOST):$(PORT)/apps/cloud_academy/"; \
 	else \
 		echo "Failed to start server on port $(PORT)."; \
 		[ -f $(LOG) ] && cat $(LOG); \

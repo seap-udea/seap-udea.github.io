@@ -27,13 +27,14 @@ Use another port with `PORT=3000 make start`.
 
 Apps live under `apps/` and are built as static exports in CI.
 
+- [Cloud Academy](https://seap-udea.github.io/apps/cloud_academy/) — bubble-chamber particle tracks
 - [Lighting Black Holes](https://seap-udea.github.io/apps/lighting-black-holes/) — black-hole light visualization
 
 Locally:
 
 ```bash
-make build-apps   # npm ci && next build
-make start        # serves _site including /apps/lighting-black-holes/
+make build-apps   # npm ci && next build (all apps under apps/)
+make start        # serves _site including /apps/cloud_academy/ and /apps/lighting-black-holes/
 ```
 
 ## Deployment

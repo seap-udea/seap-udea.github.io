@@ -28,12 +28,20 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: apps/lighting-black-holes/package-lock.json
+          cache-dependency-path: |
+            apps/lighting-black-holes/package-lock.json
+            apps/cloud_academy/package-lock.json
 
       - name: Build Lighting Black Holes app
         working-directory: apps/lighting-black-holes
         run: |
           npm ci
+          npm run build
+
+      - name: Build Cloud Academy app
+        working-directory: apps/cloud_academy
+        run: |
+          npm ci --legacy-peer-deps
           npm run build
 
       # Assemble only the files that should be public
@@ -51,6 +59,7 @@ jobs:
           # Next.js static apps
           mkdir -p _site/apps
           cp -r apps/lighting-black-holes/out _site/apps/lighting-black-holes
+          cp -r apps/cloud_academy/out _site/apps/cloud_academy
 
           # Prevent GitHub from processing with Jekyll
           touch _site/.nojekyll
