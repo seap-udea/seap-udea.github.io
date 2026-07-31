@@ -1,0 +1,21 @@
+# Local working materials (not part of the published site)
+context/
+context/**
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# Logs and temp
+*.log
+.server.log
+.server.pid
+tmp/
+temp/
+.cache/
