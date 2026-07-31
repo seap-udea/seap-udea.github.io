@@ -1,4 +1,4 @@
-.PHONY: help repos build-apps sync-site start stop restart status
+.PHONY: help repos build-apps sync-site start stop restart status cleanall
 
 PORT ?= 8000
 HOST ?= 127.0.0.1
@@ -15,6 +15,7 @@ help:
 	@echo "  make stop       - Stop the server on port $(PORT)"
 	@echo "  make restart    - Restart the local server"
 	@echo "  make status     - Show whether a server is listening on $(PORT)"
+	@echo "  make cleanall   - Remove local build artifacts (node_modules, .next, out, _site, logs)"
 	@echo ""
 	@echo "  PORT=3000 make start   - Use another port"
 
@@ -90,3 +91,22 @@ status:
 	else \
 		echo "No server listening on port $(PORT)."; \
 	fi
+
+cleanall: stop
+	@echo "▶  Cleaning local build artifacts…"
+	@rm -rf $(SITE)
+	@rm -f $(LOG) .server.pid
+	@find apps -mindepth 1 -maxdepth 2 \( \
+		-name node_modules -o \
+		-name .next -o \
+		-name out -o \
+		-name .turbo -o \
+		-name dist -o \
+		-name build -o \
+		-name .vercel -o \
+		-name coverage \
+	\) -type d -prune -exec rm -rf {} + 2>/dev/null || true
+	@find apps -name "*.tsbuildinfo" -type f -delete 2>/dev/null || true
+	@find . -name .DS_Store -type f -delete 2>/dev/null || true
+	@echo "✓  Removed $(SITE)/, app node_modules/.next/out, server logs"
+	@echo "   (context/ and source files were left untouched)"

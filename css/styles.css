@@ -109,7 +109,7 @@ img {
 .brand-logo {
   height: 47px;
   width: auto;
-  max-width: min(310px, 62vw);
+  max-width: min(220px, 55vw);
   display: block;
 }
 
