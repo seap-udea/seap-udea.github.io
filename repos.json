@@ -1316,6 +1316,23 @@
     "hidden": false
   },
   {
+    "name": "exorings",
+    "url": "https://github.com/seap-udea/exorings",
+    "description": "Code Repository for Exoring Transit Properties",
+    "stars": 0,
+    "last_commit": "2015-02-18",
+    "abstract": "Code for calculating exoplanet ring transit properties: transit depth, durations, observed radius and asterodensity. Useful for research on identifying and characterizing exorings.",
+    "featured": false,
+    "fork": true,
+    "private": false,
+    "archived": false,
+    "parent": "facom/exorings",
+    "type": "utilities",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
     "name": "gdaespec",
     "url": "https://github.com/seap-udea/gdaespec",
     "description": "General Denoising AutoEncoder (G-DAE) for transmission spectra affected by stellar contamination and observational noise",
