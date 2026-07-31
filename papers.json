@@ -103,6 +103,9 @@
     "url": "https://doi.org/10.1088/2041-8205/803/1/L14",
     "kind": "article",
     "repos": ["PRisma", "exorings"]
+  },
+  {
+    "title": "MontuPython: Astronomical ephemerides for the ancient world",
     "authors": "Zuluaga et al.",
     "year": 2026,
     "venue": "Zenodo",
