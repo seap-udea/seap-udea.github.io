@@ -25,58 +25,12 @@ PYPI_NAMES = {
     "pymcel": "pymcel",
     "fargopy": "fargopy",
     "multimin": "multimin",
+    "MontuPython": "montu",
+    "MultiREx-public": "MultiREx",
 }
 
-# Scientific papers about SEAP packages / repos (not software Zenodo DOIs).
-PAPERS = [
-    {
-        "title": "The bright side of the light curve: A general photometric model of non-transiting exorings",
-        "authors": "Zuluaga, Sucerquia, Alvarado-Montes",
-        "year": 2022,
-        "venue": "Astronomy and Computing",
-        "doi": "10.1016/j.ascom.2022.100623",
-        "url": "https://doi.org/10.1016/j.ascom.2022.100623",
-        "repos": ["pryngles"],
-    },
-    {
-        "title": "A general polarimetric model for transiting and nontransiting ringed exoplanets",
-        "authors": "Veenstra, Zuluaga, Alvarado-Montes, Sucerquia",
-        "year": 2024,
-        "venue": "Astronomy & Astrophysics",
-        "doi": "10.1051/0004-6361/202347194",
-        "url": "https://doi.org/10.1051/0004-6361/202347194",
-        "repos": ["pryngles"],
-    },
-    {
-        "title": "Scattered light may reveal the existence of ringed exoplanets",
-        "authors": "Sucerquia, Alvarado-Montes, Zuluaga, Montesinos",
-        "year": 2020,
-        "venue": "MNRAS Letters",
-        "doi": "10.1093/mnrasl/slaa080",
-        "url": "https://doi.org/10.1093/mnrasl/slaa080",
-        "repos": ["pryngles"],
-    },
-    {
-        "title": "A general method for assessing the origin of interstellar small bodies: the case of 1I/2017 U1 ('Oumuamua)",
-        "authors": "Zuluaga, Sanchez-Hernandez, Sucerquia, Ferrin",
-        "year": 2018,
-        "venue": "arXiv",
-        "doi": None,
-        "arxiv": "1711.09397",
-        "url": "https://arxiv.org/abs/1711.09397",
-        "repos": ["iWander"],
-    },
-    {
-        "title": "Conditions for visual and high-resolution bistatic radar observations of Apophis in 2029",
-        "authors": "Vallejo, Zuluaga, Chaparro",
-        "year": 2022,
-        "venue": "arXiv",
-        "doi": None,
-        "arxiv": "2201.12205",
-        "url": "https://arxiv.org/abs/2201.12205",
-        "repos": ["Apophis2029"],
-    },
-]
+# Papers + software citations curated from repo READMEs (also written to papers.json).
+PAPERS = json.loads((ROOT / "papers.json").read_text(encoding="utf-8")) if (ROOT / "papers.json").exists() else []
 
 
 def gh_api(path: str):
@@ -198,6 +152,7 @@ def normalize_repo(r: dict, existing: dict[str, dict]) -> dict:
     prev = existing.get(name, {})
     desc = r.get("description") or prev.get("description") or ""
     featured = bool(prev.get("featured", False))
+    hidden = bool(prev.get("hidden", False))
     repo_type = prev.get("type")
     fork = bool(r.get("fork"))
     parent = None
@@ -220,6 +175,7 @@ def normalize_repo(r: dict, existing: dict[str, dict]) -> dict:
         "last_commit": last_commit_date(name, r.get("pushed_at")) or prev.get("last_commit"),
         "abstract": abstract,
         "featured": featured,
+        "hidden": hidden,
         "fork": fork,
         "private": bool(r.get("private")),
         "archived": bool(r.get("archived")),
@@ -229,10 +185,9 @@ def normalize_repo(r: dict, existing: dict[str, dict]) -> dict:
         "topics": r.get("topics") or prev.get("topics") or [],
     }
 
-    if featured and (repo_type == "package" or name in PYPI_NAMES):
-        entry["pypi"] = pypi_url(name, repo_type or "package")
-    elif prev.get("pypi"):
-        entry["pypi"] = prev.get("pypi")
+    wants_pypi = repo_type == "package" or name in PYPI_NAMES or bool(prev.get("pypi"))
+    if wants_pypi:
+        entry["pypi"] = pypi_url(name, repo_type or "package") or prev.get("pypi")
 
     return entry
 
@@ -269,21 +224,24 @@ def main() -> None:
         r = by_name[name]
         print(
             f"[{i}/{len(ordered)}] {name} fork={r.get('fork')} "
-            f"private={r.get('private')} featured={existing.get(name, {}).get('featured', False)}"
+            f"private={r.get('private')} featured={existing.get(name, {}).get('featured', False)} "
+            f"hidden={existing.get(name, {}).get('hidden', False)}"
         )
         out.append(normalize_repo(r, existing))
 
     OUT.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    PAPERS_OUT.write_text(json.dumps(PAPERS, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # Preserve curated papers.json (source of truth); only rewrite if empty.
+    if PAPERS:
+        PAPERS_OUT.write_text(json.dumps(PAPERS, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
-    featured = [x for x in out if x["featured"]]
-    forks = [x for x in out if x["fork"]]
-    print(f"Wrote {OUT}: {len(out)} repos ({len(featured)} featured, {len(forks)} forks)")
-    print(f"Wrote {PAPERS_OUT}: {len(PAPERS)} papers")
+    featured = [x for x in out if x["featured"] and not x.get("hidden")]
+    forks = [x for x in out if x["fork"] and not x.get("hidden")]
+    print(f"Wrote {OUT}: {len(out)} repos ({len(featured)} featured, {len(forks)} forks visible)")
+    print(f"Papers file: {PAPERS_OUT} ({len(PAPERS)} entries)")
     for x in featured:
         print(f"  ★ {x['name']} type={x.get('type')} pypi={x.get('pypi')}")
     for x in forks:
-        print(f"  ↳ {x['name']} <- {x.get('parent')}")
+        print(f"  ↳ {x['name']} <- {x.get('parent')} type={x.get('type')}")
 
 
 if __name__ == "__main__":

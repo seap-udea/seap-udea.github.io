@@ -6,9 +6,8 @@
     "venue": "Astronomy and Computing",
     "doi": "10.1016/j.ascom.2022.100623",
     "url": "https://doi.org/10.1016/j.ascom.2022.100623",
-    "repos": [
-      "pryngles"
-    ]
+    "kind": "article",
+    "repos": ["pryngles"]
   },
   {
     "title": "A general polarimetric model for transiting and nontransiting ringed exoplanets",
@@ -17,9 +16,8 @@
     "venue": "Astronomy & Astrophysics",
     "doi": "10.1051/0004-6361/202347194",
     "url": "https://doi.org/10.1051/0004-6361/202347194",
-    "repos": [
-      "pryngles"
-    ]
+    "kind": "article",
+    "repos": ["pryngles"]
   },
   {
     "title": "Scattered light may reveal the existence of ringed exoplanets",
@@ -28,9 +26,8 @@
     "venue": "MNRAS Letters",
     "doi": "10.1093/mnrasl/slaa080",
     "url": "https://doi.org/10.1093/mnrasl/slaa080",
-    "repos": [
-      "pryngles"
-    ]
+    "kind": "article",
+    "repos": ["pryngles"]
   },
   {
     "title": "A general method for assessing the origin of interstellar small bodies: the case of 1I/2017 U1 ('Oumuamua)",
@@ -40,9 +37,8 @@
     "doi": null,
     "arxiv": "1711.09397",
     "url": "https://arxiv.org/abs/1711.09397",
-    "repos": [
-      "iWander"
-    ]
+    "kind": "preprint",
+    "repos": ["iWander"]
   },
   {
     "title": "Conditions for visual and high-resolution bistatic radar observations of Apophis in 2029",
@@ -52,8 +48,100 @@
     "doi": null,
     "arxiv": "2201.12205",
     "url": "https://arxiv.org/abs/2201.12205",
-    "repos": [
-      "Apophis2029"
-    ]
+    "kind": "preprint",
+    "repos": ["Apophis2029"]
+  },
+  {
+    "title": "Machine-assisted classification of potential biosignatures in earth-like exoplanets using low signal-to-noise ratio transmission spectra",
+    "authors": "Duque-Castaño, Zuluaga, Flor-Torres",
+    "year": 2024,
+    "venue": "MNRAS (accepted)",
+    "doi": null,
+    "arxiv": "2407.19167",
+    "url": "https://arxiv.org/abs/2407.19167",
+    "kind": "article",
+    "repos": ["MultiREx-public"]
+  },
+  {
+    "title": "Efficient reduction of stellar contamination and noise in planetary transmission spectra using neural networks",
+    "authors": "Duque-Castaño, Flor-Torres, Zuluaga",
+    "year": 2026,
+    "venue": "arXiv",
+    "doi": "10.48550/arXiv.2602.10330",
+    "arxiv": "2602.10330",
+    "url": "https://arxiv.org/abs/2602.10330",
+    "kind": "preprint",
+    "repos": ["gdaespec"]
+  },
+  {
+    "title": "Inside the Eirenesphere: The Interplay of Porosity, Heat Flux and Mineralogy in Exoplanetary Aquable Layers and Eirenespheres",
+    "authors": "Orjuela, Zuluaga",
+    "year": 2026,
+    "venue": "Submitted to Astrobiology",
+    "doi": null,
+    "url": "https://github.com/seap-udea/Eirenesphere",
+    "kind": "submitted",
+    "repos": ["Eirenesphere"]
+  },
+  {
+    "title": "Probing Exoplanetary Rings with Asterodensity Profiling: A PhotoRing Analysis of Kepler-51",
+    "authors": "Numpaque, Zuluaga, Kipping, Alvarado-Montes",
+    "year": 2026,
+    "venue": "In preparation",
+    "doi": null,
+    "url": "https://github.com/seap-udea/PRisma",
+    "kind": "in-preparation",
+    "repos": ["PRisma"]
+  },
+  {
+    "title": "A Novel Method for Identifying Exoplanetary Rings",
+    "authors": "Zuluaga, Kipping, Sucerquia, Alvarado",
+    "year": 2015,
+    "venue": "The Astrophysical Journal Letters",
+    "doi": "10.1088/2041-8205/803/1/L14",
+    "arxiv": "1502.07818",
+    "url": "https://doi.org/10.1088/2041-8205/803/1/L14",
+    "kind": "article",
+    "repos": ["PRisma"]
+  },
+  {
+    "title": "MontuPython: Astronomical ephemerides for the ancient world",
+    "authors": "Zuluaga et al.",
+    "year": 2026,
+    "venue": "Zenodo",
+    "doi": "10.5281/zenodo.21298063",
+    "url": "https://doi.org/10.5281/zenodo.21298063",
+    "kind": "software",
+    "repos": ["MontuPython"]
+  },
+  {
+    "title": "pymcel: Utilidades de Mecánica Celeste y Astrodinámica",
+    "authors": "Zuluaga, Jorge I.",
+    "year": 2026,
+    "venue": "Zenodo",
+    "doi": "10.5281/zenodo.18849743",
+    "url": "https://doi.org/10.5281/zenodo.18849743",
+    "kind": "software",
+    "repos": ["pymcel"]
+  },
+  {
+    "title": "fargopy",
+    "authors": "Murillo-Gonzalez, Zuluaga, Montesinos",
+    "year": 2026,
+    "venue": "Zenodo",
+    "doi": "10.5281/zenodo.19430858",
+    "url": "https://doi.org/10.5281/zenodo.19430858",
+    "kind": "software",
+    "repos": ["fargopy"]
+  },
+  {
+    "title": "MultiMin: Multivariate Gaussian fitting",
+    "authors": "Zuluaga, Jorge I.",
+    "year": 2026,
+    "venue": "GitHub / JOSS (submitted)",
+    "doi": null,
+    "url": "https://github.com/seap-udea/multimin",
+    "kind": "software",
+    "repos": ["multimin"]
   }
 ]

@@ -20,7 +20,8 @@
       "planetary-rings",
       "planetary-science",
       "simulation"
-    ]
+    ],
+    "hidden": false
   },
   {
     "name": "MontuPython",
@@ -35,488 +36,9 @@
     "archived": false,
     "parent": null,
     "type": "package",
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "pymcel",
-    "url": "https://github.com/seap-udea/pymcel",
-    "description": "Utilidades de Mecánica Celeste",
-    "stars": 4,
-    "last_commit": "2026-03-24",
-    "abstract": "Utilities for teaching and research in celestial mechanics and astrodynamics. Originally developed alongside the textbook Mecánica Celeste: teoría, algoritmos y problemas by Jorge I. Zuluaga at Universidad de Antioquia.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": "package",
-    "pypi": "https://pypi.org/project/pymcel/",
-    "topics": []
-  },
-  {
-    "name": "fargopy",
-    "url": "https://github.com/seap-udea/fargopy",
-    "description": "A Python wrapping to FARGO3D",
-    "stars": 1,
-    "last_commit": "2026-04-05",
-    "abstract": "Python wrapper and post-processing toolkit for FARGO3D, a hydrodynamical code for planet–disk interactions. It helps analyze outputs, control runs from Python, and build complex initial conditions with less friction.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": "package",
-    "pypi": "https://pypi.org/project/fargopy/",
-    "topics": []
-  },
-  {
-    "name": "Relatividad-Zuluaga",
-    "url": "https://github.com/seap-udea/Relatividad-Zuluaga",
-    "description": "Libro de Relatividad",
-    "stars": 4,
-    "last_commit": "2020-11-11",
-    "abstract": "Open textbook materials on relativity and gravitation by Jorge I. Zuluaga (Institute of Physics, Universidad de Antioquia), offering lecture notes and supporting resources for advanced undergraduate and graduate courses.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": "book",
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "MontuCatalogue",
-    "url": "https://github.com/seap-udea/MontuCatalogue",
-    "description": "Stellar Catalogue for MontuPython",
-    "stars": 1,
-    "last_commit": "2025-03-29",
-    "abstract": "Stellar Catalogue for Montu Python /mnṯw ꜥꜣpp(y)/ Astronomical ephemerides for the ancient world These are the tools to create the stellar catalogue for The catalogue of is an improved and slightly extended version of the incredible work of David Nash, who during almost a decade has created and released his.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": "package",
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "PlanetaryGrid",
-    "url": "https://github.com/seap-udea/PlanetaryGrid",
-    "description": "Grid of Interior Structure and Thermal Evolutionary Models",
-    "stars": 0,
-    "last_commit": "2016-12-25",
-    "abstract": "PlanetaryGrid Grid of Interior Structure and Thermal Evolutionary Models",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": "data",
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "iWander",
-    "url": "https://github.com/seap-udea/iWander",
-    "description": "Dynamics of Interstellar Wanderers",
-    "stars": 1,
-    "last_commit": "2019-09-12",
-    "abstract": "This package is an implementation of the general method devised by Zuluaga et al. (2017) for assesing the origin of interstellar small bodies (asteroids and comets) The package include data and tools that can be used in general for studying the dynamics of an interstellar vagabond object (small-body, interstellar spaceship.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": "utilities",
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "jzexam",
-    "url": "https://github.com/seap-udea/jzexam",
-    "description": "Template for LaTeX Exams",
-    "stars": 0,
-    "last_commit": "2026-06-12",
-    "abstract": "Author: Jorge I. Zuluaga (C) 2026–present Repository: License: LPPL 1.3c is a LaTeX package for typesetting academic exams. It provides a structured set of environments and commands for composing exams with problems, sub-questions, multiple-choice questions, answer keys, a formula sheet, and a fully customizable student header — all from a.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "laplacek",
-    "url": "https://github.com/seap-udea/laplacek",
-    "description": "Laplace coefficient calculation",
-    "stars": 0,
-    "last_commit": "2020-09-16",
-    "abstract": "Este sencillo paquete contiene las rutinas básicas para el cálculo de los coeficientes de Laplace y sus derivadas",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "multimin",
-    "url": "https://github.com/seap-udea/multimin",
-    "description": "Composed Multinormal Distribution Utilitie",
-    "stars": 0,
-    "last_commit": "2026-02-15",
-    "abstract": "is a package designed to provide numerical tools for fitting data to a Mixture of Gaussians (MoG, see below). It can process a sample of $n$ variables to find the set of multivariate normal distributions that best describe the data. Additionally, the package can fit one-dimensional data (e.g., numerical functions.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": "package",
-    "pypi": "https://pypi.org/project/multimin/",
-    "topics": []
-  },
-  {
-    "name": "stumpff",
-    "url": "https://github.com/seap-udea/stumpff",
-    "description": "Efficient computation of the stumpff series",
-    "stars": 0,
-    "last_commit": "2019-11-19",
-    "abstract": "Stumpff series Efficient computation of the stumpff series Computing the value of the Stumpff series is important in celestial mechanics (see for instance Wisdom and Hernandez, 2015.) Altough most of those series might be expressed in terms of trignometric or hypebolic functions, several singular points make too hard to create.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "AIsteroid",
-    "url": "https://github.com/seap-udea/AIsteroid",
-    "description": "Artificial Intelligence in the Search for Asteroids",
-    "stars": 8,
-    "last_commit": "2018-01-11",
-    "abstract": "Tools to automate asteroid searches in observatory image sets. The project explores AI-assisted detection of moving objects across multi-epoch frames, reducing manual inspection of large survey datasets such as those produced by programs like Pan-STARRS.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "Apophis2029",
-    "url": "https://github.com/seap-udea/Apophis2029",
-    "description": "Apophis Approach in 2029",
-    "stars": 3,
-    "last_commit": "2022-09-13",
-    "abstract": "Data and scripts that reproduce published analyses of asteroid Apophis and its 2029 close approach to Earth, including dynamical studies and related observational preparation work.",
-    "featured": true,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "AreciboWow",
-    "url": "https://github.com/seap-udea/AreciboWow",
-    "description": "Arecibo Wow Development Kit",
-    "stars": 0,
-    "last_commit": "2026-06-07",
-    "abstract": "Arecibo Wow Development Kit",
-    "featured": false,
-    "fork": false,
-    "private": true,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "Argus",
-    "url": "https://github.com/seap-udea/Argus",
-    "description": "A Comprehensive Python Toolkit for Small Solar System Body Computations",
-    "stars": 0,
-    "last_commit": "2026-05-11",
-    "abstract": "Argus A Comprehensive Python Toolkit for Small Solar System Body Computations",
-    "featured": false,
-    "fork": false,
-    "private": true,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "Aristarchus",
-    "url": "https://github.com/seap-udea/Aristarchus",
-    "description": "Aristarchus Campaign Activity Site",
-    "stars": 0,
-    "last_commit": "2016-05-12",
-    "abstract": "Aristarchus Campaign Activity Site",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "AstroHUM",
-    "url": "https://github.com/seap-udea/AstroHUM",
-    "description": "Astronomía del Hágalo Usted Mismo",
-    "stars": 0,
-    "last_commit": "2018-10-13",
-    "abstract": "Astronomía del Hágalo Usted Mismo",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "AstroRV",
-    "url": "https://github.com/seap-udea/AstroRV",
-    "description": "Catalog of Astrometry and Radial Velocities of Nearby Stars",
-    "stars": 0,
-    "last_commit": "2018-01-31",
-    "abstract": "AstroRV Catalog of Astrometry and Radial Velocities of Nearby Stars",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "Circular-Restricted-3BP-Interface",
-    "url": "https://github.com/dalejandroabel/Circular-Restricted-3BP-Interface",
-    "description": "",
-    "stars": 0,
-    "last_commit": "2026-02-04",
-    "abstract": "Circular-Restricted-3BP-Interface",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "Earth1.5",
-    "url": "https://github.com/seap-udea/Earth1.5",
-    "description": "Global Environmental Model including Biotic Regulation",
-    "stars": 0,
-    "last_commit": "2015-06-14",
-    "abstract": "By Juan F. Salazar & Jorge I. Zuluaga This project is under development. The version released here is an alpha undocumented version of a larger and more usable project. Stay tunned for updates and for the official release of the Beta version If you are visiting this repository looking for.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "Earth2.5",
-    "url": "https://github.com/seap-udea/Earth2.5",
-    "description": "Inhabited Habitable Planet",
-    "stars": 0,
-    "last_commit": "2015-06-08",
-    "abstract": "Inhabited Habitable Planet",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "GRT",
-    "url": "https://github.com/seap-udea/GRT",
-    "description": "",
-    "stars": 1,
-    "last_commit": "2019-08-23",
-    "abstract": "RepoTemplate > Template files for a (i)Python, C and C++ repositories integrated with SonarQube For those who program oftenly in , and , it is common that when creating a new project, many files from other projects and repositories must be copied in the new one. Makefiles, installation scripts, sample.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "GravRay",
-    "url": "https://github.com/seap-udea/GravRay",
-    "description": "Gravitational Raytracing",
-    "stars": 4,
-    "last_commit": "2016-12-03",
-    "abstract": "Implements the gravitational raytracing method for studying how meteoroids and asteroids are spatially distributed after gravitational scattering. Developed by the Solar, Earth and Planetary Physics Group at Universidad de Antioquia.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "JWSTephem",
-    "url": "https://github.com/seap-udea/JWSTephem",
-    "description": "Ephemeris of the JWST and data to spot it in the sky",
-    "stars": 2,
-    "last_commit": "2022-01-27",
-    "abstract": "JWSTephem Ephemeris of the JWST and data to spot it in the sky Use this Jupyter notebook to generate the ephemeris and a map of the sky with the location of JWST This is an example of the map generated The code to generate the sky map and the corresponding.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "MPCDatabase",
-    "url": "https://github.com/seap-udea/MPCDatabase",
-    "description": "Database of Minor Planet Center",
-    "stars": 3,
-    "last_commit": "2016-12-05",
-    "abstract": "Tools and database utilities for Minor Planet Center data covering hundreds of thousands of small Solar System bodies, aimed at practical querying and analysis of asteroid catalogs.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "MecCel-Notebooks",
-    "url": "https://github.com/seap-udea/MecCel-Notebooks",
-    "description": "Jupyter Notebooks and Scripts for the Course of Celestial Mechanics at the University of Antioquia",
-    "stars": 1,
-    "last_commit": "2016-06-02",
-    "abstract": "Jupyter Notebooks and Scripts for the Course of Celestial Mechanics at the University of Antioquia",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "MeteorTrajectories",
-    "url": "https://github.com/seap-udea/MeteorTrajectories",
-    "description": "Meteor trajectory determination",
-    "stars": 1,
-    "last_commit": "2019-04-18",
-    "abstract": "In this repository you may find a series of tools used to reconstruct the trajectory of large meteors ( super bolides ) using public footage Most of these tools have been developed by the Solar, Earth and Planetary Physics Group in the Institute of Physics of the University of Antioquia.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "MoonFlashes",
-    "url": "https://github.com/seap-udea/MoonFlashes",
-    "description": "Dynamical analysis of moon impacts",
-    "stars": 2,
-    "last_commit": "2019-12-11",
-    "abstract": "This is the data and scripts required to reproduce the results in the paper > Zuluaga, J. I., Cuartas-Restrepo, P. A., Ospina, J., Pichardo, F., Lopez, S. A., Pena, K., & Gaviria-Posada, J. M. (2019). Location, orbit and energy of a meteoroid impacting the moon during the Lunar Eclipse of.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "MultiNEAs",
-    "url": "https://github.com/seap-udea/MultiNEAs",
-    "description": "Numerical tools for near-earth asteroid dynamics and population",
-    "stars": 0,
-    "last_commit": "2026-01-22",
-    "abstract": "is a package designed to provide numerical tools for studying the dynamics and population of Near-Earth Asteroids (NEAs). The package offers a comprehensive suite of utilities for orbital calculations, statistical analysis, and visualization of NEA populations Orbital Dynamics : Tools for computing and analyzing near-earth asteroid orbits. - Population Studies.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "NotasMetodosNumericos",
-    "url": "https://github.com/JorgeZuluaga/NotasMetodosNumericos",
-    "description": "Curso de Métodos Numéricos",
-    "stars": 0,
-    "last_commit": "2023-08-14",
-    "abstract": "Curso de Métodos Numéricos",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
-  },
-  {
-    "name": "PHAsteroids",
-    "url": "https://github.com/Leonarda2g/PHAsteroids",
-    "description": "",
-    "stars": 0,
-    "last_commit": "2022-07-31",
-    "abstract": "About the package is a package intended to predict the positions during time of the asteroids and to compare with NASA Jet Propulsion Laboratory data. A PHA (Potentially Hazardous Asteroid) is defined as an asteroid that has a probability of hitting the Earth of $\\approx 10^{-6}$ (i.e. One in a.",
-    "featured": false,
-    "fork": false,
-    "private": false,
-    "archived": false,
-    "parent": null,
-    "type": null,
-    "pypi": null,
-    "topics": []
+    "pypi": "https://pypi.org/project/montu/",
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "PRisma",
@@ -532,7 +54,518 @@
     "parent": null,
     "type": "paper",
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "pymcel",
+    "url": "https://github.com/seap-udea/pymcel",
+    "description": "Utilidades de Mecánica Celeste",
+    "stars": 4,
+    "last_commit": "2026-03-24",
+    "abstract": "Utilities for teaching and research in celestial mechanics and astrodynamics. Originally developed alongside the textbook Mecánica Celeste: teoría, algoritmos y problemas by Jorge I. Zuluaga at Universidad de Antioquia.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "package",
+    "pypi": "https://pypi.org/project/pymcel/",
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "fargopy",
+    "url": "https://github.com/seap-udea/fargopy",
+    "description": "A Python wrapping to FARGO3D",
+    "stars": 1,
+    "last_commit": "2026-04-05",
+    "abstract": "Python wrapper and post-processing toolkit for FARGO3D, a hydrodynamical code for planet–disk interactions. It helps analyze outputs, control runs from Python, and build complex initial conditions with less friction.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "package",
+    "pypi": "https://pypi.org/project/fargopy/",
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "Relatividad-Zuluaga",
+    "url": "https://github.com/seap-udea/Relatividad-Zuluaga",
+    "description": "Libro de Relatividad",
+    "stars": 4,
+    "last_commit": "2020-11-11",
+    "abstract": "Open textbook materials on relativity and gravitation by Jorge I. Zuluaga (Institute of Physics, Universidad de Antioquia), offering lecture notes and supporting resources for advanced undergraduate and graduate courses.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "book",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "MontuCatalogue",
+    "url": "https://github.com/seap-udea/MontuCatalogue",
+    "description": "Stellar Catalogue for MontuPython",
+    "stars": 1,
+    "last_commit": "2025-03-29",
+    "abstract": "Stellar Catalogue for Montu Python /mnṯw ꜥꜣpp(y)/ Astronomical ephemerides for the ancient world These are the tools to create the stellar catalogue for The catalogue of is an improved and slightly extended version of the incredible work of David Nash, who during almost a decade has created and released his.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "package",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "PlanetaryGrid",
+    "url": "https://github.com/seap-udea/PlanetaryGrid",
+    "description": "Grid of Interior Structure and Thermal Evolutionary Models",
+    "stars": 0,
+    "last_commit": "2016-12-25",
+    "abstract": "PlanetaryGrid Grid of Interior Structure and Thermal Evolutionary Models",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "data",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "iWander",
+    "url": "https://github.com/seap-udea/iWander",
+    "description": "Dynamics of Interstellar Wanderers",
+    "stars": 1,
+    "last_commit": "2019-09-12",
+    "abstract": "This package is an implementation of the general method devised by Zuluaga et al. (2017) for assesing the origin of interstellar small bodies (asteroids and comets) The package include data and tools that can be used in general for studying the dynamics of an interstellar vagabond object (small-body, interstellar spaceship.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "utilities",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "jzexam",
+    "url": "https://github.com/seap-udea/jzexam",
+    "description": "Template for LaTeX Exams",
+    "stars": 0,
+    "last_commit": "2026-06-12",
+    "abstract": "Author: Jorge I. Zuluaga (C) 2026–present Repository: License: LPPL 1.3c is a LaTeX package for typesetting academic exams. It provides a structured set of environments and commands for composing exams with problems, sub-questions, multiple-choice questions, answer keys, a formula sheet, and a fully customizable student header — all from a.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "utilities",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "laplacek",
+    "url": "https://github.com/seap-udea/laplacek",
+    "description": "Laplace coefficient calculation",
+    "stars": 0,
+    "last_commit": "2020-09-16",
+    "abstract": "Este sencillo paquete contiene las rutinas básicas para el cálculo de los coeficientes de Laplace y sus derivadas",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "utilities",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "multimin",
+    "url": "https://github.com/seap-udea/multimin",
+    "description": "Composed Multinormal Distribution Utilitie",
+    "stars": 0,
+    "last_commit": "2026-02-15",
+    "abstract": "is a package designed to provide numerical tools for fitting data to a Mixture of Gaussians (MoG, see below). It can process a sample of $n$ variables to find the set of multivariate normal distributions that best describe the data. Additionally, the package can fit one-dimensional data (e.g., numerical functions.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "package",
+    "pypi": "https://pypi.org/project/multimin/",
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "Apophis2029",
+    "url": "https://github.com/seap-udea/Apophis2029",
+    "description": "Apophis Approach in 2029",
+    "stars": 3,
+    "last_commit": "2022-09-13",
+    "abstract": "Data and scripts that reproduce published analyses of asteroid Apophis and its 2029 close approach to Earth, including dynamical studies and related observational preparation work.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "paper",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "AreciboWow",
+    "url": "https://github.com/seap-udea/AreciboWow",
+    "description": "Arecibo Wow Development Kit",
+    "stars": 0,
+    "last_commit": "2026-06-07",
+    "abstract": "Arecibo Wow Development Kit",
+    "featured": true,
+    "fork": false,
+    "private": true,
+    "archived": false,
+    "parent": null,
+    "type": "paper",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "stumpff",
+    "url": "https://github.com/seap-udea/stumpff",
+    "description": "Efficient computation of the stumpff series",
+    "stars": 0,
+    "last_commit": "2019-11-19",
+    "abstract": "Stumpff series Efficient computation of the stumpff series Computing the value of the Stumpff series is important in celestial mechanics (see for instance Wisdom and Hernandez, 2015.) Altough most of those series might be expressed in terms of trignometric or hypebolic functions, several singular points make too hard to create.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "utilities",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "AIsteroid",
+    "url": "https://github.com/seap-udea/AIsteroid",
+    "description": "Artificial Intelligence in the Search for Asteroids",
+    "stars": 8,
+    "last_commit": "2018-01-11",
+    "abstract": "Tools to automate asteroid searches in observatory image sets. The project explores AI-assisted detection of moving objects across multi-epoch frames, reducing manual inspection of large survey datasets such as those produced by programs like Pan-STARRS.",
+    "featured": true,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": "utilities",
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "Argus",
+    "url": "https://github.com/seap-udea/Argus",
+    "description": "A Comprehensive Python Toolkit for Small Solar System Body Computations",
+    "stars": 0,
+    "last_commit": "2026-05-11",
+    "abstract": "Argus A Comprehensive Python Toolkit for Small Solar System Body Computations",
+    "featured": false,
+    "fork": false,
+    "private": true,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "Aristarchus",
+    "url": "https://github.com/seap-udea/Aristarchus",
+    "description": "Aristarchus Campaign Activity Site",
+    "stars": 0,
+    "last_commit": "2016-05-12",
+    "abstract": "Aristarchus Campaign Activity Site",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "AstroHUM",
+    "url": "https://github.com/seap-udea/AstroHUM",
+    "description": "Astronomía del Hágalo Usted Mismo",
+    "stars": 0,
+    "last_commit": "2018-10-13",
+    "abstract": "Astronomía del Hágalo Usted Mismo",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "AstroRV",
+    "url": "https://github.com/seap-udea/AstroRV",
+    "description": "Catalog of Astrometry and Radial Velocities of Nearby Stars",
+    "stars": 0,
+    "last_commit": "2018-01-31",
+    "abstract": "AstroRV Catalog of Astrometry and Radial Velocities of Nearby Stars",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "Circular-Restricted-3BP-Interface",
+    "url": "https://github.com/dalejandroabel/Circular-Restricted-3BP-Interface",
+    "description": "",
+    "stars": 0,
+    "last_commit": "2026-02-04",
+    "abstract": "Circular-Restricted-3BP-Interface",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "Earth1.5",
+    "url": "https://github.com/seap-udea/Earth1.5",
+    "description": "Global Environmental Model including Biotic Regulation",
+    "stars": 0,
+    "last_commit": "2015-06-14",
+    "abstract": "By Juan F. Salazar & Jorge I. Zuluaga This project is under development. The version released here is an alpha undocumented version of a larger and more usable project. Stay tunned for updates and for the official release of the Beta version If you are visiting this repository looking for.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "Earth2.5",
+    "url": "https://github.com/seap-udea/Earth2.5",
+    "description": "Inhabited Habitable Planet",
+    "stars": 0,
+    "last_commit": "2015-06-08",
+    "abstract": "Inhabited Habitable Planet",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "GRT",
+    "url": "https://github.com/seap-udea/GRT",
+    "description": "",
+    "stars": 1,
+    "last_commit": "2019-08-23",
+    "abstract": "RepoTemplate > Template files for a (i)Python, C and C++ repositories integrated with SonarQube For those who program oftenly in , and , it is common that when creating a new project, many files from other projects and repositories must be copied in the new one. Makefiles, installation scripts, sample.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "GravRay",
+    "url": "https://github.com/seap-udea/GravRay",
+    "description": "Gravitational Raytracing",
+    "stars": 4,
+    "last_commit": "2016-12-03",
+    "abstract": "Implements the gravitational raytracing method for studying how meteoroids and asteroids are spatially distributed after gravitational scattering. Developed by the Solar, Earth and Planetary Physics Group at Universidad de Antioquia.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "JWSTephem",
+    "url": "https://github.com/seap-udea/JWSTephem",
+    "description": "Ephemeris of the JWST and data to spot it in the sky",
+    "stars": 2,
+    "last_commit": "2022-01-27",
+    "abstract": "JWSTephem Ephemeris of the JWST and data to spot it in the sky Use this Jupyter notebook to generate the ephemeris and a map of the sky with the location of JWST This is an example of the map generated The code to generate the sky map and the corresponding.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "MPCDatabase",
+    "url": "https://github.com/seap-udea/MPCDatabase",
+    "description": "Database of Minor Planet Center",
+    "stars": 3,
+    "last_commit": "2016-12-05",
+    "abstract": "Tools and database utilities for Minor Planet Center data covering hundreds of thousands of small Solar System bodies, aimed at practical querying and analysis of asteroid catalogs.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "MecCel-Notebooks",
+    "url": "https://github.com/seap-udea/MecCel-Notebooks",
+    "description": "Jupyter Notebooks and Scripts for the Course of Celestial Mechanics at the University of Antioquia",
+    "stars": 1,
+    "last_commit": "2016-06-02",
+    "abstract": "Jupyter Notebooks and Scripts for the Course of Celestial Mechanics at the University of Antioquia",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "MeteorTrajectories",
+    "url": "https://github.com/seap-udea/MeteorTrajectories",
+    "description": "Meteor trajectory determination",
+    "stars": 1,
+    "last_commit": "2019-04-18",
+    "abstract": "In this repository you may find a series of tools used to reconstruct the trajectory of large meteors ( super bolides ) using public footage Most of these tools have been developed by the Solar, Earth and Planetary Physics Group in the Institute of Physics of the University of Antioquia.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "MoonFlashes",
+    "url": "https://github.com/seap-udea/MoonFlashes",
+    "description": "Dynamical analysis of moon impacts",
+    "stars": 2,
+    "last_commit": "2019-12-11",
+    "abstract": "This is the data and scripts required to reproduce the results in the paper > Zuluaga, J. I., Cuartas-Restrepo, P. A., Ospina, J., Pichardo, F., Lopez, S. A., Pena, K., & Gaviria-Posada, J. M. (2019). Location, orbit and energy of a meteoroid impacting the moon during the Lunar Eclipse of.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "MultiNEAs",
+    "url": "https://github.com/seap-udea/MultiNEAs",
+    "description": "Numerical tools for near-earth asteroid dynamics and population",
+    "stars": 0,
+    "last_commit": "2026-01-22",
+    "abstract": "is a package designed to provide numerical tools for studying the dynamics and population of Near-Earth Asteroids (NEAs). The package offers a comprehensive suite of utilities for orbital calculations, statistical analysis, and visualization of NEA populations Orbital Dynamics : Tools for computing and analyzing near-earth asteroid orbits. - Population Studies.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "NotasMetodosNumericos",
+    "url": "https://github.com/JorgeZuluaga/NotasMetodosNumericos",
+    "description": "Curso de Métodos Numéricos",
+    "stars": 0,
+    "last_commit": "2023-08-14",
+    "abstract": "Curso de Métodos Numéricos",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
+  },
+  {
+    "name": "PHAsteroids",
+    "url": "https://github.com/Leonarda2g/PHAsteroids",
+    "description": "",
+    "stars": 0,
+    "last_commit": "2022-07-31",
+    "abstract": "About the package is a package intended to predict the positions during time of the asteroids and to compare with NASA Jet Propulsion Laboratory data. A PHA (Potentially Hazardous Asteroid) is defined as an asteroid that has a probability of hitting the Earth of $\\approx 10^{-6}$ (i.e. One in a.",
+    "featured": false,
+    "fork": false,
+    "private": false,
+    "archived": false,
+    "parent": null,
+    "type": null,
+    "pypi": null,
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "PythonChallenges",
@@ -548,7 +581,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "RVGaia",
@@ -564,7 +598,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "RepoTemplate",
@@ -580,7 +615,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "SatPack",
@@ -596,7 +632,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "TSPICE",
@@ -612,7 +649,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "aQuest",
@@ -628,7 +666,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "astronomia-minsite",
@@ -644,7 +683,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "calendar",
@@ -660,7 +700,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "cloud_academy",
@@ -676,7 +717,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "debRisk",
@@ -692,7 +734,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "docente",
@@ -708,7 +751,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "iTransit",
@@ -724,7 +768,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "institutofisica",
@@ -740,7 +785,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "interstellar",
@@ -756,7 +802,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "jSpice",
@@ -772,7 +819,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "jorgezuluaga",
@@ -788,7 +836,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "lighting-black-holes",
@@ -804,7 +853,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "meccel-clase-profesor",
@@ -820,7 +870,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "micluster",
@@ -836,7 +887,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "mivaca-publico",
@@ -852,7 +904,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "murray-dermott-action",
@@ -868,7 +921,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "notas-astrodyn",
@@ -884,7 +938,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "photoring",
@@ -900,7 +955,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "phototag",
@@ -916,7 +972,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "plynet",
@@ -932,7 +989,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "pryngles-public",
@@ -948,7 +1006,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "pyconmat",
@@ -964,7 +1023,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "pylar",
@@ -980,7 +1040,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "pympact",
@@ -996,7 +1057,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "pympact-repo",
@@ -1012,7 +1074,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "pypacking",
@@ -1028,7 +1091,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "pysmallb",
@@ -1044,7 +1108,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "relatividad-clase",
@@ -1060,7 +1125,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "seap-udea.github.io",
@@ -1076,7 +1142,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "simplex-method-in-js",
@@ -1092,7 +1159,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "tExomoons",
@@ -1108,7 +1176,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "tQuakes",
@@ -1124,7 +1193,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "xearch",
@@ -1140,7 +1210,8 @@
     "parent": null,
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "BHMcalc",
@@ -1156,7 +1227,8 @@
     "parent": "facom/BHMcalc",
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": true
   },
   {
     "name": "Eirenesphere",
@@ -1170,9 +1242,10 @@
     "private": false,
     "archived": false,
     "parent": "Santiago-Orjuela/Eirenesphere",
-    "type": null,
+    "type": "paper",
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "GeoTrans",
@@ -1186,9 +1259,10 @@
     "private": false,
     "archived": false,
     "parent": "facom/GeoTrans",
-    "type": null,
+    "type": "utilities",
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "MontuApp",
@@ -1204,7 +1278,8 @@
     "parent": "JuanitaAgudelo/MontuApp",
     "type": null,
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": true
   },
   {
     "name": "MultiREx-public",
@@ -1218,9 +1293,10 @@
     "private": false,
     "archived": false,
     "parent": "D4san/MultiREx-public",
-    "type": null,
-    "pypi": null,
-    "topics": []
+    "type": "package",
+    "pypi": "https://pypi.org/project/MultiREx/",
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "einsteinpy",
@@ -1234,9 +1310,10 @@
     "private": false,
     "archived": false,
     "parent": "einsteinpy/einsteinpy",
-    "type": null,
-    "pypi": null,
-    "topics": []
+    "type": "package",
+    "pypi": "https://pypi.org/project/einsteinpy/",
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "gdaespec",
@@ -1250,9 +1327,10 @@
     "private": false,
     "archived": false,
     "parent": "D4san/gdaespec",
-    "type": null,
+    "type": "paper",
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "pycrtbp",
@@ -1266,9 +1344,10 @@
     "private": false,
     "archived": false,
     "parent": "dalejandroabel/pycrtbp",
-    "type": null,
+    "type": "utilities",
     "pypi": null,
-    "topics": []
+    "topics": [],
+    "hidden": false
   },
   {
     "name": "tspice",
@@ -1282,8 +1361,9 @@
     "private": false,
     "archived": false,
     "parent": "DeivyMercado/TSPICE",
-    "type": null,
-    "pypi": null,
-    "topics": []
+    "type": "package",
+    "pypi": "https://pypi.org/project/tspice/",
+    "topics": [],
+    "hidden": false
   }
 ]
