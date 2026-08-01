@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SEAP-UdeA image gallery — figures and images from group repositories.">
+  <meta name="author" content="Jorge I. Zuluaga">
+  <title>Gallery — SEAP-UdeA</title>
+  <link rel="icon" href="../assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="../assets/favicon.png" sizes="32x32">
+  <link rel="icon" type="image/webp" href="../assets/favicon-32.webp" sizes="32x32">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.webp">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="gallery-page">
+  <header class="site-header">
+    <div class="header-inner">
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="header-nav" id="menu-toggle">
+        <span class="sr-only">Toggle menu</span>
+        ☰
+      </button>
+      <a class="brand" href="../">
+        <img class="brand-logo" src="../assets/logo-seap-header.webp" alt="SEAP" width="1910" height="481">
+      </a>
+      <nav class="header-nav" id="header-nav" aria-label="Primary">
+        <a href="../">Home</a>
+        <a href="../#repositories">Repositories</a>
+        <a href="../#apps">Apps</a>
+        <a href="./" aria-current="page">Gallery</a>
+        <a href="https://github.com/seap-udea" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="gallery-main" id="gallery-root">
+    <p class="gallery-status" id="gallery-status">Loading gallery…</p>
+  </main>
+
+  <div class="gallery-lightbox" id="gallery-lightbox" hidden>
+    <button type="button" class="gallery-lightbox-close" id="lightbox-close" aria-label="Close">×</button>
+    <img id="lightbox-image" alt="">
+    <p class="gallery-lightbox-caption" id="lightbox-caption"></p>
+  </div>
+
+  <div class="gallery-fullscreen" id="gallery-fullscreen" hidden>
+    <div class="gallery-fs-chrome">
+      <button type="button" class="gallery-fs-nav" id="fs-prev" aria-label="Previous image">‹</button>
+      <span class="gallery-fs-counter" id="fs-counter"></span>
+      <button type="button" class="gallery-fs-nav" id="fs-next" aria-label="Next image">›</button>
+      <button type="button" class="gallery-fs-close" id="fs-close" aria-label="Exit fullscreen">×</button>
+    </div>
+    <div class="gallery-fs-stage">
+      <img class="gallery-fs-image" id="fs-image" alt="">
+    </div>
+    <p class="gallery-fs-caption" id="fs-caption"></p>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-bottom" style="padding-top: 24px;">
+      © <span id="year"></span> SEAP-UdeA.
+      <a href="../">Home</a>
+      ·
+      <a href="https://github.com/seap-udea/seap-udea.github.io">Site source</a>
+    </div>
+  </footer>
+
+  <script src="../js/gallery.js"></script>
+</body>
+</html>

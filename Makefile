@@ -45,12 +45,14 @@ sync-site:
 	@cp -r css $(SITE)/css
 	@cp -r js $(SITE)/js
 	@cp -r assets $(SITE)/assets
+	@cp -r gallery $(SITE)/gallery
 	@cp -r apps/lighting-black-holes/out $(SITE)/apps/lighting-black-holes
 	@cp -r apps/cloud_academy/out $(SITE)/apps/cloud_academy
 	@touch $(SITE)/.nojekyll
 	@echo "✓  Site ready in $(SITE)/"
 	@echo "   Apps: http://$(HOST):$(PORT)/apps/lighting-black-holes/"
 	@echo "         http://$(HOST):$(PORT)/apps/cloud_academy/"
+	@echo "   Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"
 
 start: sync-site
 	@if lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
@@ -67,6 +69,7 @@ start: sync-site
 		echo "  Home: http://$(HOST):$(PORT)/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/lighting-black-holes/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/cloud_academy/"; \
+		echo "  Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"; \
 	else \
 		echo "Failed to start server on port $(PORT)."; \
 		[ -f $(LOG) ] && cat $(LOG); \

@@ -55,6 +55,7 @@ jobs:
           cp -r css _site/css
           cp -r js _site/js
           cp -r assets _site/assets
+          cp -r gallery _site/gallery
 
           # Next.js static apps
           mkdir -p _site/apps
