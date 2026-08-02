@@ -83,6 +83,11 @@
     return (params.get("repo") || "").trim();
   }
 
+  function queryId() {
+    var params = new URLSearchParams(window.location.search);
+    return (params.get("id") || "").trim();
+  }
+
   function rawUrl(repo, branch, path) {
     return (
       "https://raw.githubusercontent.com/" +
@@ -789,7 +794,28 @@
           (repoMeta && repoMeta.url) ||
           "https://github.com/" + OWNER + "/" + repo;
 
-        return loadGalleryConfig(repo, branch).then(function (config) {
+        return loadGalleryConfig(repo, branch).then(function (configData) {
+          var config = configData;
+          if (Array.isArray(configData)) {
+            var targetId = queryId();
+            if (targetId) {
+              config = null;
+              for (var i = 0; i < configData.length; i++) {
+                if (configData[i].id === targetId) {
+                  config = configData[i];
+                  break;
+                }
+              }
+              if (!config) {
+                throw new Error(
+                  "Gallery ID \"" + targetId + "\" not found in .seap-udea-gallery.json."
+                );
+              }
+            } else {
+              config = configData[0];
+            }
+          }
+
           if (!config || !config.path) {
             throw new Error(
               "Invalid .seap-udea-gallery.json: missing required field \"path\"."
