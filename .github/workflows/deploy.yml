@@ -44,6 +44,25 @@ jobs:
           npm ci --legacy-peer-deps
           npm run build
 
+      # Resolve remote book tip SHAs for a stable cache key (API only — no clone)
+      - name: Book cache key
+        id: books
+        run: |
+          sha="$(gh api repos/seap-udea/Relatividad-Zuluaga --jq .default_branch \
+            | xargs -I{} gh api repos/seap-udea/Relatividad-Zuluaga/commits/{} --jq .sha)"
+          echo "key=$sha" >> "$GITHUB_OUTPUT"
+          echo "Relatividad-Zuluaga tip: $sha"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Restore books cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/books
+          key: books-${{ steps.books.outputs.key }}
+          restore-keys: |
+            books-
+
       # Assemble only the files that should be public
       - name: Assemble static site
         run: |
@@ -64,11 +83,18 @@ jobs:
           cp -r apps/lighting-black-holes/out _site/apps/lighting-black-holes
           cp -r apps/cloud_academy/out _site/apps/cloud_academy
 
+          # Books: prefer vendored ./books/, else cache/.cache (clone only on miss)
+          ./bin/sync_books.sh _site
+
           # Prevent GitHub from processing with Jekyll
           touch _site/.nojekyll
 
-          echo "── Artifact contents ──"
-          find _site -type f | sort
+          echo "── Artifact contents (sample) ──"
+          find _site -type f | head -n 200
+          echo "…"
+          test -f _site/books/Relatividad-Zuluaga/index.html && echo "✓ books/Relatividad-Zuluaga/index.html"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

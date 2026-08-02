@@ -119,6 +119,28 @@
     var badges = [];
     if (repo.private) badges.push('<span class="repo-badge">Private</span>');
     else badges.push('<span class="repo-badge">Public</span>');
+    if (repo.gallery) {
+      badges.push(
+        '<a class="repo-gallery" href="gallery/?repo=' +
+          encodeURIComponent(repo.name) +
+          '" data-track="gallery_click" data-track-id="' +
+          escapeHtml(repo.name) +
+          '" data-track-name="' +
+          escapeHtml(repo.name) +
+          ' gallery">Gallery</a>'
+      );
+    }
+    if (repo.site) {
+      badges.push(
+        '<a class="repo-site" href="' +
+          escapeHtml(repo.site) +
+          '" data-track="app_click" data-track-id="' +
+          escapeHtml(repo.name) +
+          '" data-track-name="' +
+          escapeHtml(repo.name) +
+          ' read">Read</a>'
+      );
+    }
     if (repo.type) {
       badges.push(
         '<span class="repo-type">' +
@@ -239,7 +261,14 @@
     var countEl = document.getElementById("papers-count");
     if (!list) return;
 
-    papers = papers || [];
+    papers = (papers || []).slice().sort(function (a, b) {
+      var ya = Number(a && a.year);
+      var yb = Number(b && b.year);
+      if (!Number.isFinite(ya)) ya = -Infinity;
+      if (!Number.isFinite(yb)) yb = -Infinity;
+      if (yb !== ya) return yb - ya;
+      return String((a && a.title) || "").localeCompare(String((b && b.title) || ""));
+    });
     if (countEl) countEl.textContent = String(papers.length);
 
     if (!papers.length) {

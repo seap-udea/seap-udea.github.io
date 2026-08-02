@@ -55,7 +55,8 @@
     "type": "paper",
     "pypi": null,
     "topics": [],
-    "hidden": false
+    "hidden": false,
+    "gallery": true
   },
   {
     "name": "pymcel",
@@ -106,7 +107,8 @@
     "type": "book",
     "pypi": null,
     "topics": [],
-    "hidden": false
+    "hidden": false,
+    "site": "books/Relatividad-Zuluaga/"
   },
   {
     "name": "MontuCatalogue",

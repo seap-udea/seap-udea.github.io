@@ -476,7 +476,7 @@
       '<button type="button" class="gallery-nav-btn" id="gallery-prev" aria-label="Previous image">‹</button>' +
       '<span class="gallery-counter" id="gallery-counter"></span>' +
       '<button type="button" class="gallery-nav-btn" id="gallery-next" aria-label="Next image">›</button>' +
-      '<span class="gallery-hint">Use ← → keys to browse</span>' +
+      '<span class="gallery-hint">Swipe or use ← → to browse</span>' +
       "</div>" +
       '<div class="gallery-preview-stage" id="gallery-preview-stage">' +
       '<img id="gallery-preview-image" alt="" decoding="async">' +
@@ -554,6 +554,63 @@
     );
   }
 
+  /**
+   * Horizontal swipe navigation for touch screens.
+   * Swipe left → next image; swipe right → previous image.
+   */
+  function bindSwipe(el, options) {
+    if (!el) return;
+    options = options || {};
+    var threshold = options.threshold || 48;
+    var maxVertical = options.maxVertical || 80;
+    var startX = 0;
+    var startY = 0;
+    var tracking = false;
+
+    el.addEventListener(
+      "touchstart",
+      function (event) {
+        if (!event.touches || event.touches.length !== 1) return;
+        if (event.target.closest("button, a, input, textarea, select")) return;
+        tracking = true;
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+      },
+      { passive: true }
+    );
+
+    el.addEventListener(
+      "touchcancel",
+      function () {
+        tracking = false;
+      },
+      { passive: true }
+    );
+
+    el.addEventListener(
+      "touchend",
+      function (event) {
+        if (!tracking) return;
+        tracking = false;
+        if (!event.changedTouches || !event.changedTouches.length) return;
+        if (!state.images.length) return;
+
+        var endX = event.changedTouches[0].clientX;
+        var endY = event.changedTouches[0].clientY;
+        var dx = endX - startX;
+        var dy = endY - startY;
+
+        if (Math.abs(dx) < threshold) return;
+        if (Math.abs(dx) < Math.abs(dy)) return;
+        if (Math.abs(dy) > maxVertical) return;
+
+        if (dx < 0) setIndex(state.index + 1);
+        else setIndex(state.index - 1);
+      },
+      { passive: true }
+    );
+  }
+
   function bindInteractions() {
     var prevBtn = document.getElementById("gallery-prev");
     var nextBtn = document.getElementById("gallery-next");
@@ -563,9 +620,15 @@
     var fullscreenBtn = document.getElementById("gallery-fullscreen");
     var strip = document.getElementById("gallery-filmstrip");
     var grid = document.getElementById("gallery-grid");
+    var stage = document.getElementById("gallery-preview-stage");
+    var fsStage = document.querySelector(".gallery-fs-stage");
 
     bindThumbFallbacks(strip);
     bindThumbFallbacks(grid);
+    bindSwipe(stage);
+    bindSwipe(fsStage);
+    bindSwipe(fullscreenEl);
+    bindSwipe(lightbox);
 
     if (prevBtn) {
       prevBtn.addEventListener("click", function () {

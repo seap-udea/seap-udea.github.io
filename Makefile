@@ -1,4 +1,4 @@
-.PHONY: help repos build-apps sync-site start stop restart status cleanall worker-deploy
+.PHONY: help repos build-apps sync-books sync-site start stop restart status cleanall worker-deploy
 
 PORT ?= 8000
 HOST ?= 127.0.0.1
@@ -10,6 +10,7 @@ help:
 	@echo ""
 	@echo "  make repos         - Refresh repos.json + papers.json from GitHub"
 	@echo "  make build-apps    - Build Next.js apps under apps/"
+	@echo "  make sync-books    - Fetch book HTML (e.g. Relatividad) into $(SITE)/books/"
 	@echo "  make sync-site     - Assemble public files into $(SITE)/"
 	@echo "  make start         - Build apps (if needed), assemble $(SITE)/, start server"
 	@echo "  make stop          - Stop the server on port $(PORT)"
@@ -54,12 +55,17 @@ sync-site:
 	@rm -rf $(SITE)/analytics && cp -r analytics $(SITE)/analytics
 	@cp -r apps/lighting-black-holes/out $(SITE)/apps/lighting-black-holes
 	@cp -r apps/cloud_academy/out $(SITE)/apps/cloud_academy
+	@$(MAKE) sync-books
 	@touch $(SITE)/.nojekyll
 	@echo "✓  Site ready in $(SITE)/"
 	@echo "   Apps: http://$(HOST):$(PORT)/apps/lighting-black-holes/"
 	@echo "         http://$(HOST):$(PORT)/apps/cloud_academy/"
+	@echo "   Book:  http://$(HOST):$(PORT)/books/Relatividad-Zuluaga/"
 	@echo "   Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"
 	@echo "   Stats:   http://$(HOST):$(PORT)/stats.html"
+
+sync-books:
+	@./bin/sync_books.sh $(SITE)
 
 start: sync-site
 	@if lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
@@ -76,6 +82,7 @@ start: sync-site
 		echo "  Home: http://$(HOST):$(PORT)/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/lighting-black-holes/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/cloud_academy/"; \
+		echo "  Book:  http://$(HOST):$(PORT)/books/Relatividad-Zuluaga/"; \
 		echo "  Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"; \
 		echo "  Stats:   http://$(HOST):$(PORT)/stats.html"; \
 	else \
@@ -118,6 +125,7 @@ status:
 cleanall: stop
 	@echo "▶  Cleaning local build artifacts…"
 	@rm -rf $(SITE)
+	@rm -rf .cache/books
 	@rm -f $(LOG) .server.pid
 	@find apps -mindepth 1 -maxdepth 2 \( \
 		-name node_modules -o \

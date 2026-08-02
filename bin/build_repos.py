@@ -153,6 +153,8 @@ def normalize_repo(r: dict, existing: dict[str, dict]) -> dict:
     desc = r.get("description") or prev.get("description") or ""
     featured = bool(prev.get("featured", False))
     hidden = bool(prev.get("hidden", False))
+    gallery = bool(prev.get("gallery", False))
+    site = prev.get("site") or None
     repo_type = prev.get("type")
     fork = bool(r.get("fork"))
     parent = None
@@ -176,6 +178,8 @@ def normalize_repo(r: dict, existing: dict[str, dict]) -> dict:
         "abstract": abstract,
         "featured": featured,
         "hidden": hidden,
+        "gallery": gallery,
+        "site": site,
         "fork": fork,
         "private": bool(r.get("private")),
         "archived": bool(r.get("archived")),
