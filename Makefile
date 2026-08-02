@@ -18,6 +18,9 @@ help:
 	@echo "  make worker-deploy - Deploy analytics Cloudflare Worker"
 	@echo "  make cleanall      - Remove local build artifacts (node_modules, .next, out, _site, logs)"
 	@echo ""
+	@echo "  Gallery previews (run inside a target repo):"
+	@echo "    ./bin/seap-udea-gallery.sh /path/to/repo"
+	@echo ""
 	@echo "  PORT=3000 make start   - Use another port"
 
 repos:

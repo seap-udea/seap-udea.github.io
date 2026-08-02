@@ -146,6 +146,21 @@
     return parts[parts.length - 1] || path;
   }
 
+  function stemName(filename) {
+    var name = String(filename || "");
+    var dot = name.lastIndexOf(".");
+    return dot > 0 ? name.slice(0, dot) : name;
+  }
+
+  /** Lightweight WebP preview produced by bin/seap-udea-gallery.sh */
+  function previewPathFor(dirPath, filename) {
+    return normalizePath(dirPath) + "/.gallery/" + stemName(filename) + ".webp";
+  }
+
+  function thumbSrc(img) {
+    return (img && (img.previewUrl || img.url)) || "";
+  }
+
   function loadDefaultBranch(repo) {
     return fetchJson(apiUrl("repos/" + OWNER + "/" + encodeURIComponent(repo))).then(
       function (data) {
@@ -215,12 +230,14 @@
         })
         .map(function (entry) {
           var filePath = entry.path || clean + "/" + entry.name;
+          var previewPath = previewPathFor(clean, entry.name);
           return {
             name: entry.name,
             path: filePath,
             url:
               entry.download_url ||
               rawUrl(repo, branch, filePath),
+            previewUrl: rawUrl(repo, branch, previewPath),
             githubUrl: githubBlobUrl(repo, branch, filePath),
           };
         });
@@ -444,6 +461,8 @@
           escapeHtml(img.name) +
           '">' +
           '<img src="' +
+          escapeHtml(thumbSrc(img)) +
+          '" data-fallback="' +
           escapeHtml(img.url) +
           '" alt="" loading="lazy" decoding="async">' +
           "</button>"
@@ -492,6 +511,8 @@
           '">' +
           '<span class="gallery-grid-thumb">' +
           '<img src="' +
+          escapeHtml(thumbSrc(img)) +
+          '" data-fallback="' +
           escapeHtml(img.url) +
           '" alt="' +
           escapeHtml(img.name) +
@@ -517,6 +538,22 @@
     );
   }
 
+  function bindThumbFallbacks(rootEl) {
+    if (!rootEl) return;
+    rootEl.addEventListener(
+      "error",
+      function (event) {
+        var el = event.target;
+        if (!el || el.tagName !== "IMG") return;
+        var fallback = el.getAttribute("data-fallback");
+        if (!fallback || el.getAttribute("data-fell-back") === "1") return;
+        el.setAttribute("data-fell-back", "1");
+        el.src = fallback;
+      },
+      true
+    );
+  }
+
   function bindInteractions() {
     var prevBtn = document.getElementById("gallery-prev");
     var nextBtn = document.getElementById("gallery-next");
@@ -526,6 +563,9 @@
     var fullscreenBtn = document.getElementById("gallery-fullscreen");
     var strip = document.getElementById("gallery-filmstrip");
     var grid = document.getElementById("gallery-grid");
+
+    bindThumbFallbacks(strip);
+    bindThumbFallbacks(grid);
 
     if (prevBtn) {
       prevBtn.addEventListener("click", function () {

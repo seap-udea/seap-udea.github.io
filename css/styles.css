@@ -107,10 +107,11 @@ img {
 }
 
 .brand-logo {
-  height: 47px;
+  height: 44px;
   width: auto;
-  max-width: min(220px, 55vw);
+  max-width: min(420px, 72vw);
   display: block;
+  object-fit: contain;
 }
 
 .header-nav {
