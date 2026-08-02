@@ -3,6 +3,19 @@
   var IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|tiff?)$/i;
   var COLUMNS_DEFAULT = 4;
 
+  // Set tracking meta before site-analytics.js fires pageview.
+  (function setGalleryTrackMeta() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var repo = (params.get("repo") || "").trim();
+      if (repo && document.body) {
+        document.body.dataset.trackPage = "gallery";
+        document.body.dataset.trackId = repo;
+        document.body.dataset.trackName = repo + " gallery";
+      }
+    } catch (e) {}
+  })();
+
   var yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 

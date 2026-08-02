@@ -11,8 +11,9 @@
   <link rel="icon" type="image/webp" href="../assets/favicon-32.webp" sizes="32x32">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.webp">
   <link rel="stylesheet" href="../css/styles.css">
+  <meta name="visitor-log-endpoint" content="https://seap-udea-visitor-log.drz-academy.workers.dev/log">
 </head>
-<body class="gallery-page">
+<body class="gallery-page" data-track-page="gallery" data-track-id="gallery" data-track-name="SEAP Gallery">
   <header class="site-header">
     <div class="header-inner">
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="header-nav" id="menu-toggle">
@@ -65,5 +66,6 @@
   </footer>
 
   <script src="../js/gallery.js"></script>
+  <script type="module" src="../js/site-analytics.js"></script>
 </body>
 </html>

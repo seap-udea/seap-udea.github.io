@@ -1,4 +1,4 @@
-.PHONY: help repos build-apps sync-site start stop restart status cleanall
+.PHONY: help repos build-apps sync-site start stop restart status cleanall worker-deploy
 
 PORT ?= 8000
 HOST ?= 127.0.0.1
@@ -8,14 +8,15 @@ LOG  := .server.log
 help:
 	@echo "Local preview server for seap-udea.github.io"
 	@echo ""
-	@echo "  make repos      - Refresh repos.json + papers.json from GitHub"
-	@echo "  make build-apps - Build Next.js apps under apps/"
-	@echo "  make sync-site  - Assemble public files into $(SITE)/"
-	@echo "  make start      - Build apps (if needed), assemble $(SITE)/, start server"
-	@echo "  make stop       - Stop the server on port $(PORT)"
-	@echo "  make restart    - Restart the local server"
-	@echo "  make status     - Show whether a server is listening on $(PORT)"
-	@echo "  make cleanall   - Remove local build artifacts (node_modules, .next, out, _site, logs)"
+	@echo "  make repos         - Refresh repos.json + papers.json from GitHub"
+	@echo "  make build-apps    - Build Next.js apps under apps/"
+	@echo "  make sync-site     - Assemble public files into $(SITE)/"
+	@echo "  make start         - Build apps (if needed), assemble $(SITE)/, start server"
+	@echo "  make stop          - Stop the server on port $(PORT)"
+	@echo "  make restart       - Restart the local server"
+	@echo "  make status        - Show whether a server is listening on $(PORT)"
+	@echo "  make worker-deploy - Deploy analytics Cloudflare Worker"
+	@echo "  make cleanall      - Remove local build artifacts (node_modules, .next, out, _site, logs)"
 	@echo ""
 	@echo "  PORT=3000 make start   - Use another port"
 
@@ -40,12 +41,14 @@ sync-site:
 	@rm -rf $(SITE)
 	@mkdir -p $(SITE)/apps
 	@cp index.html $(SITE)/
+	@cp stats.html $(SITE)/
 	@cp repos.json $(SITE)/
 	@cp papers.json $(SITE)/
 	@cp -r css $(SITE)/css
 	@cp -r js $(SITE)/js
 	@cp -r assets $(SITE)/assets
 	@cp -r gallery $(SITE)/gallery
+	@rm -rf $(SITE)/analytics && cp -r analytics $(SITE)/analytics
 	@cp -r apps/lighting-black-holes/out $(SITE)/apps/lighting-black-holes
 	@cp -r apps/cloud_academy/out $(SITE)/apps/cloud_academy
 	@touch $(SITE)/.nojekyll
@@ -53,6 +56,7 @@ sync-site:
 	@echo "   Apps: http://$(HOST):$(PORT)/apps/lighting-black-holes/"
 	@echo "         http://$(HOST):$(PORT)/apps/cloud_academy/"
 	@echo "   Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"
+	@echo "   Stats:   http://$(HOST):$(PORT)/stats.html"
 
 start: sync-site
 	@if lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
@@ -70,6 +74,7 @@ start: sync-site
 		echo "  App:  http://$(HOST):$(PORT)/apps/lighting-black-holes/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/cloud_academy/"; \
 		echo "  Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"; \
+		echo "  Stats:   http://$(HOST):$(PORT)/stats.html"; \
 	else \
 		echo "Failed to start server on port $(PORT)."; \
 		[ -f $(LOG) ] && cat $(LOG); \
@@ -94,6 +99,10 @@ stop:
 	@rm -f .server.pid
 
 restart: stop start
+
+worker-deploy:
+	@echo "▶  Deploying analytics worker…"
+	@cd analytics/worker && npx wrangler deploy
 
 status:
 	@PID="$$(lsof -tiTCP:$(PORT) -sTCP:LISTEN 2>/dev/null | head -n 1)"; \

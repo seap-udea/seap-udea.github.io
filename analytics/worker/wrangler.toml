@@ -1,0 +1,17 @@
+name = "seap-udea-visitor-log"
+main = "visitor-log-worker.js"
+compatibility_date = "2026-04-22"
+
+# Create namespace:
+#   cd analytics/worker && npx wrangler kv namespace create VISITOR_LOGS
+# Paste the returned id below.
+[[kv_namespaces]]
+binding = "VISITOR_LOGS"
+id = "e037bda27cd9455f9f0d976f82ccc732"
+
+# Read token (secret, do not commit):
+#   npx wrangler secret put LOG_READ_TOKEN
+#
+# Optional IPs to exclude from logging:
+# [vars]
+# EXCLUDED_LOG_IPS = "x.x.x.x"

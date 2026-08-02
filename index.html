@@ -11,8 +11,9 @@
   <link rel="icon" type="image/webp" href="assets/favicon-32.webp" sizes="32x32">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.webp">
   <link rel="stylesheet" href="css/styles.css">
+  <meta name="visitor-log-endpoint" content="https://seap-udea-visitor-log.drz-academy.workers.dev/log">
 </head>
-<body>
+<body data-track-page="home">
   <header class="site-header">
     <div class="header-inner">
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="header-nav" id="menu-toggle">
@@ -26,13 +27,13 @@
         <a href="#about">About</a>
         <a href="#developer">Developer</a>
         <a href="#apps">Apps</a>
-        <a href="gallery/?repo=PRisma">Gallery</a>
+        <a href="gallery/?repo=PRisma" data-track="gallery_click" data-track-id="PRisma" data-track-name="PRisma gallery">Gallery</a>
         <a href="#repositories">Repositories</a>
         <a href="#forked">Forks</a>
         <a href="#papers">Papers</a>
         <a href="#contributors">Collaborations</a>
         <a href="#contact">Contact</a>
-        <a href="https://github.com/seap-udea" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/seap-udea" target="_blank" rel="noopener noreferrer" data-track="external_click" data-track-id="github-org" data-track-name="seap-udea GitHub">GitHub</a>
       </nav>
     </div>
   </header>
@@ -197,7 +198,7 @@
               <span class="tag">Education</span>
               <span class="tag">Next.js</span>
             </div>
-            <a class="app-link" href="apps/cloud_academy/">Open app →</a>
+            <a class="app-link" href="apps/cloud_academy/" data-track="app_click" data-track-id="cloud_academy" data-track-name="Cloud Academy">Open app →</a>
           </article>
           <article class="app-card">
             <h3 class="app-title">Lighting Black Holes</h3>
@@ -210,7 +211,7 @@
               <span class="tag">Next.js</span>
               <span class="tag">WebGL</span>
             </div>
-            <a class="app-link" href="apps/lighting-black-holes/">Open app →</a>
+            <a class="app-link" href="apps/lighting-black-holes/" data-track="app_click" data-track-id="lighting-black-holes" data-track-name="Lighting Black Holes">Open app →</a>
           </article>
           <article class="app-card">
             <h3 class="app-title">Repository Gallery</h3>
@@ -222,7 +223,7 @@
               <span class="tag">Figures</span>
               <span class="tag">PRisma</span>
             </div>
-            <a class="app-link" href="gallery/?repo=PRisma">Open gallery →</a>
+            <a class="app-link" href="gallery/?repo=PRisma" data-track="gallery_click" data-track-id="PRisma" data-track-name="PRisma gallery">Open gallery →</a>
           </article>
         </div>
       </section>
@@ -398,5 +399,6 @@
   </footer>
 
   <script src="js/main.js"></script>
+  <script type="module" src="js/site-analytics.js"></script>
 </body>
 </html>

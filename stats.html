@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stats — SEAP-UdeA</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Private interaction stats for seap-udea.github.io">
+  <!-- Update after deploying the Worker -->
+  <meta name="visitor-log-read-endpoint" content="https://seap-udea-visitor-log.drz-academy.workers.dev/logs">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/favicon.png" sizes="32x32">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .stats-page { background: var(--bg-muted); }
+    .stats-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+    .stats-wrap h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .stats-sub {
+      margin: 0 0 16px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .stats-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .stats-btn {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .stats-btn:hover { filter: brightness(0.95); }
+    .stats-note { color: var(--text-muted); font-size: 13px; margin: 0 0 12px; }
+    .stats-error { color: #cf222e; font-weight: 600; margin: 0 0 12px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .stats-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .stats-card__k { font-size: 12px; color: var(--text-muted); }
+    .stats-card__v {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 4px;
+    }
+    .stats-section { margin-top: 28px; }
+    .stats-section h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .stats-range { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .stats-range-btn {
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .stats-range-btn.active {
+      background: var(--link);
+      border-color: var(--link);
+      color: #fff;
+    }
+    .stats-chart-wrap {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .stats-chart-legend {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .stats-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    .stats-dot-events { background: #0969da; }
+    .stats-dot-visitors { background: #1f883d; }
+    .stats-chart-svg { width: 100%; height: auto; display: block; }
+    .stats-muted { color: var(--text-muted); font-size: 13px; }
+    .stats-table-wrap {
+      overflow: auto;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .stats-table th,
+    .stats-table td {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-table th { color: var(--text-muted); font-weight: 500; }
+    .stats-table td:last-child {
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .stats-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--header-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .stats-brand:hover { text-decoration: none; opacity: 0.92; }
+    .stats-brand img { height: 36px; width: auto; }
+  </style>
+</head>
+<body class="stats-page">
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="stats-brand" href="./">
+        <img src="assets/logo-seap-header.webp" alt="SEAP" width="1910" height="481">
+      </a>
+      <nav class="header-nav" aria-label="Primary">
+        <a href="./">← Back to site</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="stats-wrap">
+    <h1>Interaction stats</h1>
+    <p class="stats-sub">Private panel · apps, gallery, repositories, pages</p>
+
+    <div class="stats-actions">
+      <button id="stats-refresh" class="stats-btn" type="button">Refresh</button>
+    </div>
+
+    <p id="stats-status" class="stats-note">Not loaded.</p>
+    <p id="stats-error" class="stats-error" hidden></p>
+
+    <section class="stats-grid" id="stats-summary"></section>
+
+    <section class="stats-section">
+      <h2>Activity by day</h2>
+      <div class="stats-range" id="stats-range-buttons">
+        <button class="stats-range-btn" type="button" data-range-days="3">3 days</button>
+        <button class="stats-range-btn active" type="button" data-range-days="7">Week</button>
+        <button class="stats-range-btn" type="button" data-range-days="30">Month</button>
+        <button class="stats-range-btn" type="button" data-range-days="90">Quarter</button>
+      </div>
+      <div class="stats-chart-wrap">
+        <p class="stats-chart-legend">
+          <span><span class="stats-dot stats-dot-events"></span>Events</span>
+          <span><span class="stats-dot stats-dot-visitors"></span>Unique IPs</span>
+        </p>
+        <div id="stats-timeseries"></div>
+      </div>
+    </section>
+
+    <section class="stats-section">
+      <h2>Events by type</h2>
+      <div class="stats-table-wrap">
+        <table class="stats-table">
+          <thead><tr><th>Type</th><th>Count</th></tr></thead>
+          <tbody id="by-event"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="stats-section">
+      <h2>App clicks</h2>
+      <div class="stats-table-wrap">
+        <table class="stats-table">
+          <thead><tr><th>App</th><th>Clicks</th></tr></thead>
+          <tbody id="by-app"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="stats-section">
+      <h2>Gallery (clicks + views)</h2>
+      <div class="stats-table-wrap">
+        <table class="stats-table">
+          <thead><tr><th>Gallery</th><th>Interactions</th></tr></thead>
+          <tbody id="by-gallery"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="stats-section">
+      <h2>Repository / paper clicks</h2>
+      <div class="stats-table-wrap">
+        <table class="stats-table">
+          <thead><tr><th>Target</th><th>Clicks</th></tr></thead>
+          <tbody id="by-repo"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="stats-section">
+      <h2>Pages visited</h2>
+      <div class="stats-table-wrap">
+        <table class="stats-table">
+          <thead><tr><th>Path</th><th>Events</th></tr></thead>
+          <tbody id="by-page"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="stats-section">
+      <h2>Country</h2>
+      <div class="stats-table-wrap">
+        <table class="stats-table">
+          <thead><tr><th>Country</th><th>Events</th></tr></thead>
+          <tbody id="by-country"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/stats-page.js"></script>
+</body>
+</html>

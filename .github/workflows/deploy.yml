@@ -50,12 +50,14 @@ jobs:
           rm -rf _site
           mkdir -p _site
           cp index.html _site/
+          cp stats.html _site/
           cp repos.json _site/
           cp papers.json _site/
           cp -r css _site/css
           cp -r js _site/js
           cp -r assets _site/assets
           cp -r gallery _site/gallery
+          cp -r analytics _site/analytics
 
           # Next.js static apps
           mkdir -p _site/apps

@@ -147,7 +147,11 @@
             : repoIconSvg()) +
           '<a class="repo-name" href="' +
           escapeHtml(repo.url) +
-          '" target="_blank" rel="noopener noreferrer">' +
+          '" target="_blank" rel="noopener noreferrer" data-track="repo_click" data-track-id="' +
+          escapeHtml(repo.name) +
+          '" data-track-name="' +
+          escapeHtml(repo.name) +
+          '">' +
           escapeHtml(repo.name) +
           "</a>" +
           '<span class="repo-badges">' +
@@ -250,7 +254,11 @@
             return (
               '<a class="paper-repo" href="https://github.com/seap-udea/' +
               encodeURIComponent(name) +
-              '" target="_blank" rel="noopener noreferrer">' +
+              '" target="_blank" rel="noopener noreferrer" data-track="repo_click" data-track-id="' +
+              escapeHtml(name) +
+              '" data-track-name="' +
+              escapeHtml(name) +
+              '">' +
               escapeHtml(name) +
               "</a>"
             );
@@ -270,7 +278,11 @@
           '<article class="paper-card">' +
             '<h3 class="paper-title"><a href="' +
             escapeHtml(paper.url) +
-            '" target="_blank" rel="noopener noreferrer">' +
+            '" target="_blank" rel="noopener noreferrer" data-track="repo_click" data-track-id="' +
+            escapeHtml(paper.title || paper.url) +
+            '" data-track-name="' +
+            escapeHtml(paper.title || "paper") +
+            '">' +
             escapeHtml(paper.title) +
             "</a></h3>" +
             '<p class="paper-meta">' +
