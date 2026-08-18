@@ -50,7 +50,10 @@ export function DualRangeSlider({
         value={minValue}
         style={{ zIndex: activeThumb === "min" ? 5 : 3 }}
         onPointerDown={() => setActiveThumb("min")}
-        onChange={(event) => onMinChange(Number(event.target.value))}
+        onPointerUp={() => setActiveThumb(null)}
+        onPointerCancel={() => setActiveThumb(null)}
+        onInput={(event) => onMinChange(Number(event.currentTarget.value))}
+        onChange={(event) => onMinChange(Number(event.currentTarget.value))}
         aria-label={`${ariaLabel}, mínimo`}
         aria-valuemin={min}
         aria-valuemax={maxValue}
@@ -65,7 +68,10 @@ export function DualRangeSlider({
         value={maxValue}
         style={{ zIndex: activeThumb === "max" ? 5 : 4 }}
         onPointerDown={() => setActiveThumb("max")}
-        onChange={(event) => onMaxChange(Number(event.target.value))}
+        onPointerUp={() => setActiveThumb(null)}
+        onPointerCancel={() => setActiveThumb(null)}
+        onInput={(event) => onMaxChange(Number(event.currentTarget.value))}
+        onChange={(event) => onMaxChange(Number(event.currentTarget.value))}
         aria-label={`${ariaLabel}, máximo`}
         aria-valuemin={minValue}
         aria-valuemax={max}

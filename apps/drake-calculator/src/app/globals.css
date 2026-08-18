@@ -103,6 +103,7 @@ input {
   margin: 0 0 14px;
   padding: 0;
   border: none;
+  min-width: 0;
 }
 
 .input-mode-legend {
@@ -116,21 +117,41 @@ input {
 .input-mode-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
+  gap: 8px;
 }
 
 .input-mode-option {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
   color: #e7eef1;
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
 }
 
-.input-mode-option input {
-  accent-color: var(--accent);
+.input-mode-option:hover,
+.input-mode-option:focus-visible {
+  border-color: rgba(111, 255, 233, 0.35);
+  color: #dffef9;
+  outline: none;
+}
+
+.input-mode-option--active {
+  border-color: rgba(111, 255, 233, 0.45);
+  background: rgba(111, 255, 233, 0.12);
+  color: var(--accent);
 }
 
 .input-mode-note {
@@ -231,9 +252,10 @@ input {
 .dual-range-slider {
   position: relative;
   width: 100%;
-  height: 20px;
+  height: 44px;
   display: flex;
   align-items: center;
+  touch-action: pan-y;
 }
 
 .dual-range-slider__track {
@@ -261,12 +283,13 @@ input {
 .dual-range-slider__input {
   position: absolute;
   width: 100%;
-  height: 20px;
+  height: 44px;
   margin: 0;
   background: transparent;
   appearance: none;
   pointer-events: none;
   cursor: pointer;
+  touch-action: none;
 }
 
 .dual-range-slider__input::-webkit-slider-runnable-track {
@@ -282,9 +305,9 @@ input {
 }
 
 .dual-range-slider__input::-webkit-slider-thumb {
-  width: 15px;
-  height: 15px;
-  margin-top: -5.5px;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
   border: 2px solid #10222a;
   border-radius: 50%;
   background: var(--accent);
@@ -294,8 +317,8 @@ input {
 }
 
 .dual-range-slider__input::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+  width: 20px;
+  height: 20px;
   border: 2px solid #10222a;
   border-radius: 50%;
   background: var(--accent);
@@ -315,22 +338,49 @@ input {
 
 .parameter input[type="range"] {
   width: 100%;
-  height: 4px;
+  height: 44px;
   margin: 0;
   border-radius: 999px;
   outline: none;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  touch-action: none;
+  --range-track: rgba(255, 255, 255, 0.13);
+}
+
+.parameter input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border: none;
+  border-radius: 999px;
   background: linear-gradient(
     to right,
     var(--accent) 0 var(--range-progress),
-    rgba(255, 255, 255, 0.13) var(--range-progress) 100%
+    var(--range-track) var(--range-progress) 100%
   );
-  cursor: pointer;
-  appearance: none;
+}
+
+.parameter input[type="range"]::-moz-range-track {
+  height: 4px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--range-progress),
+    var(--range-track) var(--range-progress) 100%
+  );
+}
+
+.parameter input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--accent);
 }
 
 .parameter input[type="range"]::-webkit-slider-thumb {
-  width: 15px;
-  height: 15px;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
   border: 2px solid #10222a;
   border-radius: 50%;
   background: var(--accent);
@@ -339,8 +389,8 @@ input {
 }
 
 .parameter input[type="range"]::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+  width: 20px;
+  height: 20px;
   border: 2px solid #10222a;
   border-radius: 50%;
   background: var(--accent);
@@ -898,34 +948,53 @@ input {
     margin-top: 28px;
   }
 
+  .galaxy-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-height: auto;
+    gap: 14px;
+    padding-bottom: 4px;
+  }
+
   .galaxy-panel {
-    min-height: 760px;
-    padding: 34px 18px 20px;
+    min-height: auto;
+    padding: 34px 18px 28px;
   }
 
   .galaxy-map {
-    width: 80%;
-    max-width: 80%;
+    width: min(80vw, 420px);
+    max-width: min(80vw, 420px);
+  }
+
+  .map-legend {
+    position: static;
+    align-self: flex-start;
   }
 
   .side-index {
-    position: static;
+    position: relative;
     flex-direction: column;
+    align-self: stretch;
+    width: 100%;
     height: auto;
     max-height: none;
-    margin-top: 18px;
+    margin-top: 0;
   }
 
   .side-index-tabs {
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 8px;
     padding-top: 0;
   }
 
   .side-index-tab {
+    flex: 1 1 auto;
     width: auto;
     height: auto;
-    min-height: 40px;
+    min-height: 44px;
     padding: 10px 14px;
     writing-mode: horizontal-tb;
     border: 1px solid var(--line);
@@ -938,6 +1007,12 @@ input {
     margin-top: 10px;
     border: 1px solid var(--line);
     border-radius: 8px;
+  }
+
+  .map-note {
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
   }
 }
 
@@ -955,21 +1030,21 @@ input {
   }
 
   .galaxy-panel {
-    min-height: 650px;
+    padding-bottom: 24px;
   }
 
   .galaxy-stage {
-    min-height: 390px;
+    min-height: auto;
   }
 
   .galaxy-map {
-    width: 80%;
-    max-width: 80%;
+    width: min(88vw, 380px);
+    max-width: min(88vw, 380px);
   }
 
   .map-legend {
-    bottom: 3%;
-    left: 0;
+    bottom: auto;
+    left: auto;
   }
 
   .side-index-panel {

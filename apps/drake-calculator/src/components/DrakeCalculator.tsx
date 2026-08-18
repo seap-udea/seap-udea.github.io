@@ -1284,37 +1284,27 @@ export default function DrakeCalculator() {
 
         <fieldset className="input-mode-selector" aria-label="Entrada de parámetros">
           <legend className="input-mode-legend">Entrada de parámetros</legend>
-          <div className="input-mode-options">
-            <label className="input-mode-option">
-              <input
-                type="radio"
-                name="input-mode"
-                value="exact"
-                checked={inputMode === "exact"}
-                onChange={() => handleInputModeChange("exact")}
-              />
-              <span>Exacto</span>
-            </label>
-            <label className="input-mode-option">
-              <input
-                type="radio"
-                name="input-mode"
-                value="range"
-                checked={inputMode === "range"}
-                onChange={() => handleInputModeChange("range")}
-              />
-              <span>Rango</span>
-            </label>
-            <label className="input-mode-option">
-              <input
-                type="radio"
-                name="input-mode"
-                value="distribution"
-                checked={inputMode === "distribution"}
-                onChange={() => handleInputModeChange("distribution")}
-              />
-              <span>Distribución</span>
-            </label>
+          <div className="input-mode-options" role="radiogroup" aria-label="Entrada de parámetros">
+            {(
+              [
+                ["exact", "Exacto"],
+                ["range", "Rango"],
+                ["distribution", "Distribución"],
+              ] as const
+            ).map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                role="radio"
+                aria-checked={inputMode === mode}
+                className={`input-mode-option${
+                  inputMode === mode ? " input-mode-option--active" : ""
+                }`}
+                onClick={() => handleInputModeChange(mode)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
           <p className="input-mode-note">
             {inputMode === "exact"
@@ -1354,8 +1344,11 @@ export default function DrakeCalculator() {
                     style={
                       { "--range-progress": `${progress}%` } as React.CSSProperties
                     }
+                    onInput={(event) =>
+                      updateValue(parameter.key, Number(event.currentTarget.value))
+                    }
                     onChange={(event) =>
-                      updateValue(parameter.key, Number(event.target.value))
+                      updateValue(parameter.key, Number(event.currentTarget.value))
                     }
                     aria-label={`${parameter.symbol}: ${parameter.label}`}
                     aria-describedby={`${parameter.key}-description`}
