@@ -1061,6 +1061,62 @@ function spatialDistributionSampleNote(mode: DistributionMode) {
   }
 }
 
+function AcademyFooter({ variant }: { variant: "panel" | "site-end" }) {
+  return (
+    <footer className={`academy-footer academy-footer--${variant}`}>
+      <Image
+        src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/drz.png`}
+        alt="Dr. Z Academy"
+        width={58}
+        height={58}
+      />
+      <p>
+        <i>
+          Desarrollado por{" "}
+          <a href="https://drz.academy" target="_blank" rel="noreferrer">
+            Jorge I. Zuluaga (Dr. Z)
+          </a>{" "}
+          en Cursor.
+        </i>
+      </p>
+      <div className="version">Versión {packageJson.version}</div>
+    </footer>
+  );
+}
+
+function MapAttributionNotes({
+  roundedEstimate,
+  civilizationEstimate,
+}: {
+  roundedEstimate: number;
+  civilizationEstimate: number;
+}) {
+  return (
+    <>
+      {roundedEstimate > MAX_VISIBLE_CIVILIZATIONS ? (
+        <p>
+          Se muestran {MAX_VISIBLE_CIVILIZATIONS.toLocaleString("es-CO")}{" "}
+          puntos representativos de un total estimado de{" "}
+          {formatCivilizations(civilizationEstimate)}.
+        </p>
+      ) : (
+        <p>Cada punto turquesa representa una civilización estimada.</p>
+      )}
+      <p>
+        Imagen: NASA/JPL-Caltech/R. Hurt (SSC/Caltech), generada con{" "}
+        <a
+          href="https://milkyway-plot.readthedocs.io/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          mw-plot
+        </a>
+        .
+      </p>
+    </>
+  );
+}
+
 export default function DrakeCalculator() {
   const [values, setValues] = useState<DrakeValues>(INITIAL_VALUES);
   const [ranges, setRanges] = useState<DrakeRanges>(INITIAL_RANGES);
@@ -1455,24 +1511,7 @@ export default function DrakeCalculator() {
           })}
         </section>
 
-        <footer className="academy-footer">
-          <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/drz.png`}
-            alt="Dr. Z Academy"
-            width={58}
-            height={58}
-          />
-          <p>
-            <i>
-              Desarrollado por{" "}
-              <a href="https://drz.academy" target="_blank" rel="noreferrer">
-                Jorge I. Zuluaga (Dr. Z)
-              </a>{" "}
-              en Cursor.
-            </i>
-          </p>
-          <div className="version">Versión {packageJson.version}</div>
-        </footer>
+        <AcademyFooter variant="panel" />
       </aside>
 
       <section className="galaxy-panel" aria-labelledby="estimate-title">
@@ -1610,6 +1649,13 @@ export default function DrakeCalculator() {
               <text x="27" y="-25">El Sol</text>
             </g>
           </svg>
+
+          <div className="map-caption" aria-label="Notas del mapa">
+            <MapAttributionNotes
+              roundedEstimate={roundedEstimate}
+              civilizationEstimate={civilizationEstimate}
+            />
+          </div>
 
           <div className="side-index" aria-label="Paneles laterales">
             {activeSidePanel !== null && (
@@ -1959,15 +2005,17 @@ export default function DrakeCalculator() {
             </p>
           )}
           {roundedEstimate > MAX_VISIBLE_CIVILIZATIONS ? (
-            <p>
+            <p className="map-note-static">
               Se muestran {MAX_VISIBLE_CIVILIZATIONS.toLocaleString("es-CO")}{" "}
               puntos representativos de un total estimado de{" "}
               {formatCivilizations(civilizationEstimate)}.
             </p>
           ) : (
-            <p>Cada punto turquesa representa una civilización estimada.</p>
+            <p className="map-note-static">
+              Cada punto turquesa representa una civilización estimada.
+            </p>
           )}
-          <p>
+          <p className="map-note-static">
             Imagen: NASA/JPL-Caltech/R. Hurt (SSC/Caltech), generada con{" "}
             <a
               href="https://milkyway-plot.readthedocs.io/"
@@ -1980,6 +2028,8 @@ export default function DrakeCalculator() {
           </p>
         </div>
       </section>
+
+      <AcademyFooter variant="site-end" />
     </div>
   );
 }

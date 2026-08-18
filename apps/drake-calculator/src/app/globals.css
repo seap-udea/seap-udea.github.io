@@ -412,6 +412,14 @@ input {
   border-top: 1px solid var(--line);
 }
 
+.academy-footer--site-end {
+  display: none;
+}
+
+.map-caption {
+  display: none;
+}
+
 .academy-footer img {
   grid-row: 1 / 3;
   width: 58px;
@@ -944,8 +952,39 @@ input {
     gap: 18px 24px;
   }
 
-  .academy-footer {
-    margin-top: 28px;
+  .academy-footer--panel {
+    display: none;
+  }
+
+  .academy-footer--site-end {
+    display: grid;
+    margin-top: 0;
+    padding: 24px 22px 32px;
+    border-top: 1px solid var(--line);
+    background: #000;
+  }
+
+  .map-caption {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    max-width: min(80vw, 420px);
+    margin-top: 4px;
+    color: #566771;
+    font-size: 0.62rem;
+    text-align: center;
+  }
+
+  .map-caption p {
+    margin: 0;
+  }
+
+  .map-note-static {
+    display: none;
+  }
+
+  .map-note:not(:has(p:not(.map-note-static))) {
+    display: none;
   }
 
   .galaxy-stage {
@@ -956,6 +995,22 @@ input {
     min-height: auto;
     gap: 14px;
     padding-bottom: 4px;
+  }
+
+  .galaxy-map {
+    order: 1;
+  }
+
+  .map-caption {
+    order: 2;
+  }
+
+  .map-legend {
+    order: 3;
+  }
+
+  .side-index {
+    order: 4;
   }
 
   .galaxy-panel {
@@ -1010,8 +1065,8 @@ input {
   }
 
   .map-note {
-    margin-top: 12px;
-    padding-top: 16px;
+    margin-top: 8px;
+    padding-top: 12px;
     border-top: 1px solid var(--line);
   }
 }
