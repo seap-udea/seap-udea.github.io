@@ -31,6 +31,7 @@ jobs:
           cache-dependency-path: |
             apps/lighting-black-holes/package-lock.json
             apps/cloud_academy/package-lock.json
+            apps/drake-calculator/package-lock.json
 
       - name: Build Lighting Black Holes app
         working-directory: apps/lighting-black-holes
@@ -42,6 +43,12 @@ jobs:
         working-directory: apps/cloud_academy
         run: |
           npm ci --legacy-peer-deps
+          npm run build
+
+      - name: Build Drake Calculator app
+        working-directory: apps/drake-calculator
+        run: |
+          npm ci
           npm run build
 
       # Resolve remote book tip SHAs for a stable cache key (API only — no clone)
@@ -82,6 +89,7 @@ jobs:
           mkdir -p _site/apps
           cp -r apps/lighting-black-holes/out _site/apps/lighting-black-holes
           cp -r apps/cloud_academy/out _site/apps/cloud_academy
+          cp -r apps/drake-calculator/out _site/apps/drake-calculator
 
           # Books: prefer vendored ./books/, else cache/.cache (clone only on miss)
           ./bin/sync_books.sh _site
