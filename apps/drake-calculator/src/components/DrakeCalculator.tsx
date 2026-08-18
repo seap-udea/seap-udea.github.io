@@ -38,6 +38,12 @@ type ParameterDefinition = {
   format: (value: number) => string;
 };
 
+// Estimaciones de Drake y colegas en la conferencia de Green Bank (1961).
+// Fuente: https://en.wikipedia.org/wiki/Drake_equation#Original_estimates
+const DEFAULT_L_YEARS = 100;
+const DRAKE_1961_L_MIN_YEARS = 1_000;
+const DRAKE_1961_L_MAX_YEARS = 100_000_000;
+
 const INITIAL_VALUES: DrakeValues = {
   starRate: 1,
   planetFraction: 0.35,
@@ -45,17 +51,20 @@ const INITIAL_VALUES: DrakeValues = {
   lifeFraction: 1,
   intelligenceFraction: 1,
   communicationFraction: 0.15,
-  lifetimeExponent: 4,
+  lifetimeExponent: Math.log10(DEFAULT_L_YEARS),
 };
 
 const INITIAL_RANGES: DrakeRanges = {
-  starRate: { min: 0.5, max: 2 },
-  planetFraction: { min: 0.1, max: 0.5 },
+  starRate: { min: 1, max: 1 },
+  planetFraction: { min: 0.2, max: 0.5 },
   habitablePlanets: { min: 1, max: 5 },
-  lifeFraction: { min: 0.01, max: 1 },
-  intelligenceFraction: { min: 0.01, max: 1 },
-  communicationFraction: { min: 0.01, max: 0.3 },
-  lifetimeExponent: { min: 3, max: 5 },
+  lifeFraction: { min: 1, max: 1 },
+  intelligenceFraction: { min: 1, max: 1 },
+  communicationFraction: { min: 0.1, max: 0.2 },
+  lifetimeExponent: {
+    min: Math.log10(DRAKE_1961_L_MIN_YEARS),
+    max: Math.log10(DRAKE_1961_L_MAX_YEARS),
+  },
 };
 
 const INITIAL_PARAMETER_DISTRIBUTIONS: ParameterDistributions = {
@@ -221,10 +230,11 @@ const SVG_CENTER = 500;
 const SUN_SVG = { x: 683, y: 500 };
 const KPC_PER_LIGHT_YEAR = 1 / 3261.56;
 const LIGHT_YEARS_PER_KPC = 1 / KPC_PER_LIGHT_YEAR;
-const DEFAULT_DISTANCE_UNIT = "kpc";
+const DEFAULT_DISTANCE_UNIT = "al";
 
 type DistanceUnit = "kpc" | "kal" | "al";
 type DistributionMode = "arms" | "disk" | "ghz";
+const DEFAULT_SPATIAL_DISTRIBUTION: DistributionMode = "ghz";
 type SidePanel = "stats" | "config" | "help" | null;
 
 type CivilizationPosition = {
@@ -713,6 +723,13 @@ function svgRadiusToKpc(radius: number) {
   return (radius / SVG_GALAXY_MAX_RADIUS) * GALAXY_DISK_RADIUS_KPC;
 }
 
+function kpcToDiskSvgRadius(radiusKpc: number) {
+  return (radiusKpc / GALAXY_DISK_RADIUS_KPC) * SVG_DISK_RADIUS;
+}
+
+const GHZ_INNER_SVG_RADIUS = kpcToDiskSvgRadius(GHZ_INNER_RADIUS_KPC);
+const GHZ_OUTER_SVG_RADIUS = kpcToDiskSvgRadius(GHZ_OUTER_RADIUS_KPC);
+
 function kpcToSvgRadius(radiusKpc: number) {
   return (radiusKpc / GALAXY_DISK_RADIUS_KPC) * SVG_GALAXY_MAX_RADIUS;
 }
@@ -1054,8 +1071,9 @@ export default function DrakeCalculator() {
   const [parameterSampleSeed, setParameterSampleSeed] = useState(4096);
   const [activeSidePanel, setActiveSidePanel] = useState<SidePanel>(null);
   const [distributionMode, setDistributionMode] =
-    useState<DistributionMode>("disk");
+    useState<DistributionMode>(DEFAULT_SPATIAL_DISTRIBUTION);
   const [showRadiosphere, setShowRadiosphere] = useState(true);
+  const [showGhzOverlay, setShowGhzOverlay] = useState(false);
   const [radiosphereYears, setRadiosphereYears] = useState(
     DEFAULT_RADIOSPHERE_YEARS,
   );
@@ -1528,6 +1546,37 @@ export default function DrakeCalculator() {
               clipPath="url(#galaxy-clip)"
             />
 
+            {showGhzOverlay && (
+              <g clipPath="url(#galaxy-clip)">
+                <path
+                  fill="#6fffe9"
+                  fillOpacity="0.2"
+                  fillRule="evenodd"
+                  d={`M ${SVG_CENTER} ${SVG_CENTER - GHZ_OUTER_SVG_RADIUS} A ${GHZ_OUTER_SVG_RADIUS} ${GHZ_OUTER_SVG_RADIUS} 0 1 1 ${SVG_CENTER - 0.001} ${SVG_CENTER - GHZ_OUTER_SVG_RADIUS} Z M ${SVG_CENTER} ${SVG_CENTER - GHZ_INNER_SVG_RADIUS} A ${GHZ_INNER_SVG_RADIUS} ${GHZ_INNER_SVG_RADIUS} 0 1 0 ${SVG_CENTER + 0.001} ${SVG_CENTER - GHZ_INNER_SVG_RADIUS} Z`}
+                />
+                <circle
+                  cx={SVG_CENTER}
+                  cy={SVG_CENTER}
+                  r={GHZ_INNER_SVG_RADIUS}
+                  fill="none"
+                  stroke="#6fffe9"
+                  strokeWidth="1.5"
+                  strokeDasharray="8 6"
+                  opacity="0.55"
+                />
+                <circle
+                  cx={SVG_CENTER}
+                  cy={SVG_CENTER}
+                  r={GHZ_OUTER_SVG_RADIUS}
+                  fill="none"
+                  stroke="#6fffe9"
+                  strokeWidth="1.5"
+                  strokeDasharray="8 6"
+                  opacity="0.55"
+                />
+              </g>
+            )}
+
             <g clipPath="url(#galaxy-clip)" filter="url(#civilization-glow)">
               {civilizationPositions.map((position, index) => (
                 <circle
@@ -1547,8 +1596,7 @@ export default function DrakeCalculator() {
                   cx={SUN_SVG.x}
                   cy={SUN_SVG.y}
                   r={
-                    (derivedStats.radiosphereRadiusKpc / GALAXY_DISK_RADIUS_KPC) *
-                    SVG_DISK_RADIUS
+                    kpcToDiskSvgRadius(derivedStats.radiosphereRadiusKpc)
                   }
                   fill="none"
                   stroke="#ffca5c"
@@ -1775,6 +1823,21 @@ export default function DrakeCalculator() {
                       <p className="config-note" id="radiosphere-years-note">
                         Radio de detección en años. A la velocidad de la luz,
                         equivale al mismo número de años-luz.
+                      </p>
+
+                      <label className="config-toggle">
+                        <input
+                          type="checkbox"
+                          checked={showGhzOverlay}
+                          onChange={(event) =>
+                            setShowGhzOverlay(event.target.checked)
+                          }
+                        />
+                        <span>Dibujar ZHG</span>
+                      </label>
+                      <p className="config-note">
+                        Muestra el anillo de la Zona de Habitabilidad Galáctica
+                        (7–10 kpc): franja sombreada y límites punteados.
                       </p>
 
                       <label className="config-toggle">
