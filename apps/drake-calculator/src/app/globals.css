@@ -495,6 +495,10 @@ input {
   font-size: 0.78rem;
 }
 
+.estimate-header--mobile {
+  display: none;
+}
+
 .galaxy-stage {
   position: relative;
   display: grid;
@@ -964,9 +968,33 @@ input {
     background: #000;
   }
 
+  .estimate-header--desktop {
+    display: none;
+  }
+
+  .estimate-header--mobile {
+    display: block;
+    width: 100%;
+    margin: 0;
+    text-align: center;
+  }
+
+  .estimate-header--mobile > p {
+    margin-bottom: 6px;
+  }
+
+  .estimate-header--mobile h2 {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .estimate-header--mobile > span {
+    font-size: 0.68rem;
+    line-height: 1.45;
+  }
+
   .map-caption {
     display: grid;
-    gap: 6px;
+    gap: 10px;
     width: 100%;
     max-width: min(80vw, 420px);
     margin-top: 4px;
@@ -979,11 +1007,14 @@ input {
     margin: 0;
   }
 
-  .map-note-static {
-    display: none;
+  .map-summary p {
+    margin: 0;
+    color: #71828d;
+    font-size: 0.68rem;
+    line-height: 1.45;
   }
 
-  .map-note:not(:has(p:not(.map-note-static))) {
+  .map-note {
     display: none;
   }
 
@@ -1062,12 +1093,6 @@ input {
     margin-top: 10px;
     border: 1px solid var(--line);
     border-radius: 8px;
-  }
-
-  .map-note {
-    margin-top: 8px;
-    padding-top: 12px;
-    border-top: 1px solid var(--line);
   }
 }
 

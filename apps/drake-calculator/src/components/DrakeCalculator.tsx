@@ -1117,6 +1117,96 @@ function MapAttributionNotes({
   );
 }
 
+type EstimateHeaderProps = {
+  variant: "desktop" | "mobile";
+  inputMode: InputMode;
+  civilizationBounds: { min: number; max: number } | null;
+  distributionAnalysis: DistributionAnalysis | null;
+  civilizationEstimate: number;
+  estimateLabel: string;
+};
+
+function EstimateHeader({
+  variant,
+  inputMode,
+  civilizationBounds,
+  distributionAnalysis,
+  civilizationEstimate,
+  estimateLabel,
+}: EstimateHeaderProps) {
+  return (
+    <header
+      className={`estimate-header estimate-header--${variant}`}
+      aria-labelledby={variant === "desktop" ? "estimate-title" : undefined}
+    >
+      <p>ECUACIÓN DE DRAKE</p>
+      <h2 id={variant === "desktop" ? "estimate-title" : undefined}>
+        <strong>
+          {inputMode === "range" && civilizationBounds
+            ? `${formatCivilizations(civilizationBounds.min)} – ${formatCivilizations(civilizationBounds.max)}`
+            : inputMode === "distribution" && distributionAnalysis
+              ? formatCivilizations(distributionAnalysis.civilization.mean)
+              : formatCivilizations(civilizationEstimate)}
+        </strong>{" "}
+        {estimateLabel}
+      </h2>
+      <span>
+        {inputMode === "range"
+          ? "rango posible en la galaxia; el mapa usa una muestra aleatoria uniforme"
+          : inputMode === "distribution" && distributionAnalysis
+            ? `intervalo del 95 %: ${formatCivilizations(distributionAnalysis.civilization.lower95)} – ${formatCivilizations(distributionAnalysis.civilization.upper95)}; el mapa muestra una muestra aleatoria`
+            : inputMode === "distribution"
+              ? "muestra aleatoria según las distribuciones elegidas"
+              : "en nuestra galaxia, según tus supuestos"}
+      </span>
+    </header>
+  );
+}
+
+function MapSummary({
+  inputMode,
+  civilizationEstimate,
+  distributionAnalysis,
+}: {
+  inputMode: InputMode;
+  civilizationEstimate: number;
+  distributionAnalysis: DistributionAnalysis | null;
+}) {
+  if (inputMode === "exact") {
+    return null;
+  }
+
+  return (
+    <div className="map-summary">
+      {inputMode === "range" && (
+        <p>
+          Muestra actual:{" "}
+          {formatCivilizations(civilizationEstimate)} civilizaciones con
+          parámetros aleatorios uniformes.
+        </p>
+      )}
+      {inputMode === "distribution" && distributionAnalysis && (
+        <p>
+          Promedio:{" "}
+          {formatCivilizations(distributionAnalysis.civilization.mean)}{" "}
+          civilizaciones (intervalo del 95 %:{" "}
+          {formatCivilizations(distributionAnalysis.civilization.lower95)} –{" "}
+          {formatCivilizations(distributionAnalysis.civilization.upper95)}).
+          Muestra del mapa:{" "}
+          {formatCivilizations(civilizationEstimate)} civilizaciones.
+        </p>
+      )}
+      {inputMode === "distribution" && !distributionAnalysis && (
+        <p>
+          Muestra actual:{" "}
+          {formatCivilizations(civilizationEstimate)} civilizaciones con
+          parámetros generados según las distribuciones elegidas.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function DrakeCalculator() {
   const [values, setValues] = useState<DrakeValues>(INITIAL_VALUES);
   const [ranges, setRanges] = useState<DrakeRanges>(INITIAL_RANGES);
@@ -1515,28 +1605,14 @@ export default function DrakeCalculator() {
       </aside>
 
       <section className="galaxy-panel" aria-labelledby="estimate-title">
-        <header className="estimate-header">
-          <p>ECUACIÓN DE DRAKE</p>
-          <h2 id="estimate-title">
-            <strong>
-              {inputMode === "range" && civilizationBounds
-                ? `${formatCivilizations(civilizationBounds.min)} – ${formatCivilizations(civilizationBounds.max)}`
-                : inputMode === "distribution" && distributionAnalysis
-                  ? formatCivilizations(distributionAnalysis.civilization.mean)
-                  : formatCivilizations(civilizationEstimate)}
-            </strong>{" "}
-            {estimateLabel}
-          </h2>
-          <span>
-            {inputMode === "range"
-              ? "rango posible en la galaxia; el mapa usa una muestra aleatoria uniforme"
-              : inputMode === "distribution" && distributionAnalysis
-                ? `intervalo del 95 %: ${formatCivilizations(distributionAnalysis.civilization.lower95)} – ${formatCivilizations(distributionAnalysis.civilization.upper95)}; el mapa muestra una muestra aleatoria`
-                : inputMode === "distribution"
-                  ? "muestra aleatoria según las distribuciones elegidas"
-                  : "en nuestra galaxia, según tus supuestos"}
-          </span>
-        </header>
+        <EstimateHeader
+          variant="desktop"
+          inputMode={inputMode}
+          civilizationBounds={civilizationBounds}
+          distributionAnalysis={distributionAnalysis}
+          civilizationEstimate={civilizationEstimate}
+          estimateLabel={estimateLabel}
+        />
 
         <div className="galaxy-stage">
           <div className="galaxy-halo" />
@@ -1651,6 +1727,19 @@ export default function DrakeCalculator() {
           </svg>
 
           <div className="map-caption" aria-label="Notas del mapa">
+            <EstimateHeader
+              variant="mobile"
+              inputMode={inputMode}
+              civilizationBounds={civilizationBounds}
+              distributionAnalysis={distributionAnalysis}
+              civilizationEstimate={civilizationEstimate}
+              estimateLabel={estimateLabel}
+            />
+            <MapSummary
+              inputMode={inputMode}
+              civilizationEstimate={civilizationEstimate}
+              distributionAnalysis={distributionAnalysis}
+            />
             <MapAttributionNotes
               roundedEstimate={roundedEstimate}
               civilizationEstimate={civilizationEstimate}
@@ -1979,53 +2068,15 @@ export default function DrakeCalculator() {
         </div>
 
         <div className="map-note">
-          {inputMode === "range" && (
-            <p>
-              Muestra actual:{" "}
-              {formatCivilizations(civilizationEstimate)} civilizaciones con
-              parámetros aleatorios uniformes.
-            </p>
-          )}
-          {inputMode === "distribution" && distributionAnalysis && (
-            <p>
-              Promedio:{" "}
-              {formatCivilizations(distributionAnalysis.civilization.mean)}{" "}
-              civilizaciones (intervalo del 95 %:{" "}
-              {formatCivilizations(distributionAnalysis.civilization.lower95)} –{" "}
-              {formatCivilizations(distributionAnalysis.civilization.upper95)}).
-              Muestra del mapa:{" "}
-              {formatCivilizations(civilizationEstimate)} civilizaciones.
-            </p>
-          )}
-          {inputMode === "distribution" && !distributionAnalysis && (
-            <p>
-              Muestra actual:{" "}
-              {formatCivilizations(civilizationEstimate)} civilizaciones con
-              parámetros generados según las distribuciones elegidas.
-            </p>
-          )}
-          {roundedEstimate > MAX_VISIBLE_CIVILIZATIONS ? (
-            <p className="map-note-static">
-              Se muestran {MAX_VISIBLE_CIVILIZATIONS.toLocaleString("es-CO")}{" "}
-              puntos representativos de un total estimado de{" "}
-              {formatCivilizations(civilizationEstimate)}.
-            </p>
-          ) : (
-            <p className="map-note-static">
-              Cada punto turquesa representa una civilización estimada.
-            </p>
-          )}
-          <p className="map-note-static">
-            Imagen: NASA/JPL-Caltech/R. Hurt (SSC/Caltech), generada con{" "}
-            <a
-              href="https://milkyway-plot.readthedocs.io/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              mw-plot
-            </a>
-            .
-          </p>
+          <MapSummary
+            inputMode={inputMode}
+            civilizationEstimate={civilizationEstimate}
+            distributionAnalysis={distributionAnalysis}
+          />
+          <MapAttributionNotes
+            roundedEstimate={roundedEstimate}
+            civilizationEstimate={civilizationEstimate}
+          />
         </div>
       </section>
 
