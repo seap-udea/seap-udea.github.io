@@ -1401,6 +1401,8 @@ const GITHUB_APP_URL =
   process.env.NEXT_PUBLIC_GITHUB_APP_URL ??
   "https://github.com/seap-udea/seap-udea.github.io/tree/main/apps/drake-calculator";
 
+const SCENARIOS_README_URL = `${GITHUB_APP_URL.replace("/tree/", "/blob/")}/README.md#escenarios-de-ejemplo`;
+
 function formatLastPushDate(isoDate: string) {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return null;
@@ -2076,7 +2078,10 @@ function DrakeCalculatorView({
           </p>
           <p className="intro">
             Ajusta cada supuesto y explora cuántas civilizaciones podrían
-            comunicarse hoy en la Vía Láctea.
+            comunicarse hoy en la Vía Láctea.{" "}
+            <a href={SCENARIOS_README_URL} target="_blank" rel="noreferrer">
+              Prueba algunos escenarios interesantes.
+            </a>
           </p>
         </header>
 

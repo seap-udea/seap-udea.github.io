@@ -99,6 +99,16 @@ input {
   line-height: 1.55;
 }
 
+.intro a {
+  color: #b8c7cf;
+  text-decoration: none;
+}
+
+.intro a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
 .equation {
   margin: 18px 0 14px;
   padding: 12px 14px;
