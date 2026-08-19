@@ -3,7 +3,8 @@
 Aplicación web interactiva para explorar la [ecuación de Drake](https://es.wikipedia.org/wiki/Ecuaci%C3%B3n_de_Drake), estimar cuántas civilizaciones podrían estar comunicándose hoy en la Vía Láctea y visualizarlas sobre un mapa galáctico.
 
 **Autor:** [Jorge I. Zuluaga](https://jorgezuluaga.github.io)  
-**Demostración:** https://seap-udea.github.io/apps/drake-calculator/
+**Demostración:** [seap-udea.github.io/apps/drake-calculator/](https://seap-udea.github.io/apps/drake-calculator/)  
+**Novedades:** [WHATSNEW.md](./WHATSNEW.md)
 
 ---
 
@@ -87,7 +88,7 @@ La referencia técnica de todos los parámetros URL está en [Configuración por
 
 ### Escenarios de ejemplo
 
-Enlaces listos para abrir en la [demostración en línea](https://seap-udea.github.io/apps/drake-calculator/). **N** es el valor mostrado por la app (redondeo al entero más cercano en modo exacto).
+Enlaces listos para abrir en [seap-udea.github.io/apps/drake-calculator](https://seap-udea.github.io/apps/drake-calculator/). **N** es el valor mostrado por la app (redondeo al entero más cercano en modo exacto).
 
 #### Modos de entrada
 
@@ -259,6 +260,7 @@ apps/drake-calculator/
 │       ├── DrakeCalculator.tsx   # lógica principal, UI y estadísticas
 │       └── DualRangeSlider.tsx   # deslizador de rango doble
 ├── public/               # imagen galáctica, ATTRIBUTION.md
+├── WHATSNEW.md           # registro de cambios por versión
 ├── next.config.ts        # basePath /apps/drake-calculator
 ├── Dockerfile            # build standalone (DOCKER_BUILD=1)
 └── package.json
@@ -324,4 +326,4 @@ Mapa galáctico generado con [mw-plot](https://milkyway-plot.readthedocs.io/); c
 
 ## Licencia y contacto
 
-Proyecto académico/divulgativo asociado al grupo SEAP (Universidad de Antioquia). Para consultas sobre el contenido científico o el diseño de la herramienta, contactar al autor vía [jorgezuluaga.github.io](https://jorgezuluaga.github.io).
+Proyecto académico/divulgativo asociado al grupo [SEAP](https://seap-udea.github.io) (Universidad de Antioquia). Para consultas sobre el contenido científico o el diseño de la herramienta, contactar al autor vía [jorgezuluaga.github.io](https://jorgezuluaga.github.io).

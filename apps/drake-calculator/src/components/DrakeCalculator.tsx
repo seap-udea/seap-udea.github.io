@@ -1403,6 +1403,8 @@ const GITHUB_APP_URL =
 
 const SCENARIOS_README_URL = `${GITHUB_APP_URL.replace("/tree/", "/blob/")}/README.md#escenarios-de-ejemplo`;
 
+const WHATSNEW_URL = `${GITHUB_APP_URL.replace("/tree/", "/blob/")}/WHATSNEW.md`;
+
 function formatLastPushDate(isoDate: string) {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return null;
@@ -1504,6 +1506,14 @@ function AcademyFooter({ variant }: { variant: "panel" | "site-end" }) {
           rel="noreferrer"
         >
           Código y README en GitHub
+        </a>
+        <a
+          className="footer-repo-link"
+          href={WHATSNEW_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Novedades (WHATSNEW)
         </a>
       </div>
     </footer>
