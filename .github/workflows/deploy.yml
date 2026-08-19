@@ -47,6 +47,8 @@ jobs:
 
       - name: Build Drake Calculator app
         working-directory: apps/drake-calculator
+        env:
+          NEXT_PUBLIC_LAST_PUSH_DATE: ${{ github.event.head_commit.timestamp }}
         run: |
           npm ci
           npm run build

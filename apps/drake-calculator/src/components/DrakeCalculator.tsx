@@ -461,6 +461,30 @@ const DRAKE_HELP_GUIDE_SECTIONS = [
   },
 ] as const;
 
+const DRAKE_HELP_IA_DISCLOSURE = [
+  <>
+    Esta aplicación fue{" "}
+    <strong>
+      desarrollada con asistencia de agentes de inteligencia artificial
+    </strong>{" "}
+    (codificación, documentación, iteración de interfaz y corrección de errores).
+  </>,
+  <>
+    Sin embargo, el <strong>diseño conceptual</strong>, la{" "}
+    <strong>concepción de las opciones</strong> (modos Exacto/Rango/Distribución,
+    distribuciones espaciales Disco/Brazos/ZHG, tipos de distribución de
+    parámetros, estadísticas mostradas, panel de ayuda contextual), las{" "}
+    <strong>decisiones científicas y pedagógicas</strong> y la{" "}
+    <strong>interpretación de los resultados</strong> son responsabilidad del
+    autor, <strong>Jorge I. Zuluaga</strong>.
+  </>,
+  <>
+    Los agentes de IA actuaron como herramientas de implementación bajo dirección
+    humana; no sustituyen el criterio del autor sobre el modelo ni sobre la
+    experiencia de uso.
+  </>,
+] as const;
+
 type SidePanel = "stats" | "config" | "help" | null;
 
 type CivilizationPosition = {
@@ -1287,7 +1311,27 @@ function spatialDistributionSampleNote(mode: DistributionMode) {
   }
 }
 
+const GITHUB_APP_URL =
+  process.env.NEXT_PUBLIC_GITHUB_APP_URL ??
+  "https://github.com/seap-udea/seap-udea.github.io/tree/main/apps/drake-calculator";
+
+function formatLastPushDate(isoDate: string) {
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat("es-CO", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "America/Bogota",
+  }).format(date);
+}
+
 function AcademyFooter({ variant }: { variant: "panel" | "site-end" }) {
+  const lastPushLabel = formatLastPushDate(
+    process.env.NEXT_PUBLIC_LAST_PUSH_DATE ?? "",
+  );
+
   return (
     <footer className={`academy-footer academy-footer--${variant}`}>
       <Image
@@ -1305,7 +1349,20 @@ function AcademyFooter({ variant }: { variant: "panel" | "site-end" }) {
           en Cursor.
         </i>
       </p>
-      <div className="version">Versión {packageJson.version}</div>
+      <div className="footer-meta">
+        <div className="version">
+          Versión {packageJson.version}
+          {lastPushLabel ? <> · {lastPushLabel}</> : null}
+        </div>
+        <a
+          className="footer-repo-link"
+          href={GITHUB_APP_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Código y README en GitHub
+        </a>
+      </div>
     </footer>
   );
 }
@@ -2487,6 +2544,16 @@ export default function DrakeCalculator() {
                         );
                       })}
                     </div>
+
+                    <h4 className="help-guide-heading">
+                      Divulgación sobre inteligencia artificial (IA Disclosure)
+                    </h4>
+
+                    <article className="help-item help-item--disclosure">
+                      {DRAKE_HELP_IA_DISCLOSURE.map((paragraph, index) => (
+                        <p key={`ia-disclosure-${index}`}>{paragraph}</p>
+                      ))}
+                    </article>
                   </>
                 )}
               </div>

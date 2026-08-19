@@ -525,10 +525,26 @@ input {
   text-decoration: underline;
 }
 
+.footer-meta {
+  display: grid;
+  gap: 4px;
+}
+
 .version {
   color: #50616c;
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.58rem;
+}
+
+.footer-repo-link {
+  color: #71828d;
+  font-size: 0.58rem;
+  text-decoration: none;
+}
+
+.footer-repo-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 .galaxy-panel {
@@ -964,6 +980,11 @@ input {
 
 .help-list--guide {
   margin-top: 4px;
+}
+
+.help-item--disclosure {
+  padding-top: 0;
+  border-top: 0;
 }
 
 .help-item-list {
