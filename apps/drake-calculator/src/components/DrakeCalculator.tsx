@@ -1,8 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import packageJson from "../../package.json";
+import {
+  buildDrakeConfigUrl,
+  mergeDrakeConfigSnapshot,
+  parseDrakeConfigFromSearch,
+  type DrakeConfigSnapshot,
+} from "../lib/drakeConfigUrl";
 import { DualRangeSlider } from "./DualRangeSlider";
 
 type DrakeValues = {
@@ -224,7 +230,23 @@ const DRAKE_HELP_TERMS = [
   },
 ] as const;
 
+function buildDefaultConfigSnapshot(): DrakeConfigSnapshot {
+  return {
+    inputMode: "exact",
+    values: INITIAL_VALUES,
+    ranges: INITIAL_RANGES,
+    parameterDistributions: INITIAL_PARAMETER_DISTRIBUTIONS,
+    distributionMode: DEFAULT_SPATIAL_DISTRIBUTION,
+    distanceUnit: DEFAULT_DISTANCE_UNIT,
+    radiosphereYears: DEFAULT_RADIOSPHERE_YEARS,
+    distributionSeed: 2026,
+    showRadiosphere: true,
+    showGhzOverlay: false,
+  };
+}
+
 const MAX_VISIBLE_CIVILIZATIONS = 3000;
+const CIVILIZATION_HOVER_TOOLTIP_MAX = 250;
 const DEFAULT_RADIOSPHERE_YEARS = 100;
 const GALAXY_DISK_RADIUS_KPC = 21.1;
 const MILKY_WAY_SCALE_LENGTH_KPC = 3.5;
@@ -494,6 +516,21 @@ type CivilizationPosition = {
   opacity: number;
 };
 
+type CivilizationHoverStats = {
+  distanceToSunKpc: number;
+  distanceToCenterKpc: number;
+  nearestNeighborKpc: number | null;
+};
+
+type MapHoverStats = {
+  civilizations: CivilizationHoverStats[];
+  sun: CivilizationHoverStats;
+};
+
+type MapHoverTarget =
+  | { kind: "civilization"; index: number }
+  | { kind: "sun" };
+
 type DerivedStats = {
   meanSeparationKpc: number | null;
   meanSeparationLy: number | null;
@@ -731,6 +768,55 @@ function computeNearestNeighborFromSunKpc(
     const distance = Math.hypot(point.x - sun.x, point.y - sun.y);
     return Math.min(nearest, distance);
   }, Number.POSITIVE_INFINITY);
+}
+
+function computeMapHoverStats(positions: CivilizationPosition[]): MapHoverStats {
+  const civilizationPoints = positions.map((position) =>
+    svgToKpc(position.x, position.y),
+  );
+  const sun = svgToKpc(SUN_SVG.x, SUN_SVG.y);
+  const sunDistanceToCenterKpc = Math.hypot(sun.x, sun.y);
+
+  const civilizations = civilizationPoints.map((point, index) => {
+    const distanceToSunKpc = Math.hypot(point.x - sun.x, point.y - sun.y);
+    const distanceToCenterKpc = Math.hypot(point.x, point.y);
+
+    let nearestNeighborKpc = distanceToSunKpc;
+
+    for (let other = 0; other < civilizationPoints.length; other += 1) {
+      if (other === index) continue;
+      nearestNeighborKpc = Math.min(
+        nearestNeighborKpc,
+        Math.hypot(
+          point.x - civilizationPoints[other].x,
+          point.y - civilizationPoints[other].y,
+        ),
+      );
+    }
+
+    return {
+      distanceToSunKpc,
+      distanceToCenterKpc,
+      nearestNeighborKpc,
+    };
+  });
+
+  const sunNearestNeighborKpc =
+    civilizationPoints.length === 0
+      ? null
+      : civilizationPoints.reduce((nearest, point) => {
+          const distance = Math.hypot(point.x - sun.x, point.y - sun.y);
+          return Math.min(nearest, distance);
+        }, Number.POSITIVE_INFINITY);
+
+  return {
+    civilizations,
+    sun: {
+      distanceToSunKpc: 0,
+      distanceToCenterKpc: sunDistanceToCenterKpc,
+      nearestNeighborKpc: sunNearestNeighborKpc,
+    },
+  };
 }
 
 function computeDerivedStats(
@@ -1327,6 +1413,61 @@ function formatLastPushDate(isoDate: string) {
   }).format(date);
 }
 
+function SidePanelHeader({
+  title,
+  onClose,
+}: {
+  title: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="side-panel-header">
+      <h3>{title}</h3>
+      <button
+        type="button"
+        className="side-panel-close"
+        aria-label={`Cerrar ${title.toLowerCase()}`}
+        onClick={onClose}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+function CivilizationMapTooltip({
+  stats,
+  anchorX,
+  anchorY,
+  formatDistance,
+}: {
+  stats: CivilizationHoverStats;
+  anchorX: number;
+  anchorY: number;
+  formatDistance: (valueKpc: number | null) => string;
+}) {
+  return (
+    <div
+      className="civilization-tooltip"
+      style={{ left: `${anchorX / 10}%`, top: `${anchorY / 10}%` }}
+      role="tooltip"
+    >
+      <p>
+        <span>Al Sol</span>
+        {formatDistance(stats.distanceToSunKpc)}
+      </p>
+      <p>
+        <span>Vecino más cercano</span>
+        {formatDistance(stats.nearestNeighborKpc)}
+      </p>
+      <p>
+        <span>Al centro</span>
+        {formatDistance(stats.distanceToCenterKpc)}
+      </p>
+    </div>
+  );
+}
+
 function AcademyFooter({ variant }: { variant: "panel" | "site-end" }) {
   const lastPushLabel = formatLastPushDate(
     process.env.NEXT_PUBLIC_LAST_PUSH_DATE ?? "",
@@ -1576,30 +1717,68 @@ function ParameterLabelWithHelp({
   );
 }
 
-export default function DrakeCalculator() {
-  const [values, setValues] = useState<DrakeValues>(INITIAL_VALUES);
-  const [ranges, setRanges] = useState<DrakeRanges>(INITIAL_RANGES);
+function resolveConfigFromSearch(search: string): DrakeConfigSnapshot {
+  const defaults = buildDefaultConfigSnapshot();
+  if (!search) return defaults;
+  const partial = parseDrakeConfigFromSearch(search);
+  return partial ? mergeDrakeConfigSnapshot(defaults, partial) : defaults;
+}
+
+function subscribeToLocation(onStoreChange: () => void) {
+  window.addEventListener("popstate", onStoreChange);
+  return () => window.removeEventListener("popstate", onStoreChange);
+}
+
+function getLocationSearch() {
+  return window.location.search;
+}
+
+function getServerLocationSearch() {
+  return "";
+}
+
+function DrakeCalculatorView({
+  initialConfig,
+}: {
+  initialConfig: DrakeConfigSnapshot;
+}) {
+  const [values, setValues] = useState<DrakeValues>(initialConfig.values);
+  const [ranges, setRanges] = useState<DrakeRanges>(initialConfig.ranges);
   const [parameterDistributions, setParameterDistributions] =
-    useState<ParameterDistributions>(INITIAL_PARAMETER_DISTRIBUTIONS);
-  const [inputMode, setInputMode] = useState<InputMode>("exact");
-  const [distributionSeed, setDistributionSeed] = useState(2026);
+    useState<ParameterDistributions>(initialConfig.parameterDistributions);
+  const [inputMode, setInputMode] = useState<InputMode>(initialConfig.inputMode);
+  const [distributionSeed, setDistributionSeed] = useState(
+    initialConfig.distributionSeed,
+  );
   const [parameterSampleSeed, setParameterSampleSeed] = useState(4096);
   const [activeSidePanel, setActiveSidePanel] = useState<SidePanel>(null);
   const [focusedHelpTermId, setFocusedHelpTermId] = useState<string | null>(
     null,
   );
-  const [distributionMode, setDistributionMode] =
-    useState<DistributionMode>(DEFAULT_SPATIAL_DISTRIBUTION);
-  const [showRadiosphere, setShowRadiosphere] = useState(true);
-  const [showGhzOverlay, setShowGhzOverlay] = useState(false);
+  const [hoveredMapTarget, setHoveredMapTarget] = useState<MapHoverTarget | null>(
+    null,
+  );
+  const [distributionMode, setDistributionMode] = useState<DistributionMode>(
+    initialConfig.distributionMode,
+  );
+  const [showRadiosphere, setShowRadiosphere] = useState(
+    initialConfig.showRadiosphere,
+  );
+  const [showGhzOverlay, setShowGhzOverlay] = useState(
+    initialConfig.showGhzOverlay,
+  );
   const [radiosphereYears, setRadiosphereYears] = useState(
-    DEFAULT_RADIOSPHERE_YEARS,
+    initialConfig.radiosphereYears,
   );
   const [radiosphereInput, setRadiosphereInput] = useState(
-    String(DEFAULT_RADIOSPHERE_YEARS),
+    String(initialConfig.radiosphereYears),
   );
-  const [distanceUnit, setDistanceUnit] =
-    useState<DistanceUnit>(DEFAULT_DISTANCE_UNIT);
+  const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>(
+    initialConfig.distanceUnit,
+  );
+  const [copyLinkFeedback, setCopyLinkFeedback] = useState<string | null>(
+    null,
+  );
 
   const formatDistance = useCallback(
     (valueKpc: number | null) => formatDistanceFromKpc(valueKpc, distanceUnit),
@@ -1609,6 +1788,10 @@ export default function DrakeCalculator() {
   const toggleSidePanel = (panel: Exclude<SidePanel, null>) => {
     setActiveSidePanel((current) => (current === panel ? null : panel));
   };
+
+  const closeSidePanel = useCallback(() => {
+    setActiveSidePanel(null);
+  }, []);
 
   const openHelpTarget = useCallback((targetId: string) => {
     setFocusedHelpTermId(targetId);
@@ -1645,6 +1828,46 @@ export default function DrakeCalculator() {
     const timeout = window.setTimeout(() => setFocusedHelpTermId(null), 2400);
     return () => window.clearTimeout(timeout);
   }, [focusedHelpTermId]);
+
+  const buildCurrentConfigSnapshot = useCallback(
+    (): DrakeConfigSnapshot => ({
+      inputMode,
+      values,
+      ranges,
+      parameterDistributions,
+      distributionMode,
+      distanceUnit,
+      radiosphereYears,
+      distributionSeed,
+      showRadiosphere,
+      showGhzOverlay,
+    }),
+    [
+      inputMode,
+      values,
+      ranges,
+      parameterDistributions,
+      distributionMode,
+      distanceUnit,
+      radiosphereYears,
+      distributionSeed,
+      showRadiosphere,
+      showGhzOverlay,
+    ],
+  );
+
+  const handleCopyConfigLink = useCallback(async () => {
+    const url = buildDrakeConfigUrl(buildCurrentConfigSnapshot());
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyLinkFeedback("Enlace copiado");
+    } catch {
+      setCopyLinkFeedback("No se pudo copiar el enlace");
+    }
+
+    window.setTimeout(() => setCopyLinkFeedback(null), 2500);
+  }, [buildCurrentConfigSnapshot]);
 
   const activeValues = useMemo(() => {
     if (inputMode === "exact") return values;
@@ -1695,6 +1918,22 @@ export default function DrakeCalculator() {
       ),
     [visibleCount, distributionSeed, distributionMode],
   );
+
+  const civilizationHoverEnabled =
+    civilizationPositions.length <= CIVILIZATION_HOVER_TOOLTIP_MAX;
+
+  const mapHoverStats = useMemo(() => {
+    if (!civilizationHoverEnabled) return null;
+    return computeMapHoverStats(civilizationPositions);
+  }, [civilizationHoverEnabled, civilizationPositions]);
+
+  const activeHoveredMapTarget: MapHoverTarget | null =
+    civilizationHoverEnabled && hoveredMapTarget
+      ? hoveredMapTarget.kind === "sun" ||
+        hoveredMapTarget.index < civilizationPositions.length
+        ? hoveredMapTarget
+        : null
+      : null;
 
   const derivedStats = useMemo(
     () =>
@@ -1785,6 +2024,7 @@ export default function DrakeCalculator() {
   };
 
   const handleNewDistribution = () => {
+    setHoveredMapTarget(null);
     setDistributionSeed((seed) => seed + 1);
     if (inputMode === "range" || inputMode === "distribution") {
       setParameterSampleSeed((seed) => seed + 1);
@@ -2038,6 +2278,21 @@ export default function DrakeCalculator() {
           })}
         </section>
 
+        <div className="config-share">
+          <button
+            type="button"
+            className="config-share-link"
+            onClick={() => void handleCopyConfigLink()}
+          >
+            Copiar enlace de configuración
+          </button>
+          {copyLinkFeedback && (
+            <p className="config-share-feedback" role="status">
+              {copyLinkFeedback}
+            </p>
+          )}
+        </div>
+
         <AcademyFooter variant="panel" />
       </aside>
 
@@ -2054,14 +2309,15 @@ export default function DrakeCalculator() {
 
         <div className="galaxy-stage">
           <div className="galaxy-halo" />
-          <svg
-            className="galaxy-map"
-            viewBox="0 0 1000 1000"
-            role="img"
-            aria-label={`Mapa estimado de ${formatCivilizations(
-              civilizationEstimate,
-            )} civilizaciones en la Vía Láctea`}
-          >
+          <div className="galaxy-map-wrap">
+            <svg
+              className="galaxy-map"
+              viewBox="0 0 1000 1000"
+              role="img"
+              aria-label={`Mapa estimado de ${formatCivilizations(
+                civilizationEstimate,
+              )} civilizaciones en la Vía Láctea`}
+            >
             <defs>
               <clipPath id="galaxy-clip">
                 <circle cx="500" cy="500" r="474" />
@@ -2125,14 +2381,29 @@ export default function DrakeCalculator() {
 
             <g clipPath="url(#galaxy-clip)" filter="url(#civilization-glow)">
               {civilizationPositions.map((position, index) => (
-                <circle
-                  key={`${distributionSeed}-${index}`}
-                  cx={position.x}
-                  cy={position.y}
-                  r={position.radius}
-                  fill="#6fffe9"
-                  opacity={position.opacity}
-                />
+                <g key={`${distributionSeed}-${index}`}>
+                  <circle
+                    cx={position.x}
+                    cy={position.y}
+                    r={position.radius}
+                    fill="#6fffe9"
+                    opacity={position.opacity}
+                    pointerEvents={civilizationHoverEnabled ? "none" : "auto"}
+                  />
+                  {civilizationHoverEnabled && (
+                    <circle
+                      className="civilization-hit-target"
+                      cx={position.x}
+                      cy={position.y}
+                      r={12}
+                      fill="transparent"
+                      onMouseEnter={() =>
+                        setHoveredMapTarget({ kind: "civilization", index })
+                      }
+                      onMouseLeave={() => setHoveredMapTarget(null)}
+                    />
+                  )}
+                </g>
               ))}
             </g>
 
@@ -2162,7 +2433,39 @@ export default function DrakeCalculator() {
               <line x1="14" y1="0" x2="31" y2="0" />
               <text x="27" y="-25">El Sol</text>
             </g>
+            {civilizationHoverEnabled && (
+              <circle
+                className="sun-hit-target"
+                cx={SUN_SVG.x}
+                cy={SUN_SVG.y}
+                r={22}
+                fill="transparent"
+                onMouseEnter={() => setHoveredMapTarget({ kind: "sun" })}
+                onMouseLeave={() => setHoveredMapTarget(null)}
+              />
+            )}
           </svg>
+            {activeHoveredMapTarget && mapHoverStats && (
+              <CivilizationMapTooltip
+                stats={
+                  activeHoveredMapTarget.kind === "sun"
+                    ? mapHoverStats.sun
+                    : mapHoverStats.civilizations[activeHoveredMapTarget.index]
+                }
+                anchorX={
+                  activeHoveredMapTarget.kind === "sun"
+                    ? SUN_SVG.x
+                    : civilizationPositions[activeHoveredMapTarget.index].x
+                }
+                anchorY={
+                  activeHoveredMapTarget.kind === "sun"
+                    ? SUN_SVG.y
+                    : civilizationPositions[activeHoveredMapTarget.index].y
+                }
+                formatDistance={formatDistance}
+              />
+            )}
+          </div>
 
           <div className="map-caption" aria-label="Notas del mapa">
             <EstimateHeader
@@ -2194,7 +2497,10 @@ export default function DrakeCalculator() {
               >
                 {activeSidePanel === "stats" && (
                   <>
-                    <h3>Estadísticas derivadas</h3>
+                    <SidePanelHeader
+                      title="Estadísticas derivadas"
+                      onClose={closeSidePanel}
+                    />
                     <p className="side-index-intro">
                       {inputMode === "range"
                         ? "Rangos estimados a partir de los límites mínimo y máximo de cada parámetro."
@@ -2330,7 +2636,10 @@ export default function DrakeCalculator() {
 
                 {activeSidePanel === "config" && (
                   <>
-                    <h3>Configuración</h3>
+                    <SidePanelHeader
+                      title="Configuración"
+                      onClose={closeSidePanel}
+                    />
                     <p className="side-index-intro">
                       Opciones de visualización y distribución de las
                       civilizaciones en el mapa.
@@ -2449,7 +2758,7 @@ export default function DrakeCalculator() {
 
                 {activeSidePanel === "help" && (
                   <>
-                    <h3>Ayuda</h3>
+                    <SidePanelHeader title="Ayuda" onClose={closeSidePanel} />
                     <p className="side-index-intro">
                       La{" "}
                       <a
@@ -2618,5 +2927,24 @@ export default function DrakeCalculator() {
 
       <AcademyFooter variant="site-end" />
     </div>
+  );
+}
+
+export default function DrakeCalculator() {
+  const locationSearch = useSyncExternalStore(
+    subscribeToLocation,
+    getLocationSearch,
+    getServerLocationSearch,
+  );
+  const initialConfig = useMemo(
+    () => resolveConfigFromSearch(locationSearch),
+    [locationSearch],
+  );
+
+  return (
+    <DrakeCalculatorView
+      key={locationSearch || "default"}
+      initialConfig={initialConfig}
+    />
   );
 }

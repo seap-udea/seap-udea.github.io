@@ -15,6 +15,7 @@ La calculadora permite ajustar cada factor de la ecuación de Drake mediante des
 - Calcula estadísticas espaciales: distancia media entre civilizaciones, vecino más cercano al Sol, radio de la radiosfera y probabilidad de que alguna civilización quede dentro de ese radio.
 - Ofrece tres modos de distribución espacial en el disco: **Disco**, **Brazos** y **ZHG** (zona de habitabilidad galáctica).
 - Incluye un panel de **Ayuda** contextual con enlaces a Wikipedia y explicaciones del modelo.
+- Permite **compartir o guardar** una configuración concreta mediante un enlace (parámetros en la URL).
 
 Todo el cálculo se ejecuta en el navegador; no hay servidor ni base de datos en tiempo de ejecución.
 
@@ -74,6 +75,46 @@ En la interfaz, **L** se controla en escala logarítmica (el deslizador mueve lo
 - **Estadísticas** — Distancias, radiosfera, probabilidades (con intervalos en modo Distribución).
 - **Configuración** — Opciones anteriores.
 - **Ayuda** — Definición de términos y conceptos del modelo (unidades, ZHG, distribuciones, disco galáctico). Los botones **?** junto a parámetros y controles abren la sección correspondiente.
+
+### Compartir configuración
+
+Al final del panel de parámetros aparece el enlace **Copiar enlace de configuración**. Al pulsarlo se copia al portapapeles la URL de la página con el estado actual codificado en los parámetros de consulta (modo de entrada, valores Drake, distribución espacial, unidades, radiosfera, semilla del mapa, capas visibles, etc.).
+
+- **Compartir:** envía el enlace a otra persona o pégalo en material de clase; al abrirlo, la calculadora carga esa configuración automáticamente.
+- **Guardar:** marca la URL en el navegador o en un documento para volver más tarde al mismo escenario.
+
+La referencia técnica de todos los parámetros URL está en [Configuración por URL (GET)](#configuración-por-url-get) (sección para desarrolladores).
+
+### Escenarios de ejemplo
+
+Enlaces listos para abrir en la [demostración en línea](https://seap-udea.github.io/apps/drake-calculator/). **N** es el valor mostrado por la app (redondeo al entero más cercano en modo exacto).
+
+#### Modos de entrada
+
+| Escenario | Modo | N (aprox.) | Descripción |
+|-----------|------|------------|-------------|
+| [Drake 1961](https://seap-udea.github.io/apps/drake-calculator/?mode=exact&starRate=1&planetFraction=0.35&habitablePlanets=3&lifeFraction=1&intelligenceFraction=1&communicationFraction=0.15&lifetimeYears=100&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=1) | Exacto | 16 | Valores originales de la conferencia de Green Bank (*L* = 100 años). |
+| [Incertidumbre histórica](https://seap-udea.github.io/apps/drake-calculator/?mode=range&starRateMin=1&starRateMax=1&planetFractionMin=0.2&planetFractionMax=0.5&habitablePlanetsMin=1&habitablePlanetsMax=5&lifeFractionMin=1&lifeFractionMax=1&intelligenceFractionMin=1&intelligenceFractionMax=1&communicationFractionMin=0.1&communicationFractionMax=0.2&lifetimeYearsMin=1000&lifetimeYearsMax=100000000&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=1) | Rango | 20 – 50 M | Rangos amplios de Drake; *L* entre 10³ y 10⁸ años domina el intervalo de **N**. |
+| [Monte Carlo pedagógico](https://seap-udea.github.io/apps/drake-calculator/?mode=distribution&starRateMin=1&starRateMax=1&starRateDist=uniform&planetFractionMin=0.2&planetFractionMax=0.8&planetFractionDist=gaussian&habitablePlanetsMin=0.5&habitablePlanetsMax=5&habitablePlanetsDist=triangular&lifeFractionMin=1&lifeFractionMax=1&lifeFractionDist=uniform&intelligenceFractionMin=1&intelligenceFractionMax=1&intelligenceFractionDist=uniform&communicationFractionMin=0.05&communicationFractionMax=0.3&communicationFractionDist=gaussian&lifetimeYearsMin=100&lifetimeYearsMax=1000000&lifetimeYearsDist=triangular&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=1) | Distribución | variable | Mismos órdenes de magnitud que Drake 1961, pero con distribuciones gaussiana/triangular en *fₚ*, *nₑ*, *f𝒸* y *L*; muestra promedio e intervalo del 95 %. |
+
+#### Astrofísica reciente (η⊕)
+
+Tras Kepler, muchos autores fijan **fₚ ≈ 1** (casi todas las estrellas con planetas) y usan **η⊕** — la fracción de estrellas con planetas rocosos en la zona habitable — en lugar del producto *fₚ nₑ*. En esta app, con **fₚ = 1**, se identifica **nₑ ≈ η⊕**.
+
+| Escenario | Modo | N (aprox.) | Parámetros clave |
+|-----------|------|------------|------------------|
+| [Kepler / η⊕ (punto)](https://seap-udea.github.io/apps/drake-calculator/?mode=exact&starRate=1.5&planetFraction=1&habitablePlanets=0.24&lifeFraction=0.1&intelligenceFraction=0.01&communicationFraction=0.1&lifetimeYears=10000&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=1) | Exacto | ≈ 0 | **R★** = 1,5 /año; **fₚ** = 1; **nₑ** = **η⊕** ≈ 0,24 ([Petigura et al. 2013](https://www.pnas.org/doi/10.1073/pnas.1219909110)); factores biológicos conservadores (*fₗ*, *fᵢ*, *f𝒸* bajos); *L* = 10⁴ años. |
+| [Kepler / η⊕ (incertidumbre)](https://seap-udea.github.io/apps/drake-calculator/?mode=range&starRateMin=1&starRateMax=3&planetFractionMin=0.9&planetFractionMax=1&habitablePlanetsMin=0.1&habitablePlanetsMax=0.5&lifeFractionMin=0.01&lifeFractionMax=1&intelligenceFractionMin=0.001&intelligenceFractionMax=0.1&communicationFractionMin=0.01&communicationFractionMax=0.5&lifetimeYearsMin=100&lifetimeYearsMax=1000000&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=1) | Rango | amplio | Incertidumbre en **R★**, **η⊕** ∈ [0,1; 0,5], factores biológicos y *L*; útil para ver cómo domina la bioincertidumbre. |
+
+#### Escenarios extremos y pedagógicos
+
+| Escenario | Modo | N (aprox.) | Descripción |
+|-----------|------|------------|-------------|
+| [Una sola civilización](https://seap-udea.github.io/apps/drake-calculator/?mode=exact&starRate=1&planetFraction=0.1&habitablePlanets=0.5&lifeFraction=1&intelligenceFraction=1&communicationFraction=0.2&lifetimeYears=100&spatial=disk&unit=al&radio=100&seed=2026&showRadio=1&showGhz=0) | Exacto | 1 | *fₚ* y *nₑ* bajos, *f𝒸* = 0,2; mapa en modo **Disco** con un solo punto. |
+| [Una civilización (solo *f𝒸*)](https://seap-udea.github.io/apps/drake-calculator/?mode=exact&starRate=1&planetFraction=0.35&habitablePlanets=3&lifeFraction=1&intelligenceFraction=1&communicationFraction=0.01&lifetimeYears=100&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=1) | Exacto | 1 | Resto en valores Drake 1961; solo **f𝒸** ≈ 1 % para que **N** ≈ 1. |
+| [Tierra rara](https://seap-udea.github.io/apps/drake-calculator/?mode=exact&starRate=1&planetFraction=0.5&habitablePlanets=0.1&lifeFraction=0.01&intelligenceFraction=0.001&communicationFraction=0.01&lifetimeYears=1000&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=1) | Exacto | 0 | Hipótesis pesimista: vida e inteligencia muy raras; galaxia efectivamente vacía. |
+| [Optimista SETI](https://seap-udea.github.io/apps/drake-calculator/?mode=exact&starRate=3&planetFraction=1&habitablePlanets=0.5&lifeFraction=0.5&intelligenceFraction=0.5&communicationFraction=0.5&lifetimeYears=100000&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=1) | Exacto | 18 750 | Muchas civilizaciones longevas; mapa saturado (máx. 3 000 puntos visibles). |
+| [Galaxia muy poblada (brazos)](https://seap-udea.github.io/apps/drake-calculator/?mode=exact&starRate=2&planetFraction=1&habitablePlanets=2&lifeFraction=1&intelligenceFraction=0.5&communicationFraction=0.3&lifetimeYears=10000&spatial=arms&unit=al&radio=100&seed=42&showRadio=1&showGhz=1) | Exacto | 6 000 | **N** alto con distribución espacial en **Brazos** espirales (semilla fija 42). |
 
 ---
 
@@ -212,6 +253,8 @@ Los agentes de IA actuaron como herramientas de implementación bajo dirección 
 apps/drake-calculator/
 ├── src/
 │   ├── app/              # layout, globals.css, metadatos
+│   ├── lib/
+│   │   └── drakeConfigUrl.ts     # serialización de configuración en la URL
 │   └── components/
 │       ├── DrakeCalculator.tsx   # lógica principal, UI y estadísticas
 │       └── DualRangeSlider.tsx   # deslizador de rango doble
@@ -220,6 +263,31 @@ apps/drake-calculator/
 ├── Dockerfile            # build standalone (DOCKER_BUILD=1)
 └── package.json
 ```
+
+### Configuración por URL (GET)
+
+La calculadora no tiene backend: la «API» de configuración son los **parámetros de consulta** de la propia página. Al abrir un enlace con esos parámetros, la app carga automáticamente los valores; el botón **Copiar enlace de configuración** (al final del panel de parámetros) genera la URL con el estado actual.
+
+| Parámetro | Valores | Descripción |
+|-----------|---------|-------------|
+| `mode` | `exact`, `range`, `distribution` | Modo de entrada |
+| `starRate`, `planetFraction`, … | número | En modo exacto |
+| `{param}Min`, `{param}Max` | número | En modo rango o distribución |
+| `{param}Dist` | `uniform`, `gaussian`, `triangular` | Solo en modo distribución |
+| `lifetimeYears` | número | Vida media *L* (años); en rango/distribución usar `lifetimeYearsMin` / `lifetimeYearsMax` |
+| `spatial` | `arms`, `disk`, `ghz` | Distribución espacial en el mapa |
+| `unit` | `kpc`, `al`, `kal` | Unidad de distancia |
+| `radio` | número | Años de la radiosfera |
+| `seed` | entero | Semilla del mapa |
+| `showRadio`, `showGhz` | `0` o `1` | Capas del mapa |
+
+Ejemplo (modo exacto con valores Drake 1961 y mapa en ZHG):
+
+```
+/apps/drake-calculator/?mode=exact&starRate=1&planetFraction=0.35&habitablePlanets=3&lifeFraction=1&intelligenceFraction=1&communicationFraction=0.15&lifetimeYears=100&spatial=ghz&unit=al&radio=100&seed=2026&showRadio=1&showGhz=0
+```
+
+Implementación: `src/lib/drakeConfigUrl.ts` (`parseDrakeConfigFromSearch`, `buildDrakeConfigUrl`).
 
 ### Comandos
 
