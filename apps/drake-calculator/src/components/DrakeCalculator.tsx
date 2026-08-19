@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import packageJson from "../../package.json";
 import { DualRangeSlider } from "./DualRangeSlider";
@@ -167,48 +167,56 @@ const PARAMETERS: ParameterDefinition[] = [
 
 const DRAKE_HELP_TERMS = [
   {
+    id: "result",
     symbol: "N",
     name: "Civilizaciones comunicantes",
     description:
       "Número estimado de civilizaciones en la Vía Láctea cuyas señales podríamos detectar hoy. Es el resultado de multiplicar todos los factores de la ecuación.",
   },
   {
+    id: "starRate",
     symbol: "R★",
     name: "Tasa de formación estelar",
     description:
       "Promedio de estrellas que se forman cada año en la galaxia. A mayor R★, hay más ‘semillas’ donde podrían surgir civilizaciones.",
   },
   {
+    id: "planetFraction",
     symbol: "fₚ",
     name: "Fracción de estrellas con planetas",
     description:
       "Fracción de estrellas que poseen al menos un planeta. No basta con que existan estrellas: muchas deben tener sistemas planetarios.",
   },
   {
+    id: "habitablePlanets",
     symbol: "nₑ",
     name: "Mundos habitables",
     description:
       "Número promedio de planetas con condiciones adecuadas para la vida por cada sistema planetario.",
   },
   {
+    id: "lifeFraction",
     symbol: "fₗ",
     name: "Probabilidad de abiogénesis",
     description:
       "Fracción de esos mundos habitables donde la vida llega a originarse en algún momento de su historia.",
   },
   {
+    id: "intelligenceFraction",
     symbol: "fᵢ",
     name: "Probabilidad de inteligencia",
     description:
       "Fracción de mundos con vida en los que aparece una civilización o inteligencia capaz de tecnología.",
   },
   {
+    id: "communicationFraction",
     symbol: "f𝒸",
     name: "Probabilidad de tecnología de comunicaciones",
     description:
       "Fracción de civilizaciones inteligentes que desarrollan señales detectables a distancia, como emisiones de radio.",
   },
   {
+    id: "lifetimeExponent",
     symbol: "L",
     name: "Tiempo comunicándose",
     description:
@@ -235,6 +243,224 @@ const DEFAULT_DISTANCE_UNIT = "al";
 type DistanceUnit = "kpc" | "kal" | "al";
 type DistributionMode = "arms" | "disk" | "ghz";
 const DEFAULT_SPATIAL_DISTRIBUTION: DistributionMode = "ghz";
+
+const HELP_AU_PER_LIGHT_YEAR = 63241;
+const HELP_LIGHT_YEARS_PER_KPC = Math.round(LIGHT_YEARS_PER_KPC);
+const HELP_AU_PER_KPC = 206_265_000;
+
+const DRAKE_HELP_GUIDE_SECTIONS = [
+  {
+    id: "distance-units",
+    title: "Unidades de distancia",
+    paragraphs: [
+      <>
+        Las estadísticas pueden mostrarse en{" "}
+        <strong>kpc</strong> (kiloparsec), <strong>al</strong> (años-luz) o{" "}
+        <strong>kal</strong> (kilo-años-luz, 1000 al). La radiósfera se define
+        en años; a la velocidad de la luz equivale al mismo número de años-luz.
+      </>,
+      <>
+        <strong>al</strong> (año-luz): distancia que recorre la luz en el
+        vacío durante un año juliano (~9,46 × 10¹² km). Equivale aproximadamente
+        a {HELP_AU_PER_LIGHT_YEAR.toLocaleString("es-CO")}{" "}
+        <abbr title="unidades astronómicas">UA</abbr> (unidades astronómicas).{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/A%C3%B1o_luz"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Más sobre el año-luz
+        </a>
+        .
+      </>,
+      <>
+        <strong>kpc</strong> (kiloparsec): 1000{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/Parsec"
+          target="_blank"
+          rel="noreferrer"
+        >
+          parsecs
+        </a>
+        . Un parsec es la distancia a la que 1 UA subtende 1 arcosegundo; por
+        definición 1 pc = 206 265 UA, luego 1 kpc ≈{" "}
+        {HELP_AU_PER_KPC.toLocaleString("es-CO")} UA. En esta calculadora, 1 kpc
+        ≈ {HELP_LIGHT_YEARS_PER_KPC.toLocaleString("es-CO")} al.
+      </>,
+      <>
+        <strong>kal</strong>: kilo-año-luz (10³ al). Es útil para distancias
+        galácticas sin manejar números tan grandes como en años-luz sueltos. 1
+        kal = 1000 al ≈ 0,31 kpc en las conversiones usadas aquí.
+      </>,
+      <>
+        La{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/Unidad_astron%C3%B3mica"
+          target="_blank"
+          rel="noreferrer"
+        >
+          unidad astronómica (UA)
+        </a>{" "}
+        es la distancia media Tierra–Sol (~149,6 millones de km) y sirve como
+        referencia para comparar escalas planetarias y estelares.
+      </>,
+    ],
+  },
+  {
+    id: "ghz",
+    title: "Zona de habitabilidad galáctica (ZHG)",
+    paragraphs: [
+      <>
+        La{" "}
+        <a
+          href="https://en.wikipedia.org/wiki/Galactic_habitable_zone"
+          target="_blank"
+          rel="noreferrer"
+        >
+          zona de habitabilidad galáctica
+        </a>{" "}
+        es el anillo de la Vía Láctea donde las condiciones promedio favorecen
+        la aparición de vida compleja: lejos del bulbo y del centro (radiación,
+        inestabilidades) y no demasiado cerca del borde (poca metalicidad,
+        estrellas viejas).
+      </>,
+      <>
+        En esta app el modo <strong>ZHG</strong> coloca preferentemente las
+        civilizaciones en un anillo de {GHZ_INNER_RADIUS_KPC}–
+        {GHZ_OUTER_RADIUS_KPC} kpc desde el centro galáctico. El Sol (~8,5 kpc)
+        cae dentro de esa franja. Fuera del anillo solo se conserva el{" "}
+        {Math.round(GHZ_OUTSIDE_RETENTION * 100)} % de los candidatos; hacia el
+        centro la retención baja linealmente del {Math.round(GHZ_OUTSIDE_RETENTION * 100)} % en el
+        borde interior (7 kpc) al 0 % en el centro.
+      </>,
+      <>
+        No debe confundirse con la{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/Zona_habitable"
+          target="_blank"
+          rel="noreferrer"
+        >
+          zona habitable de un sistema planetario
+        </a>
+        : la ZHG es una región a escala galáctica, no la distancia a una
+        estrella donde puede existir agua líquida.
+      </>,
+    ],
+  },
+  {
+    id: "parameter-distributions",
+    title: "Distribuciones de parámetros",
+    paragraphs: [
+      <>
+        En el modo <strong>Distribución</strong> cada factor de la ecuación se
+        muestrea al azar dentro del intervalo del deslizador. Puedes elegir tres
+        formas:
+      </>,
+    ],
+    list: [
+      <>
+        <strong>Uniforme</strong>: cualquier valor en el intervalo es
+        equiprobable.{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/Distribuci%C3%B3n_uniforme_continua"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Distribución uniforme continua
+        </a>
+        .
+      </>,
+      <>
+        <strong>Triangular</strong>: el valor más probable es el centro del
+        intervalo; la densidad decrece linealmente hacia los extremos.{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/Distribuci%C3%B3n_triangular"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Distribución triangular
+        </a>
+        .
+      </>,
+      <>
+        <strong>Gaussiana (normal)</strong>: la media coincide con el centro del
+        intervalo y 1 σ es la mitad del ancho; la curva se trunca en los
+        límites del deslizador.{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/Distribuci%C3%B3n_normal"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Distribución normal
+        </a>
+        .
+      </>,
+    ],
+    afterListId: "confidence-interval",
+    afterList: (
+      <>
+        El número de civilizaciones <strong>N</strong> en modo Distribución se
+        resume con promedio e intervalo del 95 % mediante simulación Monte
+        Carlo.{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/M%C3%A9todo_de_Monte_Carlo"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Método de Monte Carlo
+        </a>
+        .
+      </>
+    ),
+  },
+  {
+    id: "stellar-disk",
+    title: "Distribución estelar en el disco",
+    paragraphs: [
+      <>
+        Las posiciones en el mapa no son uniformes en área: siguen un disco
+        exponencial de la forma Σ(<i>R</i>) ∝ <i>R</i> e<sup>−<i>R</i>/<i>h</i></sup>,
+        con escala <i>h</i> ≈ {MILKY_WAY_SCALE_LENGTH_KPC} kpc, como en modelos
+        habituales del{" "}
+        <a
+          href="https://es.wikipedia.org/wiki/Disco_gal%C3%A1ctico"
+          target="_blank"
+          rel="noreferrer"
+        >
+          disco galáctico
+        </a>
+        . Hay más estrellas hacia el interior que hacia el borde exterior.
+      </>,
+      <>
+        Para cada civilización se elige un radio <i>R</i> mediante muestreo por
+        rechazo acorde a esa ley (hasta {GALAXY_DISK_RADIUS_KPC} kpc) y un
+        ángulo aleatorio uniforme en [0, 2π), lo que reparte puntos en anillos
+        con densidad radial realista.
+      </>,
+      <>
+        En el modo <strong>Brazos</strong>, dentro del bulbo (~
+        {MILKY_WAY_BULGE_RADIUS_KPC} kpc) se mantiene solo la densidad radial; fuera
+        del bulbo los puntos se agrupan en cuatro brazos espirales logarítmicos
+        superpuestos a ese perfil. El modo <strong>Disco</strong> ignora los
+        brazos y usa únicamente el perfil radial en todo el disco.
+      </>,
+      <>
+        La imagen de fondo es una vista cenital de la Vía Láctea (
+        <a
+          href="https://milkyway-plot.readthedocs.io/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          mw-plot
+        </a>
+        , NASA/JPL-Caltech/R. Hurt). Las estadísticas de separación y
+        probabilidad en la radiosfera se calculan según el modo espacial
+        elegido (disco, ZHG o brazos).
+      </>,
+    ],
+  },
+] as const;
+
 type SidePanel = "stats" | "config" | "help" | null;
 
 type CivilizationPosition = {
@@ -1124,6 +1350,7 @@ type EstimateHeaderProps = {
   distributionAnalysis: DistributionAnalysis | null;
   civilizationEstimate: number;
   estimateLabel: string;
+  onOpenConfidenceIntervalHelp: () => void;
 };
 
 function EstimateHeader({
@@ -1133,6 +1360,7 @@ function EstimateHeader({
   distributionAnalysis,
   civilizationEstimate,
   estimateLabel,
+  onOpenConfidenceIntervalHelp,
 }: EstimateHeaderProps) {
   return (
     <header
@@ -1154,7 +1382,22 @@ function EstimateHeader({
         {inputMode === "range"
           ? "rango posible en la galaxia; el mapa usa una muestra aleatoria uniforme"
           : inputMode === "distribution" && distributionAnalysis
-            ? `intervalo del 95 %: ${formatCivilizations(distributionAnalysis.civilization.lower95)} – ${formatCivilizations(distributionAnalysis.civilization.upper95)}; el mapa muestra una muestra aleatoria`
+            ? (
+                <>
+                  <ConfidenceIntervalLabel
+                    onOpenHelp={onOpenConfidenceIntervalHelp}
+                  />
+                  :{" "}
+                  {formatCivilizations(
+                    distributionAnalysis.civilization.lower95,
+                  )}{" "}
+                  –{" "}
+                  {formatCivilizations(
+                    distributionAnalysis.civilization.upper95,
+                  )}
+                  ; el mapa muestra una muestra aleatoria
+                </>
+              )
             : inputMode === "distribution"
               ? "muestra aleatoria según las distribuciones elegidas"
               : "en nuestra galaxia, según tus supuestos"}
@@ -1167,10 +1410,12 @@ function MapSummary({
   inputMode,
   civilizationEstimate,
   distributionAnalysis,
+  onOpenConfidenceIntervalHelp,
 }: {
   inputMode: InputMode;
   civilizationEstimate: number;
   distributionAnalysis: DistributionAnalysis | null;
+  onOpenConfidenceIntervalHelp: () => void;
 }) {
   if (inputMode === "exact") {
     return null;
@@ -1189,10 +1434,14 @@ function MapSummary({
         <p>
           Promedio:{" "}
           {formatCivilizations(distributionAnalysis.civilization.mean)}{" "}
-          civilizaciones (intervalo del 95 %:{" "}
+          civilizaciones (
+          <ConfidenceIntervalLabel
+            onOpenHelp={onOpenConfidenceIntervalHelp}
+          />
+          :{" "}
           {formatCivilizations(distributionAnalysis.civilization.lower95)} –{" "}
-          {formatCivilizations(distributionAnalysis.civilization.upper95)}).
-          Muestra del mapa:{" "}
+          {formatCivilizations(distributionAnalysis.civilization.upper95)}
+          ). Muestra del mapa:{" "}
           {formatCivilizations(civilizationEstimate)} civilizaciones.
         </p>
       )}
@@ -1207,6 +1456,69 @@ function MapSummary({
   );
 }
 
+function helpTermElementId(id: string) {
+  return `help-term-${id}`;
+}
+
+function helpGuideElementId(id: string) {
+  return `help-guide-${id}`;
+}
+
+function InlineHelpButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="inline-help-button"
+      aria-label={`Ayuda: ${label}`}
+      onClick={onClick}
+    >
+      ?
+    </button>
+  );
+}
+
+function ConfidenceIntervalLabel({
+  onOpenHelp,
+}: {
+  onOpenHelp: () => void;
+}) {
+  return (
+    <span className="confidence-interval-label">
+      intervalo del 95 %
+      <InlineHelpButton
+        label="intervalo del 95 %"
+        onClick={onOpenHelp}
+      />
+    </span>
+  );
+}
+
+function ParameterLabelWithHelp({
+  label,
+  parameterKey,
+  onOpenHelp,
+}: {
+  label: string;
+  parameterKey: ParameterKey;
+  onOpenHelp: (parameterKey: ParameterKey) => void;
+}) {
+  return (
+    <span className="parameter-name">
+      {label}
+      <InlineHelpButton
+        label={label}
+        onClick={() => onOpenHelp(parameterKey)}
+      />
+    </span>
+  );
+}
+
 export default function DrakeCalculator() {
   const [values, setValues] = useState<DrakeValues>(INITIAL_VALUES);
   const [ranges, setRanges] = useState<DrakeRanges>(INITIAL_RANGES);
@@ -1216,6 +1528,9 @@ export default function DrakeCalculator() {
   const [distributionSeed, setDistributionSeed] = useState(2026);
   const [parameterSampleSeed, setParameterSampleSeed] = useState(4096);
   const [activeSidePanel, setActiveSidePanel] = useState<SidePanel>(null);
+  const [focusedHelpTermId, setFocusedHelpTermId] = useState<string | null>(
+    null,
+  );
   const [distributionMode, setDistributionMode] =
     useState<DistributionMode>(DEFAULT_SPATIAL_DISTRIBUTION);
   const [showRadiosphere, setShowRadiosphere] = useState(true);
@@ -1237,6 +1552,42 @@ export default function DrakeCalculator() {
   const toggleSidePanel = (panel: Exclude<SidePanel, null>) => {
     setActiveSidePanel((current) => (current === panel ? null : panel));
   };
+
+  const openHelpTarget = useCallback((targetId: string) => {
+    setFocusedHelpTermId(targetId);
+    setActiveSidePanel("help");
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.getElementById(targetId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      });
+    });
+  }, []);
+
+  const openParameterHelp = useCallback(
+    (parameterKey: ParameterKey) =>
+      openHelpTarget(helpTermElementId(parameterKey)),
+    [openHelpTarget],
+  );
+
+  const openHelpGuide = useCallback(
+    (guideId: string) => openHelpTarget(helpGuideElementId(guideId)),
+    [openHelpTarget],
+  );
+
+  const openConfidenceIntervalHelp = useCallback(
+    () => openHelpTarget(helpGuideElementId("confidence-interval")),
+    [openHelpTarget],
+  );
+
+  useEffect(() => {
+    if (!focusedHelpTermId) return;
+    const timeout = window.setTimeout(() => setFocusedHelpTermId(null), 2400);
+    return () => window.clearTimeout(timeout);
+  }, [focusedHelpTermId]);
 
   const activeValues = useMemo(() => {
     if (inputMode === "exact") return values;
@@ -1416,6 +1767,16 @@ export default function DrakeCalculator() {
         <header className="brand-header">
           <p className="eyebrow">ASTROBIOLOGÍA INTERACTIVA</p>
           <h1>La calculadora de Drake</h1>
+          <p className="brand-byline">
+            Por{" "}
+            <a
+              href="https://jorgezuluaga.github.io"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Jorge I. Zuluaga
+            </a>
+          </p>
           <p className="intro">
             Ajusta cada supuesto y explora cuántas civilizaciones podrían
             comunicarse hoy en la Vía Láctea.
@@ -1438,18 +1799,25 @@ export default function DrakeCalculator() {
                 ["distribution", "Distribución"],
               ] as const
             ).map(([mode, label]) => (
-              <button
-                key={mode}
-                type="button"
-                role="radio"
-                aria-checked={inputMode === mode}
-                className={`input-mode-option${
-                  inputMode === mode ? " input-mode-option--active" : ""
-                }`}
-                onClick={() => handleInputModeChange(mode)}
-              >
-                {label}
-              </button>
+              <div className="input-mode-option-wrap" key={mode}>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={inputMode === mode}
+                  className={`input-mode-option${
+                    inputMode === mode ? " input-mode-option--active" : ""
+                  }`}
+                  onClick={() => handleInputModeChange(mode)}
+                >
+                  {label}
+                </button>
+                {mode === "distribution" && (
+                  <InlineHelpButton
+                    label="Modo Distribución"
+                    onClick={() => openHelpGuide("parameter-distributions")}
+                  />
+                )}
+              </div>
             ))}
           </div>
           <p className="input-mode-note">
@@ -1475,7 +1843,11 @@ export default function DrakeCalculator() {
                 <div className="parameter" key={parameter.key}>
                   <div className="parameter-heading">
                     <span className="parameter-symbol">{parameter.symbol}</span>
-                    <span className="parameter-name">{parameter.label}</span>
+                    <ParameterLabelWithHelp
+                      label={parameter.label}
+                      parameterKey={parameter.key}
+                      onOpenHelp={openParameterHelp}
+                    />
                     <output htmlFor={`${parameter.key}-exact`}>
                       {parameter.format(value)}
                     </output>
@@ -1511,7 +1883,11 @@ export default function DrakeCalculator() {
                 <div className="parameter parameter--range" key={parameter.key}>
                   <div className="parameter-heading">
                     <span className="parameter-symbol">{parameter.symbol}</span>
-                    <span className="parameter-name">{parameter.label}</span>
+                    <ParameterLabelWithHelp
+                      label={parameter.label}
+                      parameterKey={parameter.key}
+                      onOpenHelp={openParameterHelp}
+                    />
                     <output htmlFor={`${parameter.key}-range`}>
                       {parameter.format(range.min)} – {parameter.format(range.max)}
                     </output>
@@ -1543,7 +1919,11 @@ export default function DrakeCalculator() {
               >
                 <div className="parameter-heading">
                   <span className="parameter-symbol">{parameter.symbol}</span>
-                  <span className="parameter-name">{parameter.label}</span>
+                  <ParameterLabelWithHelp
+                    label={parameter.label}
+                    parameterKey={parameter.key}
+                    onOpenHelp={openParameterHelp}
+                  />
                   <output htmlFor={`${parameter.key}-distribution`}>
                     {parameter.format(range.min)} – {parameter.format(range.max)}
                   </output>
@@ -1612,6 +1992,7 @@ export default function DrakeCalculator() {
           distributionAnalysis={distributionAnalysis}
           civilizationEstimate={civilizationEstimate}
           estimateLabel={estimateLabel}
+          onOpenConfidenceIntervalHelp={openConfidenceIntervalHelp}
         />
 
         <div className="galaxy-stage">
@@ -1734,11 +2115,13 @@ export default function DrakeCalculator() {
               distributionAnalysis={distributionAnalysis}
               civilizationEstimate={civilizationEstimate}
               estimateLabel={estimateLabel}
+              onOpenConfidenceIntervalHelp={openConfidenceIntervalHelp}
             />
             <MapSummary
               inputMode={inputMode}
               civilizationEstimate={civilizationEstimate}
               distributionAnalysis={distributionAnalysis}
+              onOpenConfidenceIntervalHelp={openConfidenceIntervalHelp}
             />
             <MapAttributionNotes
               roundedEstimate={roundedEstimate}
@@ -1781,7 +2164,10 @@ export default function DrakeCalculator() {
                         </dd>
                         {distributionAnalysis?.meanSeparationKpc && (
                           <dd className="stats-subvalue">
-                            Intervalo del 95 %:{" "}
+                            <ConfidenceIntervalLabel
+                              onOpenHelp={openConfidenceIntervalHelp}
+                            />
+                            :{" "}
                             {formatDistributionInterval(
                               distributionAnalysis.meanSeparationKpc,
                               (value) => formatDistance(value),
@@ -1840,7 +2226,10 @@ export default function DrakeCalculator() {
                         </dd>
                         {distributionAnalysis && (
                           <dd className="stats-subvalue">
-                            Intervalo del 95 %:{" "}
+                            <ConfidenceIntervalLabel
+                              onOpenHelp={openConfidenceIntervalHelp}
+                            />
+                            :{" "}
                             {formatDistributionInterval(
                               distributionAnalysis.probabilityWithinRadiosphere,
                               formatPercent,
@@ -1891,8 +2280,14 @@ export default function DrakeCalculator() {
                     </p>
 
                     <div className="config-list">
-                      <label className="config-field" htmlFor="distribution-mode">
-                        <span>Distribución</span>
+                      <div className="config-field">
+                        <div className="config-field-label-row">
+                          <label htmlFor="distribution-mode">Distribución</label>
+                          <InlineHelpButton
+                            label="Distribución espacial en el mapa"
+                            onClick={() => openHelpGuide("stellar-disk")}
+                          />
+                        </div>
                         <select
                           id="distribution-mode"
                           value={distributionMode}
@@ -1906,7 +2301,7 @@ export default function DrakeCalculator() {
                           <option value="disk">Disco</option>
                           <option value="ghz">ZHG</option>
                         </select>
-                      </label>
+                      </div>
                       <p className="config-note">
                         {distributionMode === "arms"
                           ? "Dentro del bulbo se usa densidad radial; fuera, los brazos espirales hasta el borde del disco."
@@ -1999,8 +2394,16 @@ export default function DrakeCalculator() {
                   <>
                     <h3>Ayuda</h3>
                     <p className="side-index-intro">
-                      La ecuación de Drake estima cuántas civilizaciones podrían
-                      estar comunicándose en la galaxia:
+                      La{" "}
+                      <a
+                        href="https://es.wikipedia.org/wiki/Ecuaci%C3%B3n_de_Drake"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        ecuación de Drake
+                      </a>{" "}
+                      estima cuántas civilizaciones podrían estar comunicándose
+                      en la galaxia:
                     </p>
                     <p className="help-equation" aria-label="Ecuación de Drake">
                       <i>N</i> = <i>R</i><sub>★</sub> · <i>f</i><sub>p</sub> ·{" "}
@@ -2009,15 +2412,80 @@ export default function DrakeCalculator() {
                     </p>
 
                     <div className="help-list">
-                      {DRAKE_HELP_TERMS.map((term) => (
-                        <article className="help-item" key={term.symbol}>
-                          <h4>
-                            <span className="help-symbol">{term.symbol}</span>
-                            {term.name}
-                          </h4>
-                          <p>{term.description}</p>
-                        </article>
-                      ))}
+                      {DRAKE_HELP_TERMS.map((term) => {
+                        const termElementId = helpTermElementId(term.id);
+                        return (
+                          <article
+                            className={`help-item${
+                              focusedHelpTermId === termElementId
+                                ? " help-item--focused"
+                                : ""
+                            }`}
+                            id={termElementId}
+                            key={term.id}
+                          >
+                            <h4>
+                              <span className="help-symbol">{term.symbol}</span>
+                              {term.name}
+                            </h4>
+                            <p>{term.description}</p>
+                          </article>
+                        );
+                      })}
+                    </div>
+
+                    <h4 className="help-guide-heading">Conceptos del modelo</h4>
+
+                    <div className="help-list help-list--guide">
+                      {DRAKE_HELP_GUIDE_SECTIONS.map((section) => {
+                        const sectionElementId = helpGuideElementId(section.id);
+                        const afterListElementId =
+                          "afterListId" in section && section.afterListId
+                            ? helpGuideElementId(section.afterListId)
+                            : null;
+                        const isFocused =
+                          focusedHelpTermId === sectionElementId ||
+                          focusedHelpTermId === afterListElementId;
+
+                        return (
+                          <article
+                            className={`help-item${
+                              isFocused ? " help-item--focused" : ""
+                            }`}
+                            id={sectionElementId}
+                            key={section.id}
+                          >
+                            <h4>{section.title}</h4>
+                            {"paragraphs" in section &&
+                              section.paragraphs.map((paragraph, index) => (
+                                <p key={`${section.id}-p-${index}`}>
+                                  {paragraph}
+                                </p>
+                              ))}
+                            {"list" in section && section.list && (
+                              <ul className="help-item-list">
+                                {section.list.map((item, index) => (
+                                  <li key={`${section.id}-l-${index}`}>
+                                    {item}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {"afterList" in section && section.afterList && (
+                              <p
+                                id={afterListElementId ?? undefined}
+                                className={
+                                  focusedHelpTermId === afterListElementId
+                                    ? "help-item-part--focused"
+                                    : undefined
+                                }
+                              >
+                                {section.afterList}
+                              </p>
+                            )}
+                          </article>
+                        );
+                      })}
                     </div>
                   </>
                 )}
@@ -2072,6 +2540,7 @@ export default function DrakeCalculator() {
             inputMode={inputMode}
             civilizationEstimate={civilizationEstimate}
             distributionAnalysis={distributionAnalysis}
+            onOpenConfidenceIntervalHelp={openConfidenceIntervalHelp}
           />
           <MapAttributionNotes
             roundedEstimate={roundedEstimate}

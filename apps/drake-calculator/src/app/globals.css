@@ -74,9 +74,26 @@ input {
   letter-spacing: -0.04em;
 }
 
+.brand-byline {
+  margin: 8px 0 0;
+  color: #71828d;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.brand-byline a {
+  color: #b8c7cf;
+  text-decoration: none;
+}
+
+.brand-byline a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
 .intro {
   max-width: 390px;
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   color: var(--muted);
   font-size: 0.86rem;
   line-height: 1.55;
@@ -118,6 +135,12 @@ input {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.input-mode-option-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .input-mode-option {
@@ -186,12 +209,60 @@ input {
 }
 
 .parameter-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   overflow: hidden;
   color: #e7eef1;
   font-size: 0.79rem;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.parameter-help-button,
+.inline-help-button {
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+  border: 1px solid rgba(111, 255, 233, 0.35);
+  border-radius: 999px;
+  background: rgba(111, 255, 233, 0.08);
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.parameter-help-button:hover,
+.parameter-help-button:focus-visible,
+.inline-help-button:hover,
+.inline-help-button:focus-visible {
+  border-color: rgba(111, 255, 233, 0.65);
+  background: rgba(111, 255, 233, 0.16);
+  outline: none;
+}
+
+.confidence-interval-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.config-field-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.help-item-part--focused {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid rgba(111, 255, 233, 0.35);
+  border-radius: 6px;
+  background: rgba(111, 255, 233, 0.08);
 }
 
 .parameter output {
@@ -229,12 +300,19 @@ input {
 
 .parameter-distribution-field select {
   width: 100%;
-  padding: 6px 8px;
+  padding: 8px 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background-color: #101c26;
   color: #eef4f6;
-  font-size: 0.68rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color-scheme: dark;
+}
+
+.parameter-distribution-field select option {
+  color: #eef4f6;
+  background-color: #101c26;
 }
 
 .parameter-distribution-field select:focus-visible {
@@ -516,8 +594,8 @@ input {
 .galaxy-map {
   position: relative;
   z-index: 1;
-  width: 80%;
-  max-width: 80%;
+  width: 100%;
+  max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1;
   overflow: visible;
@@ -691,6 +769,17 @@ input {
   line-height: 1.45;
 }
 
+.side-index-intro a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: rgba(111, 255, 233, 0.35);
+  text-underline-offset: 2px;
+}
+
+.side-index-intro a:hover {
+  text-decoration-color: var(--accent);
+}
+
 .config-list {
   display: grid;
   gap: 12px;
@@ -702,6 +791,7 @@ input {
 }
 
 .config-field span,
+.config-field label,
 .config-toggle span {
   color: #9cacb7;
   font-size: 0.62rem;
@@ -714,13 +804,20 @@ input {
   padding: 8px 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background-color: #101c26;
   color: #eef4f6;
-  font-size: 0.72rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
 }
 
 .config-field select {
   appearance: auto;
+  color-scheme: dark;
+}
+
+.config-field select option {
+  color: #eef4f6;
+  background-color: #101c26;
 }
 
 .config-field select:focus-visible,
@@ -796,6 +893,16 @@ input {
 .help-item {
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  scroll-margin-top: 12px;
+  scroll-margin-bottom: 12px;
+}
+
+.help-item--focused {
+  margin-inline: -8px;
+  padding: 10px 8px 8px;
+  border: 1px solid rgba(111, 255, 233, 0.35);
+  border-radius: 8px;
+  background: rgba(111, 255, 233, 0.06);
 }
 
 .help-item:first-child {
@@ -828,6 +935,51 @@ input {
   color: #71828d;
   font-size: 0.62rem;
   line-height: 1.45;
+}
+
+.help-item p + p {
+  margin-top: 8px;
+}
+
+.help-item a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: rgba(111, 255, 233, 0.35);
+  text-underline-offset: 2px;
+}
+
+.help-item a:hover {
+  text-decoration-color: var(--accent);
+}
+
+.help-guide-heading {
+  margin: 18px 0 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(111, 255, 233, 0.15);
+  color: #e7eef1;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.help-list--guide {
+  margin-top: 4px;
+}
+
+.help-item-list {
+  margin: 8px 0 0;
+  padding-left: 1.1em;
+  color: #71828d;
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.help-item-list li + li {
+  margin-top: 6px;
+}
+
+.help-item-list li::marker {
+  color: rgba(111, 255, 233, 0.55);
 }
 
 .stats-list {
@@ -956,6 +1108,19 @@ input {
     gap: 18px 24px;
   }
 
+  .config-field select,
+  .parameter-distribution-field select {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
+
+  .config-field span,
+  .config-field label,
+  .parameter-distribution-field span {
+    font-size: 0.75rem;
+  }
+
   .academy-footer--panel {
     display: none;
   }
@@ -996,7 +1161,7 @@ input {
     display: grid;
     gap: 10px;
     width: 100%;
-    max-width: min(80vw, 420px);
+    max-width: 100%;
     margin-top: 4px;
     color: #566771;
     font-size: 0.62rem;
@@ -1050,8 +1215,8 @@ input {
   }
 
   .galaxy-map {
-    width: min(80vw, 420px);
-    max-width: min(80vw, 420px);
+    width: 100%;
+    max-width: 100%;
   }
 
   .map-legend {
@@ -1118,8 +1283,8 @@ input {
   }
 
   .galaxy-map {
-    width: min(88vw, 380px);
-    max-width: min(88vw, 380px);
+    width: 100%;
+    max-width: 100%;
   }
 
   .map-legend {
