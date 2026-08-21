@@ -128,7 +128,7 @@ status:
 		echo "No server listening on port $(PORT)."; \
 	fi
 
-cleanall: stop
+cleanall: _dev_cleanall stop
 	@echo "▶  Cleaning local build artifacts…"
 	@rm -rf $(SITE)
 	@rm -rf .cache/books
@@ -147,3 +147,5 @@ cleanall: stop
 	@find . -name .DS_Store -type f -delete 2>/dev/null || true
 	@echo "✓  Removed $(SITE)/, app node_modules/.next/out, server logs"
 	@echo "   (context/ and source files were left untouched)"
+# --- dev/cleanall (auto) ---
+include .dev_common.mk
