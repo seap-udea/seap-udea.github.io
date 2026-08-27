@@ -32,6 +32,7 @@ jobs:
             apps/lighting-black-holes/package-lock.json
             apps/cloud_academy/package-lock.json
             apps/drake-calculator/package-lock.json
+            apps/star-trek/package-lock.json
 
       - name: Build Lighting Black Holes app
         working-directory: apps/lighting-black-holes
@@ -47,6 +48,14 @@ jobs:
 
       - name: Build Drake Calculator app
         working-directory: apps/drake-calculator
+        env:
+          NEXT_PUBLIC_LAST_PUSH_DATE: ${{ github.event.head_commit.timestamp }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Star Trek app
+        working-directory: apps/star-trek
         env:
           NEXT_PUBLIC_LAST_PUSH_DATE: ${{ github.event.head_commit.timestamp }}
         run: |
@@ -92,6 +101,7 @@ jobs:
           cp -r apps/lighting-black-holes/out _site/apps/lighting-black-holes
           cp -r apps/cloud_academy/out _site/apps/cloud_academy
           cp -r apps/drake-calculator/out _site/apps/drake-calculator
+          cp -r apps/star-trek/out _site/apps/star-trek
 
           # Books: prefer vendored ./books/, else cache/.cache (clone only on miss)
           ./bin/sync_books.sh _site

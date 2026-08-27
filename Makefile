@@ -34,6 +34,8 @@ build-apps:
 	@cd apps/cloud_academy && npm ci --legacy-peer-deps && npm run build
 	@echo "▶  Building Drake Calculator…"
 	@cd apps/drake-calculator && npm ci && npm run build
+	@echo "▶  Building Star Trek…"
+	@cd apps/star-trek && npm ci && npm run build
 	@echo "✓  Apps built"
 
 sync-site:
@@ -44,6 +46,7 @@ sync-site:
 	test -f apps/lighting-black-holes/out/index.html || missing=1; \
 	test -f apps/cloud_academy/out/index.html || missing=1; \
 	test -f apps/drake-calculator/out/index.html || missing=1; \
+	test -f apps/star-trek/out/index.html || missing=1; \
 	if [ "$$missing" = 1 ]; then $(MAKE) build-apps; fi
 	@rm -rf $(SITE)
 	@mkdir -p $(SITE)/apps
@@ -59,12 +62,14 @@ sync-site:
 	@cp -r apps/lighting-black-holes/out $(SITE)/apps/lighting-black-holes
 	@cp -r apps/cloud_academy/out $(SITE)/apps/cloud_academy
 	@cp -r apps/drake-calculator/out $(SITE)/apps/drake-calculator
+	@cp -r apps/star-trek/out $(SITE)/apps/star-trek
 	@$(MAKE) sync-books
 	@touch $(SITE)/.nojekyll
 	@echo "✓  Site ready in $(SITE)/"
 	@echo "   Apps: http://$(HOST):$(PORT)/apps/lighting-black-holes/"
 	@echo "         http://$(HOST):$(PORT)/apps/cloud_academy/"
 	@echo "         http://$(HOST):$(PORT)/apps/drake-calculator/"
+	@echo "         http://$(HOST):$(PORT)/apps/star-trek/"
 	@echo "   Book:  http://$(HOST):$(PORT)/books/Relatividad-Zuluaga/"
 	@echo "   Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"
 	@echo "   Stats:   http://$(HOST):$(PORT)/stats.html"
@@ -88,6 +93,7 @@ start: sync-site
 		echo "  App:  http://$(HOST):$(PORT)/apps/lighting-black-holes/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/cloud_academy/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/drake-calculator/"; \
+		echo "  App:  http://$(HOST):$(PORT)/apps/star-trek/"; \
 		echo "  Book:  http://$(HOST):$(PORT)/books/Relatividad-Zuluaga/"; \
 		echo "  Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"; \
 		echo "  Stats:   http://$(HOST):$(PORT)/stats.html"; \
