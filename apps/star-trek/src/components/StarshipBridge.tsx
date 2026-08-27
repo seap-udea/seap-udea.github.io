@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import packageJson from "../../package.json";
 import Starfield from "./Starfield";
 import NumberField from "./NumberField";
 import { FlightProfileChart, SpacetimeChart, type ChartAxis } from "./FlightCharts";
 import {
   computeFlight,
+  formatDecimal,
   formatDistance,
   formatHudDistance,
   formatHudGamma,
@@ -17,10 +18,14 @@ import {
   formatYears,
   humanizeYears,
   sampleFlightAt,
+  signedAccelGToCoverRemaining,
+  brakeAccelGToStop,
   G_LIGHT,
   G_M_S2,
   type FlightLeg,
   type FlightPlan,
+  type FlightResult,
+  type FlightSample,
   type LegResult,
   type StopMode,
 } from "../lib/relativity";
@@ -46,12 +51,11 @@ const PLAYBACK_SECONDS = 18;
 
 const PLAYBACK_RATES = [0.5, 1, 2, 4];
 
-const ACCEL_CHIPS = [
-  { label: "−1 g", value: -1 },
-  { label: "−1/6 g", value: -DEFAULT_ACCEL_G },
-  { label: "1/6 g", value: DEFAULT_ACCEL_G },
-  { label: "1 g", value: 1 },
-];
+const ACCEL_RANGES = [
+  { label: "−2 a 2", min: -2, max: 2 },
+  { label: "−10 a 10", min: -10, max: 10 },
+  { label: "−100 a 100", min: -100, max: 100 },
+] as const;
 
 const STOP_MODES: StopMode[] = [
   "remaining",
@@ -61,16 +65,117 @@ const STOP_MODES: StopMode[] = [
   "earthTime",
 ];
 
+const MONTHS_ES_SHORT = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sept",
+  "oct",
+  "nov",
+  "dic",
+] as const;
+
+/** Bogotá es UTC−5 todo el año; se evita Intl porque Node y el navegador
+ *  no coinciden en la abreviatura del mes ("ago" vs "ago."). */
 function formatLastPushDate(isoDate: string) {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return null;
 
-  return new Intl.DateTimeFormat("es-CO", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "America/Bogota",
-  }).format(date);
+  const bogota = new Date(date.getTime() - 5 * 60 * 60 * 1000);
+  const day = bogota.getUTCDate();
+  const month = MONTHS_ES_SHORT[bogota.getUTCMonth()];
+  const year = bogota.getUTCFullYear();
+  return `${day} ${month} ${year}`;
+}
+
+/** Umbral relativo: por debajo, el plan se considera corto del destino. */
+function shortfallEps(targetDistanceLy: number) {
+  return Math.max(1e-6, 1e-6 * targetDistanceLy);
+}
+
+function isShortOfDestination(flight: FlightResult) {
+  return flight.distanceGapLy < -shortfallEps(flight.targetDistanceLy);
+}
+
+/** Magnitud de la última aceleración de impulso; si no hay, el valor por defecto. */
+function lastBurnAbsG(legs: FlightLeg[]) {
+  for (let i = legs.length - 1; i >= 0; i -= 1) {
+    const leg = legs[i];
+    if (leg.kind === "burn" && Math.abs(leg.accelG) > 1e-9) {
+      return Math.abs(leg.accelG);
+    }
+  }
+  return DEFAULT_ACCEL_G;
+}
+
+/** Estado desde el que se puede añadir (o sustituir) un frenado a destino. */
+function prepareBrake(
+  flight: FlightResult,
+  plan: FlightPlan,
+): {
+  popRemaining: boolean;
+  remainingLy: number;
+  speedC: number;
+  preferredAbsG: number;
+} | null {
+  const eps = shortfallEps(flight.targetDistanceLy);
+  const lastIndex = plan.legs.length - 1;
+  const last = plan.legs[lastIndex];
+  const lastResult = flight.legs[lastIndex];
+  const preferredAbsG = lastBurnAbsG(plan.legs);
+
+  if (flight.failed) {
+    if (flight.legs.length !== plan.legs.length) return null;
+    if (last?.stopMode !== "remaining" || lastResult?.status !== "failed") {
+      return null;
+    }
+    return {
+      popRemaining: true,
+      remainingLy: -flight.distanceGapLy,
+      speedC: flight.totals.vArrival,
+      preferredAbsG:
+        last.kind === "burn" && Math.abs(last.accelG) > 1e-9
+          ? Math.abs(last.accelG)
+          : preferredAbsG,
+    };
+  }
+
+  const landed =
+    Math.abs(flight.distanceGapLy) <= eps &&
+    Math.abs(flight.totals.vArrival) <= 0.01;
+  if (landed) return null;
+
+  // Un "lo que falte" que termina en sobrevuelo se sustituye por el frenado.
+  if (
+    last?.stopMode === "remaining" &&
+    lastResult &&
+    lastResult.status !== "failed" &&
+    Math.abs(lastResult.vEnd) > 0.01
+  ) {
+    return {
+      popRemaining: true,
+      remainingLy: flight.targetDistanceLy - lastResult.startX,
+      speedC: lastResult.vStart,
+      preferredAbsG:
+        last.kind === "burn" && Math.abs(last.accelG) > 1e-9
+          ? Math.abs(last.accelG)
+          : preferredAbsG,
+    };
+  }
+
+  if (flight.distanceGapLy >= -eps) return null;
+
+  return {
+    popRemaining: false,
+    remainingLy: -flight.distanceGapLy,
+    speedC: flight.totals.vArrival,
+    preferredAbsG,
+  };
 }
 
 function AcademyFooter() {
@@ -100,22 +205,24 @@ function AcademyFooter() {
           Versión {packageJson.version}
           {lastPushLabel ? <> · {lastPushLabel}</> : null}
         </div>
-        <a
-          className="footer-repo-link"
-          href={GITHUB_APP_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Código y README en GitHub
-        </a>
-        <a
-          className="footer-repo-link"
-          href={WHATSNEW_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Novedades (WHATSNEW)
-        </a>
+        <div className="footer-links">
+          <a
+            className="footer-repo-link"
+            href={GITHUB_APP_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Código y README en GitHub
+          </a>
+          <a
+            className="footer-repo-link"
+            href={WHATSNEW_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Novedades (WHATSNEW)
+          </a>
+        </div>
       </div>
     </footer>
   );
@@ -126,15 +233,15 @@ export default function StarshipBridge() {
   const [activePreset, setActivePreset] = useState<string | null>(PRESETS[0].id);
   const [chartTab, setChartTab] = useState<"profile" | "spacetime">("profile");
   const [chartAxis, setChartAxis] = useState<ChartAxis>("ship");
-  const [progress, setProgress] = useState(1);
+  const [progress, setProgress] = useState(0.5);
   const [playing, setPlaying] = useState(false);
   const [rate, setRate] = useState(1);
-  const [skyAnimated, setSkyAnimated] = useState(false);
+  const [skyAnimated, setSkyAnimated] = useState(true);
   const [shareState, setShareState] = useState<"idle" | "copied" | "error">(
     "idle",
   );
 
-  const progressRef = useRef(1);
+  const progressRef = useRef(0.5);
 
   const setProgressValue = useCallback((value: number) => {
     progressRef.current = value;
@@ -143,17 +250,19 @@ export default function StarshipBridge() {
 
   /**
    * Al cambiar el plan la reproducción salta al final: el tablero muestra de
-   * inmediato el estado de llegada, que es lo que el capitán quiere ver.
+   * inmediato el estado de llegada, que es lo que el comandante quiere ver.
+   * El cielo sigue animado: la llegada no lo apaga.
    */
   const rewindToArrival = useCallback(() => {
     setPlaying(false);
     setProgressValue(1);
-    setSkyAnimated(false);
   }, [setProgressValue]);
 
   // El plan compartido vive en la URL, un sistema externo que solo puede leerse
   // ya montado el componente sin romper la hidratación del export estático.
-  useEffect(() => {
+  // useLayoutEffect corre antes del pintado, para no mostrar un instante el
+  // plan por defecto (0,2 g a Próxima) encima del enlace compartido.
+  useLayoutEffect(() => {
     const readSharedPlan = () => {
       const shared = decodePlan(window.location.search);
       if (!shared) return;
@@ -187,9 +296,6 @@ export default function StarshipBridge() {
       setProgress(next);
       if (next >= 1) {
         setPlaying(false);
-        // Llegada a destino: motores apagados y el cielo queda quieto para que
-        // el capitán pueda leer el tablero sin el campo estelar en movimiento.
-        setSkyAnimated(false);
         return;
       }
       raf = window.requestAnimationFrame(step);
@@ -244,6 +350,79 @@ export default function StarshipBridge() {
     });
   }, [updatePlan]);
 
+  const appendCompletingLeg = useCallback(
+    (kind: "coast" | "burn") => {
+      if (!isShortOfDestination(flight)) return;
+      if (kind === "coast" && flight.totals.vArrival <= 1e-9) return;
+
+      const lastIndex = plan.legs.length - 1;
+      const trailingRemainingFailed =
+        plan.legs[lastIndex]?.stopMode === "remaining" &&
+        flight.legs[lastIndex]?.status === "failed";
+      if (flight.failed && !trailingRemainingFailed) return;
+
+      updatePlan((previous) => {
+        const legs = [...previous.legs];
+        const last = legs[legs.length - 1];
+        const lastResult = flight.legs[legs.length - 1];
+        // Un "lo que falte" que falló no recorrió nada: se sustituye.
+        if (last?.stopMode === "remaining" && lastResult?.status === "failed") {
+          legs.pop();
+        }
+        const remainingLy = -flight.distanceGapLy;
+        legs.push(
+          kind === "coast"
+            ? makeLeg({
+                kind: "coast",
+                inheritSpeed: true,
+                stopMode: "remaining",
+              })
+            : makeLeg({
+                kind: "burn",
+                accelG: signedAccelGToCoverRemaining(
+                  flight.totals.vArrival,
+                  remainingLy,
+                  lastBurnAbsG(legs),
+                ),
+                stopMode: "remaining",
+              }),
+        );
+        return { ...previous, legs };
+      });
+    },
+    [flight, plan.legs, updatePlan],
+  );
+
+  const appendBrakeLeg = useCallback(() => {
+    const prep = prepareBrake(flight, plan);
+    if (!prep) return;
+
+    updatePlan((previous) => {
+      const legs = [...previous.legs];
+      if (prep.popRemaining) legs.pop();
+
+      const brakeG = brakeAccelGToStop(prep.speedC, prep.remainingLy);
+      if (brakeG !== null) {
+        legs.push(makeLeg({ accelG: brakeG, stopMode: "remaining" }));
+        return { ...previous, legs };
+      }
+
+      // En reposo un solo frenado no avanza: impulso hasta la mitad de lo
+      // que falta y frenado simétrico el resto.
+      if (!(prep.remainingLy > 0)) return previous;
+      const g = prep.preferredAbsG;
+      legs.push(
+        makeLeg({
+          accelG: g,
+          stopMode: "distance",
+          stopValue: prep.remainingLy / 2,
+        }),
+      );
+      legs.push(makeLeg({ accelG: -g, stopMode: "remaining" }));
+      return { ...previous, legs };
+    });
+  }, [flight, plan, updatePlan]);
+
   const removeLeg = useCallback(
     (id: string) => {
       updatePlan((previous) => {
@@ -286,7 +465,9 @@ export default function StarshipBridge() {
   );
 
   const share = useCallback(async () => {
-    const url = `${window.location.origin}${window.location.pathname}?${encodePlan(plan)}`;
+    const query = encodePlan(plan);
+    const url = `${window.location.origin}${window.location.pathname}?${query}`;
+    window.history.replaceState(null, "", `${window.location.pathname}?${query}`);
     try {
       await navigator.clipboard.writeText(url);
       setShareState("copied");
@@ -301,6 +482,42 @@ export default function StarshipBridge() {
       Math.abs(destination.distanceLy - plan.targetDistanceLy) < 1e-6,
   );
 
+  const lastLegIndex = plan.legs.length - 1;
+  const trailingRemainingFailed =
+    plan.legs[lastLegIndex]?.stopMode === "remaining" &&
+    flight.legs[lastLegIndex]?.status === "failed";
+  const canFillShortfall =
+    isShortOfDestination(flight) &&
+    (!flight.failed || trailingRemainingFailed);
+  const canAdjustCruise =
+    canFillShortfall && flight.totals.vArrival > 1e-9;
+  const canAdjustImpulse = canFillShortfall;
+  const brakePrep = prepareBrake(flight, plan);
+  const canAdjustBrake = brakePrep !== null;
+
+  const cruiseAdjustTitle = canAdjustCruise
+    ? "Añade un tramo de crucero que cubra lo que falte hasta el destino."
+    : flight.failed && !trailingRemainingFailed
+      ? "El plan se interrumpió: revisa el tramo marcado en rojo."
+      : !isShortOfDestination(flight)
+        ? "El plan ya alcanza el destino."
+        : "La nave está en reposo o retrocediendo: el crucero no avanza hacia el destino.";
+
+  const impulseAdjustTitle = canAdjustImpulse
+    ? "Añade un tramo de impulso que cubra lo que falte hasta el destino."
+    : flight.failed && !trailingRemainingFailed
+      ? "El plan se interrumpió: revisa el tramo marcado en rojo."
+      : "El plan ya alcanza el destino.";
+
+  const brakeAdjustTitle = canAdjustBrake
+    ? "Añade un tramo de frenado para llegar al destino en reposo."
+    : flight.failed && !trailingRemainingFailed
+      ? "El plan se interrumpió: revisa el tramo marcado en rojo."
+      : Math.abs(flight.totals.vArrival) <= 0.01 &&
+          Math.abs(flight.distanceGapLy) <= shortfallEps(flight.targetDistanceLy)
+        ? "El plan ya llega en reposo."
+        : "No se puede frenar hasta el destino con los tramos actuales.";
+
   const profileMarker = chartAxis === "ship" ? current.tau : current.t;
 
   return (
@@ -310,23 +527,36 @@ export default function StarshipBridge() {
 
       <div className="bridge-inner">
         <header className="bridge-header">
-          <p className="eyebrow">Cinemática relativista interactiva</p>
-          <h1>Viaje a las estrellas</h1>
-          <p className="byline">
-            Por{" "}
-            <a
-              href="https://jorgezuluaga.github.io"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Jorge I. Zuluaga
-            </a>
-          </p>
-          <p className="intro">
-            Diseña el plan de vuelo de una nave que acelera con aceleración
-            propia constante, y descubre por qué el tiempo del capitán y el de
-            quienes se quedaron en casa dejan de coincidir.
-          </p>
+          <div className="title-grid">
+            <Image
+              className="title-ship"
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/daedalus.png`}
+              alt="Nave interestelar tipo Daedalus"
+              width={240}
+              height={180}
+              priority
+            />
+            <div className="title-copy">
+              <h1>
+                <i>Star trek</i>
+              </h1>
+              <p className="byline">
+                Por{" "}
+                <a
+                  href="https://jorgezuluaga.github.io"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Jorge I. Zuluaga
+                </a>
+              </p>
+            </div>
+            <p className="intro">
+              Diseña el plan de vuelo de una nave que acelera con aceleración
+              propia constante, y descubre por qué el tiempo de comandante y el
+              de quienes se quedaron en casa dejan de coincidir.
+            </p>
+          </div>
         </header>
 
         <Canopy
@@ -356,7 +586,7 @@ export default function StarshipBridge() {
           <section className="console console--plan" aria-label="Plan de vuelo">
             <h2 className="console-title">
               <span>Plan de vuelo</span>
-              <small>entrada del capitán</small>
+              <small>entrada comandante</small>
             </h2>
 
             <div className="panel">
@@ -435,6 +665,26 @@ export default function StarshipBridge() {
                   se ejecutan en orden, de arriba abajo
                 </span>
               </h3>
+              <div className="plan-actions plan-actions--header">
+                <button
+                  type="button"
+                  className="button button--ghost"
+                  onClick={() => applyPreset(PRESETS[0].id)}
+                >
+                  Reiniciar
+                </button>
+                <button
+                  type="button"
+                  className="button button--ghost"
+                  onClick={share}
+                >
+                  {shareState === "copied"
+                    ? "¡Enlace copiado!"
+                    : shareState === "error"
+                      ? "No se pudo copiar"
+                      : "Compartir plan"}
+                </button>
+              </div>
 
               <div className="leg-list">
                 {plan.legs.map((leg, index) => (
@@ -457,21 +707,30 @@ export default function StarshipBridge() {
                 </button>
                 <button
                   type="button"
-                  className="button button--ghost"
-                  onClick={() => applyPreset(PRESETS[0].id)}
+                  className="button"
+                  onClick={() => appendCompletingLeg("coast")}
+                  disabled={!canAdjustCruise}
+                  title={cruiseAdjustTitle}
                 >
-                  Reiniciar
+                  Ajustar crucero
                 </button>
                 <button
                   type="button"
-                  className="button button--ghost"
-                  onClick={share}
+                  className="button"
+                  onClick={() => appendCompletingLeg("burn")}
+                  disabled={!canAdjustImpulse}
+                  title={impulseAdjustTitle}
                 >
-                  {shareState === "copied"
-                    ? "¡Enlace copiado!"
-                    : shareState === "error"
-                      ? "No se pudo copiar"
-                      : "Compartir plan"}
+                  Ajustar impulso
+                </button>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={appendBrakeLeg}
+                  disabled={!canAdjustBrake}
+                  title={brakeAdjustTitle}
+                >
+                  Ajustar frenado
                 </button>
               </div>
             </div>
@@ -535,7 +794,7 @@ export default function StarshipBridge() {
                       className={`tab${chartAxis === "earth" ? " tab--active" : ""}`}
                       onClick={() => setChartAxis("earth")}
                     >
-                      vs. t Tierra
+                      vs. t planeta
                     </button>
                   </div>
                 )}
@@ -589,7 +848,7 @@ function Canopy({
   onToggleSky,
   onScrub,
 }: {
-  current: { tau: number; t: number; x: number; v: number; gamma: number };
+  current: FlightSample;
   totalTau: number;
   progress: number;
   playing: boolean;
@@ -609,6 +868,16 @@ function Canopy({
       <div className="canopy-glass">
         <div className="canopy-mullions" aria-hidden="true" />
         <div className="canopy-vignette" aria-hidden="true" />
+
+        <div className="g-meter" aria-label="Aceleración propia a bordo">
+          <span className="g-meter-label">g a bordo</span>
+          <span className="g-meter-value">
+            {current.accelG === 0
+              ? "0"
+              : `${current.accelG < 0 ? "−" : "+"}${formatDecimal(Math.abs(current.accelG), 2)}`}
+            <em>g</em>
+          </span>
+        </div>
 
         <button
           type="button"
@@ -646,7 +915,7 @@ function Canopy({
           unit="a"
         />
         <HudReadout
-          label="Reloj en la Tierra"
+          label="Reloj en el planeta"
           value={formatHudYears(current.t)}
           unit="a"
         />
@@ -698,7 +967,7 @@ function Canopy({
 
         <p className="playback-note">
           {rate === 1 ? "A ×1" : `A ×${rate}`} transcurren{" "}
-          <strong>{shipYearsPerSecond.toFixed(3)} a</strong> en la nave por cada
+          <strong>{formatDecimal(shipYearsPerSecond, 3)} a</strong> en la nave por cada
           segundo en pantalla.
         </p>
       </div>
@@ -751,6 +1020,11 @@ function LegCard({
   // leg.id identifica el tramo en el modelo; para el DOM se usa useId porque
   // es estable entre el render del servidor y el del navegador.
   const stopId = useId();
+  const [rangeMax, setRangeMax] = useState(2);
+  const neededMax = Math.abs(leg.accelG) > 10 ? 100 : Math.abs(leg.accelG) > 2 ? 10 : 2;
+  const accelMax = Math.max(rangeMax, neededMax);
+  const accelMin = -accelMax;
+  const accelStep = accelMax <= 2 ? 0.01 : accelMax <= 10 ? 0.05 : 0.5;
 
   return (
     <article
@@ -815,31 +1089,35 @@ function LegCard({
             label="Aceleración propia"
             value={leg.accelG}
             onCommit={(value) => onChange({ accelG: value })}
-            min={-10}
-            max={10}
-            step={0.01}
+            min={accelMin}
+            max={accelMax}
+            step={accelStep}
             suffix="g"
-            hint={`${(leg.accelG * G_M_S2).toFixed(2)} m/s² · α = ${alpha.toFixed(4)} a-l/a²`}
+            hint={`${formatDecimal(leg.accelG * G_M_S2, 2)} m/s² · α = ${formatDecimal(alpha, 4)} a-l/a²`}
           />
           <input
-            className="slider"
+            className={`slider slider--accel${leg.accelG < 0 ? " slider--negative" : ""}`}
             type="range"
-            min={-2}
-            max={2}
-            step={0.01}
-            value={Math.max(-2, Math.min(2, leg.accelG))}
+            min={accelMin}
+            max={accelMax}
+            step={accelStep}
+            value={Math.max(accelMin, Math.min(accelMax, leg.accelG))}
             onChange={(event) => onChange({ accelG: Number(event.target.value) })}
             aria-label={`Aceleración del tramo ${index + 1}`}
           />
-          <div className="chip-row">
-            {ACCEL_CHIPS.map((chip) => (
+          <div className="chip-row" role="group" aria-label="Rango del deslizador">
+            {ACCEL_RANGES.map((range) => (
               <button
-                key={chip.label}
+                key={range.max}
                 type="button"
-                className={`chip${Math.abs(leg.accelG - chip.value) < 1e-6 ? " chip--active" : ""}`}
-                onClick={() => onChange({ accelG: chip.value })}
+                className={`chip${accelMax === range.max ? " chip--active" : ""}`}
+                onClick={() => {
+                  setRangeMax(range.max);
+                  const clamped = Math.min(range.max, Math.max(range.min, leg.accelG));
+                  if (clamped !== leg.accelG) onChange({ accelG: clamped });
+                }}
               >
-                {chip.label}
+                {range.label}
               </button>
             ))}
           </div>
@@ -867,7 +1145,7 @@ function LegCard({
                 max={0.999999}
                 step={0.01}
                 suffix="c"
-                hint={`γ = ${(1 / Math.sqrt(1 - leg.speedC ** 2)).toFixed(3)}`}
+                hint={`γ = ${formatDecimal(1 / Math.sqrt(1 - leg.speedC ** 2), 3)}`}
               />
               <input
                 className="slider"
@@ -945,33 +1223,29 @@ function LegCard({
 function FlightSummary({ flight }: { flight: ReturnType<typeof computeFlight> }) {
   const { totals } = flight;
   const saved = totals.earthYears - totals.shipYears;
+  const eps = shortfallEps(flight.targetDistanceLy);
+  const shortfall = -flight.distanceGapLy;
+  const distanceHint =
+    shortfall > eps
+      ? `alcanzada · faltan ${formatDistance(shortfall)} a-l`
+      : flight.distanceGapLy > eps
+        ? `sobrepasa ${formatDistance(flight.distanceGapLy)} a-l`
+        : undefined;
 
   return (
     <div className="summary-grid">
       <SummaryTile
-        label="Distancia cubierta"
-        value={formatDistance(totals.distanceLy)}
-        unit="a-l"
-        tone="cyan"
-      />
-      <SummaryTile
-        label="Reloj en la Tierra"
-        value={formatYears(totals.earthYears)}
-        unit="a"
-        tone="amber"
-      />
-      <SummaryTile
-        label="Reloj de la nave"
+        label="Duración (tripulantes)"
         value={formatYears(totals.shipYears)}
         unit="a"
         tone="green"
       />
       <SummaryTile
-        label="Tiempo que la tripulación no envejece"
-        value={formatYears(saved)}
-        unit="a"
-        tone="magenta"
-        hint={`t/τ = ${totals.dilation.toFixed(3)}`}
+        label="Distancia (planeta)"
+        value={formatDistance(totals.distanceLy)}
+        unit="a-l"
+        tone="cyan"
+        hint={distanceHint}
       />
       <SummaryTile
         label="Velocidad máxima"
@@ -980,14 +1254,23 @@ function FlightSummary({ flight }: { flight: ReturnType<typeof computeFlight> })
         tone="cyan"
       />
       <SummaryTile
-        label="Factor de Lorentz máximo"
-        value={
-          totals.gammaMax >= 1000
-            ? totals.gammaMax.toExponential(2)
-            : totals.gammaMax.toFixed(3)
-        }
+        label="Factor de Lorentz"
+        value={formatHudGamma(totals.gammaMax)}
         unit="γ"
         tone="amber"
+      />
+      <SummaryTile
+        label="Duración (planeta)"
+        value={formatYears(totals.earthYears)}
+        unit="a"
+        tone="amber"
+      />
+      <SummaryTile
+        label="Diferencia (planeta-nave)"
+        value={formatYears(saved)}
+        unit="a"
+        tone="magenta"
+        hint={`t/τ = ${formatDecimal(totals.dilation, 3)}`}
       />
     </div>
   );
@@ -1045,8 +1328,8 @@ function LegTable({
               <th scope="col">Tramo</th>
               <th scope="col">Motor</th>
               <th scope="col">Distancia</th>
-              <th scope="col">Tiempo Tierra</th>
               <th scope="col">Tiempo nave</th>
+              <th scope="col">Tiempo planeta</th>
               <th scope="col">Velocidad</th>
             </tr>
           </thead>
@@ -1055,7 +1338,7 @@ function LegTable({
               const source = plan.legs[leg.index];
               const engine =
                 leg.kind === "burn"
-                  ? `${leg.accelG >= 0 ? "+" : "−"}${Math.abs(leg.accelG).toFixed(3)} g`
+                  ? `${leg.accelG >= 0 ? "+" : "−"}${formatDecimal(Math.abs(leg.accelG), 3)} g`
                   : `crucero a ${formatSpeed(leg.vStart)} c`;
 
               if (leg.status === "failed") {
@@ -1077,13 +1360,13 @@ function LegTable({
                   <td data-label="Distancia">
                     {formatDistance(leg.distanceLy)} <em>a-l</em>
                   </td>
-                  <td data-label="Tiempo Tierra">
-                    {formatYears(leg.earthYears)} <em>a</em>
-                    <SubYearHint years={leg.earthYears} />
-                  </td>
                   <td data-label="Tiempo nave">
                     {formatYears(leg.shipYears)} <em>a</em>
                     <SubYearHint years={leg.shipYears} />
+                  </td>
+                  <td data-label="Tiempo planeta">
+                    {formatYears(leg.earthYears)} <em>a</em>
+                    <SubYearHint years={leg.earthYears} />
                   </td>
                   <td data-label="Velocidad">
                     {formatSpeed(leg.vMin)} → {formatSpeed(leg.vMax, leg.oneMinusVEnd)} <em>c</em>
@@ -1100,11 +1383,11 @@ function LegTable({
               <td data-label="Distancia">
                 {formatDistance(flightTotals.totals.distanceLy)} <em>a-l</em>
               </td>
-              <td data-label="Tiempo Tierra">
-                {formatYears(flightTotals.totals.earthYears)} <em>a</em>
-              </td>
               <td data-label="Tiempo nave">
                 {formatYears(flightTotals.totals.shipYears)} <em>a</em>
+              </td>
+              <td data-label="Tiempo planeta">
+                {formatYears(flightTotals.totals.earthYears)} <em>a</em>
               </td>
               <td data-label="Velocidad">
                 máx {formatSpeed(flightTotals.totals.vMax, flightTotals.totals.oneMinusVMax)} <em>c</em>
@@ -1120,66 +1403,130 @@ function LegTable({
 /* -------------------------------------------------------------------------- */
 
 function TheoryPanel() {
+  const [open, setOpen] = useState(false);
+
   return (
     <section className="console console--theory" aria-label="Origen de los números">
       <h2 className="console-title">
-        <span>¿De dónde salen estos números?</span>
-        <small>cinemática en unidades luz</small>
+        <button
+          type="button"
+          className="theory-toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span>¿De dónde salen estos números?</span>
+          <small>cinemática en unidades luz</small>
+        </button>
       </h2>
-      <div className="theory-body">
-        <div className="theory-text">
-          <p>
-            Todo se calcula en <strong>unidades luz</strong>: distancias en
-            años-luz (a-l), tiempos en años (a) y velocidades en fracciones de{" "}
-            <em>c</em>, de modo que <em>c</em> = 1. En esas unidades 1 g
-            equivale a α = {G_LIGHT.toFixed(4)} a-l/a².
-          </p>
-          <p>
-            Con la rapidez θ = artanh(v<sub>L</sub>) las tres ecuaciones se
-            vuelven una sola: θ crece linealmente con el tiempo propio, θ(τ) = θ
-            <sub>0</sub> + ατ, y la nave se limita a deslizarse por una
-            hipérbola del espacio-tiempo. La app integra en θ para no perder
-            precisión cuando v es indistinguible de 1.
-          </p>
-          <p>
-            Un tramo de crucero es el caso α = 0: el tiempo coordenado y el
-            propio se relacionan simplemente por Δt = γ Δτ.
-          </p>
-          <p>
-            El visor no es solo decoración: aplica la{" "}
-            <strong>aberración relativista</strong>{" "}
-            cos θ′ = (cos θ + v)/(1 + v cos θ) y el factor Doppler D = 1 /
-            [γ(1 − v cos θ′)]. Al aproximarnos a <em>c</em> casi todo el cielo
-            se aplasta hacia la proa y se ilumina (beaming): el clásico efecto
-            túnel. Con el cielo congelado las estrellas no recorren el campo;
-            solo se ve cómo la aberración las arrastra al centro al subir v.
-          </p>
-          <p className="theory-source">
-            Basado en la Clase 5 (Cinemática en el espacio-tiempo) del curso de
-            Relatividad y Gravitación de la Universidad de Antioquia.
-          </p>
-        </div>
+      {open ? (
+        <div className="theory-body">
+          <div className="theory-text">
+            <p>
+              Todo se calcula en <strong>unidades luz</strong>: distancias en
+              años-luz (a-l), tiempos en años (a) y velocidades en fracciones de{" "}
+              <em>c</em>, de modo que <em>c</em> = 1. En esas unidades 1 g
+              equivale a α = {formatDecimal(G_LIGHT, 4)} a-l/a².
+            </p>
+            <p>
+              Con la rapidez θ = artanh(v<sub>L</sub>) las tres ecuaciones se
+              vuelven una sola: θ crece linealmente con el tiempo propio, θ(τ) = θ
+              <sub>0</sub> + ατ, y la nave se limita a deslizarse por una
+              hipérbola del espacio-tiempo. La app integra en θ para no perder
+              precisión cuando v es indistinguible de 1.
+            </p>
+            <p>
+              Un tramo de crucero es el caso α = 0: el tiempo coordenado y el
+              propio se relacionan simplemente por Δt = γ Δτ.
+            </p>
+            <p>
+              El visor no es solo decoración: aplica la{" "}
+              <strong>aberración relativista</strong>{" "}
+              cos θ′ = (cos θ + v)/(1 + v cos θ) y el factor Doppler D = 1 /
+              [γ(1 − v cos θ′)]. Al aproximarnos a <em>c</em> casi todo el cielo
+              se aplasta hacia la proa y se ilumina (beaming): el clásico efecto
+              túnel. Con el cielo congelado las estrellas no recorren el campo;
+              solo se ve cómo la aberración las arrastra al centro al subir v.
+            </p>
+          </div>
 
-        <div className="theory-math">
-          <p>
-            Para un tramo con aceleración propia constante α y condiciones
-            iniciales arbitrarias, la solución general del movimiento es:
-          </p>
-          <div className="formula">
-            <span>
-              x<sub>L</sub>(τ) = x<sub>L0</sub> + (γ<sub>0</sub>v<sub>L0</sub>
-              /α) sinh(ατ) + (γ<sub>0</sub>/α)[cosh(ατ) − 1]
-            </span>
-            <span>
-              t(τ) = t<sub>0</sub> + (γ<sub>0</sub>/α) sinh(ατ) + (γ
-              <sub>0</sub>v<sub>L0</sub>/α)[cosh(ατ) − 1]
-            </span>
-            <span>
-              v<sub>L</sub>(τ) = [v<sub>L0</sub> + tanh(ατ)] / [1 + v
-              <sub>L0</sub> tanh(ατ)]
-            </span>
+          <div className="theory-math">
+            <p>
+              Para un tramo con aceleración propia constante α y condiciones
+              iniciales arbitrarias, la solución general del movimiento es:
+            </p>
+            <div className="formula">
+              <span>
+                x<sub>L</sub>(τ) = x<sub>L0</sub> + (γ<sub>0</sub>v<sub>L0</sub>
+                /α) sinh(ατ) + (γ<sub>0</sub>/α)[cosh(ατ) − 1]
+              </span>
+              <span>
+                t(τ) = t<sub>0</sub> + (γ<sub>0</sub>/α) sinh(ατ) + (γ
+                <sub>0</sub>v<sub>L0</sub>/α)[cosh(ατ) − 1]
+              </span>
+              <span>
+                v<sub>L</sub>(τ) = [v<sub>L0</sub> + tanh(ατ)] / [1 + v
+                <sub>L0</sub> tanh(ατ)]
+              </span>
+            </div>
           </div>
         </div>
+      ) : null}
+
+      <div className="theory-ships">
+        <p className="theory-source">
+          Basado en Jorge I. Zuluaga,{" "}
+          <cite>
+            Relatividad y Gravitación: teoría, algoritmos y problemas
+          </cite>
+          , sección 1.11.5 «Movimiento con cuadriaceleración constante».{" "}
+          <a
+            href="https://seap-udea.github.io/books/Relatividad-Zuluaga/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Libro en línea
+          </a>
+          .
+        </p>
+        <p>
+          La silueta del título es una nave tipo{" "}
+          <a
+            href="https://en.wikipedia.org/wiki/Project_Daedalus"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Daedalus
+          </a>
+          , el estudio de la British Interplanetary Society (década de 1970)
+          para un viaje de fusión a la estrella de Barnard: esferas de
+          combustible, tobera y carga útil a proa. Otros conceptos clásicos
+          de naves interestelares son los{" "}
+          <a
+            href="https://markbaumann.net/interstellar-ramjets-and-antimatter-drives/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Bussard ramjets
+          </a>{" "}
+          —que recolectarían hidrógeno del medio interestelar— y los motores
+          de fusión. Véase también{" "}
+          <a
+            href="https://www.damninteresting.com/the-daedalus-starship/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            The Daedalus Starship
+          </a>
+          . Imagen: concepto de Daedalus en{" "}
+          <a
+            href="https://en.wikipedia.org/wiki/Project_Daedalus#/media/File:Daedalus_Spaceship_concept.jpg"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Wikimedia Commons
+          </a>
+          .
+        </p>
       </div>
     </section>
   );

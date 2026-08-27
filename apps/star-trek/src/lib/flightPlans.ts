@@ -1,7 +1,7 @@
 import type { FlightLeg, FlightPlan, StopMode } from "./relativity";
 
-/** Aceleración por defecto: 1/6 g, la gravedad de la Luna. */
-export const DEFAULT_ACCEL_G = 1 / 6;
+/** Aceleración por defecto: 0,2 g. */
+export const DEFAULT_ACCEL_G = 0.2;
 
 /** Distancia por defecto: Próxima Centauri. */
 export const DEFAULT_DISTANCE_LY = 4.2;
@@ -57,7 +57,7 @@ export const PRESETS: Preset[] = [
     id: "continuous",
     name: "Impulso continuo",
     summary:
-      "Un solo tramo a 1/6 g durante todo el trayecto. Llegada a máxima velocidad: un sobrevuelo.",
+      "Un solo tramo a 0,2 g durante todo el trayecto. Llegada a máxima velocidad: un sobrevuelo.",
     build: () => ({
       targetDistanceLy: DEFAULT_DISTANCE_LY,
       legs: [makeLeg({ accelG: DEFAULT_ACCEL_G, stopMode: "remaining" })],
@@ -67,7 +67,7 @@ export const PRESETS: Preset[] = [
     id: "flip-and-burn",
     name: "Giro a mitad de camino",
     summary:
-      "Acelera 1/6 g la primera mitad, gira la nave y frena a −1/6 g la segunda. Llega en reposo.",
+      "Acelera 0,2 g la primera mitad, gira la nave y frena a −0,2 g la segunda. Llega en reposo.",
     build: () => ({
       targetDistanceLy: DEFAULT_DISTANCE_LY,
       legs: [
@@ -127,7 +127,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "half-light",
-    name: "Crucero a 0.5 c",
+    name: "Crucero a 0,5 c",
     summary:
       "Sin motores: la nave ya viaja a media luz. El caso newtoniano de referencia.",
     build: () => ({
@@ -149,7 +149,7 @@ export const STOP_MODE_LABELS: Record<StopMode, string> = {
   distance: "Una distancia dada",
   fraction: "Un % del viaje",
   shipTime: "Un tiempo en la nave",
-  earthTime: "Un tiempo en la Tierra",
+  earthTime: "Un tiempo en el planeta",
 };
 
 export const STOP_MODE_UNITS: Record<StopMode, string> = {
@@ -177,60 +177,79 @@ const STOP_FROM_CODE = Object.fromEntries(
 ) as Record<string, StopMode>;
 
 /** Misma precisión que muestran los campos del tablero, para que el enlace
- *  compartido y la interfaz coincidan dígito a dígito. */
+ *  compartido y la interfaz coincidan dígito a dígito. Punto decimal, nunca
+ *  coma: la coma separaba tramos y rompía el plan al copiar o abrir el URL. */
 function trimNumber(value: number): string {
   return Number.parseFloat(value.toPrecision(10)).toString();
 }
 
-export function encodePlan(plan: FlightPlan): string {
-  const legs = plan.legs
-    .map((leg) => {
-      const stop = `${STOP_CODES[leg.stopMode]}${
-        leg.stopMode === "remaining" ? "" : trimNumber(leg.stopValue)
-      }`;
-      if (leg.kind === "burn") return `b${trimNumber(leg.accelG)}:${stop}`;
-      const speed = leg.inheritSpeed ? "i" : trimNumber(leg.speedC);
-      return `c${speed}:${stop}`;
-    })
-    .join(",");
+function parseNum(raw: string): number {
+  return Number(raw.trim().replace(",", "."));
+}
 
-  return `d=${trimNumber(plan.targetDistanceLy)}&p=${legs}`;
+function encodeLeg(leg: FlightLeg): string {
+  const stop =
+    leg.stopMode === "remaining"
+      ? "r"
+      : `${STOP_CODES[leg.stopMode]}${trimNumber(leg.stopValue)}`;
+  if (leg.kind === "burn") return `b${trimNumber(leg.accelG)}:${stop}`;
+  const speed = leg.inheritSpeed ? "i" : trimNumber(leg.speedC);
+  return `c${speed}:${stop}`;
+}
+
+export function encodePlan(plan: FlightPlan): string {
+  const params = new URLSearchParams();
+  params.set("d", trimNumber(plan.targetDistanceLy));
+  params.set("p", plan.legs.map(encodeLeg).join("~"));
+  return params.toString();
+}
+
+function decodeLeg(chunk: string): FlightLeg | null {
+  const [head, stop] = chunk.split(":");
+  if (!head || !stop) return null;
+
+  const stopMode = STOP_FROM_CODE[stop[0]];
+  if (!stopMode) return null;
+  const stopValue = stopMode === "remaining" ? 0 : parseNum(stop.slice(1));
+  if (stopMode !== "remaining" && !Number.isFinite(stopValue)) return null;
+
+  if (head[0] === "b") {
+    const accelG = parseNum(head.slice(1));
+    if (!Number.isFinite(accelG)) return null;
+    return makeLeg({ kind: "burn", accelG, stopMode, stopValue });
+  }
+  if (head[0] === "c") {
+    const body = head.slice(1);
+    const inheritSpeed = body === "i";
+    const speedC = inheritSpeed ? 0.5 : parseNum(body);
+    if (!inheritSpeed && !Number.isFinite(speedC)) return null;
+    return makeLeg({ kind: "coast", inheritSpeed, speedC, stopMode, stopValue });
+  }
+  return null;
 }
 
 export function decodePlan(search: string): FlightPlan | null {
-  const params = new URLSearchParams(search);
+  const query = search.startsWith("http")
+    ? new URL(search).search
+    : search;
+  const params = new URLSearchParams(query);
   const rawDistance = params.get("d");
   const rawPlan = params.get("p");
   if (!rawDistance || !rawPlan) return null;
 
-  const targetDistanceLy = Number(rawDistance);
+  const targetDistanceLy = parseNum(rawDistance);
   if (!Number.isFinite(targetDistanceLy) || targetDistanceLy <= 0) return null;
 
+  const chunks = rawPlan.includes("~")
+    ? rawPlan.split("~")
+    : rawPlan.split(",");
   const legs: FlightLeg[] = [];
-  for (const chunk of rawPlan.split(",")) {
-    const [head, stop] = chunk.split(":");
-    if (!head || !stop) return null;
-
-    const stopMode = STOP_FROM_CODE[stop[0]];
-    if (!stopMode) return null;
-    const stopValue = stopMode === "remaining" ? 0 : Number(stop.slice(1));
-    if (stopMode !== "remaining" && !Number.isFinite(stopValue)) return null;
-
-    if (head[0] === "b") {
-      const accelG = Number(head.slice(1));
-      if (!Number.isFinite(accelG)) return null;
-      legs.push(makeLeg({ kind: "burn", accelG, stopMode, stopValue }));
-    } else if (head[0] === "c") {
-      const body = head.slice(1);
-      const inheritSpeed = body === "i";
-      const speedC = inheritSpeed ? 0.5 : Number(body);
-      if (!inheritSpeed && !Number.isFinite(speedC)) return null;
-      legs.push(
-        makeLeg({ kind: "coast", inheritSpeed, speedC, stopMode, stopValue }),
-      );
-    } else {
-      return null;
-    }
+  for (const chunk of chunks) {
+    const trimmed = chunk.trim();
+    if (!trimmed) continue;
+    const leg = decodeLeg(trimmed);
+    if (!leg) return null;
+    legs.push(leg);
   }
 
   if (legs.length === 0) return null;

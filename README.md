@@ -70,7 +70,7 @@ Apps live under `apps/` and are built as static exports in CI.
 - [Cloud Academy](https://seap-udea.github.io/apps/cloud_academy/) — bubble-chamber particle tracks
 - [Lighting Black Holes](https://seap-udea.github.io/apps/lighting-black-holes/) — black-hole light visualization
 - [La calculadora de Drake](https://seap-udea.github.io/apps/drake-calculator/) — interactive Drake equation and Milky Way visualization
-- [Viaje a las estrellas](https://seap-udea.github.io/apps/star-trek/) — relativistic flight planner with constant proper acceleration
+- [Star trek](https://seap-udea.github.io/apps/star-trek/) — relativistic flight planner with constant proper acceleration
 
 Locally:
 

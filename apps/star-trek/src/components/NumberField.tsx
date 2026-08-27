@@ -2,14 +2,41 @@
 
 import { useId, useState } from "react";
 
-function normalize(value: number): string {
+/** Muestra el valor con coma decimal, sin miles, para que coincida con lo que se teclea. */
+function formatField(value: number): string {
   if (!Number.isFinite(value)) return "0";
-  return String(Number(value.toPrecision(10)));
+  const compact = Number(value.toPrecision(10));
+  const sign = compact < 0 || Object.is(compact, -0) ? "−" : "";
+  const abs = Math.abs(compact);
+  const raw = abs.toString();
+  const plain = raw.includes("e") || raw.includes("E")
+    ? abs.toFixed(10).replace(/\.?0+$/, "")
+    : raw;
+  return `${sign}${plain.replace(".", ",")}`;
+}
+
+/** Acepta "0,2", "0.2", "−0,2" y "1.234,5". */
+function parseField(raw: string): number {
+  const trimmed = raw.trim().replace(/\s/g, "").replace(/−/g, "-");
+  if (
+    trimmed === "" ||
+    trimmed === "-" ||
+    trimmed === "," ||
+    trimmed === "." ||
+    trimmed === "-," ||
+    trimmed === "-."
+  ) {
+    return Number.NaN;
+  }
+  if (trimmed.includes(",") && trimmed.includes(".")) {
+    return Number(trimmed.replace(/\./g, "").replace(",", "."));
+  }
+  return Number(trimmed.replace(",", "."));
 }
 
 /**
  * Campo numérico que respeta lo que el usuario está escribiendo: acepta
- * estados intermedios como "-", "0." o "" mientras el foco está dentro y solo
+ * estados intermedios como "-", "0," o "" mientras el foco está dentro y solo
  * ajusta el valor a los límites al salir.
  */
 export default function NumberField({
@@ -17,7 +44,6 @@ export default function NumberField({
   onCommit,
   min,
   max,
-  step,
   suffix,
   label,
   hint,
@@ -34,36 +60,36 @@ export default function NumberField({
   disabled?: boolean;
 }) {
   const id = useId();
-  const [text, setText] = useState(() => normalize(value));
+  const [text, setText] = useState(() => formatField(value));
   const [focused, setFocused] = useState(false);
   const [syncedValue, setSyncedValue] = useState(value);
 
-  // Si el valor cambia desde fuera (un preset, un chip) mientras el campo no
-  // tiene el foco, el texto se pone al día durante el render.
+  // Si el valor cambia desde fuera (un preset, el deslizador) mientras el campo
+  // no tiene el foco, el texto se pone al día durante el render.
   if (!focused && value !== syncedValue) {
     setSyncedValue(value);
-    setText(normalize(value));
+    setText(formatField(value));
   }
 
   const handleChange = (raw: string) => {
     setText(raw);
-    const parsed = Number(raw);
-    if (raw.trim() === "" || !Number.isFinite(parsed)) return;
+    const parsed = parseField(raw);
+    if (!Number.isFinite(parsed)) return;
     if (parsed < min || parsed > max) return;
     onCommit(parsed);
   };
 
   const handleBlur = () => {
     setFocused(false);
-    const parsed = Number(text);
-    if (text.trim() === "" || !Number.isFinite(parsed)) {
-      setText(normalize(value));
+    const parsed = parseField(text);
+    if (!Number.isFinite(parsed)) {
+      setText(formatField(value));
       setSyncedValue(value);
       return;
     }
     const clamped = Math.min(max, Math.max(min, parsed));
     onCommit(clamped);
-    setText(normalize(clamped));
+    setText(formatField(clamped));
     setSyncedValue(clamped);
   };
 
@@ -75,10 +101,11 @@ export default function NumberField({
       <div className="field-input">
         <input
           id={id}
-          type="number"
+          type="text"
           inputMode="decimal"
+          autoComplete="off"
+          spellCheck={false}
           value={text}
-          step={step}
           disabled={disabled}
           onFocus={() => setFocused(true)}
           onChange={(event) => handleChange(event.target.value)}

@@ -72,6 +72,8 @@ export type FlightSample = {
   v: number;
   /** Factor de Lorentz. */
   gamma: number;
+  /** Aceleración propia instantánea en g, la que siente la tripulación. */
+  accelG: number;
   /** Índice del tramo al que pertenece la muestra. */
   legIndex: number;
 };
@@ -118,7 +120,7 @@ export type FlightResult = {
     dilation: number;
   };
   targetDistanceLy: number;
-  /** Diferencia entre la distancia alcanzada y el objetivo del capitán. */
+  /** Diferencia entre la distancia alcanzada y el objetivo del comandante. */
   distanceGapLy: number;
   warnings: string[];
   failed: boolean;
@@ -202,7 +204,7 @@ function burnDtauForDistance(
       );
     }
     return FAILED(
-      `Frenando así la nave se detiene tras ${reach.toFixed(3)} a-l y nunca cubre ${distance.toFixed(3)} a-l.`,
+      `Frenando así la nave se detiene tras ${formatDecimal(reach, 3)} a-l y nunca cubre ${formatDecimal(distance, 3)} a-l.`,
     );
   }
 
@@ -217,6 +219,49 @@ function burnDtauForDistance(
   }
 
   return { dtau: candidates[0], note: null, status: "ok" };
+}
+
+/**
+ * Aceleración con signo que cubre la distancia restante. Si frenar con |g|
+ * alcanza, se frena (llegada en reposo o casi); si el frenado se queda
+ * corto, se impulsa hacia el destino.
+ */
+export function signedAccelGToCoverRemaining(
+  speedC: number,
+  remainingLy: number,
+  preferredAbsG: number,
+): number {
+  const g = Math.abs(preferredAbsG) > 1e-9 ? Math.abs(preferredAbsG) : 0.2;
+  if (!(remainingLy > 0)) return g;
+
+  const theta = rapidityFromSpeed(speedC);
+  const alpha = g * G_LIGHT;
+  if (burnDtauForDistance(theta, -alpha, remainingLy).status !== "failed") {
+    return -g;
+  }
+  return g;
+}
+
+/**
+ * Aceleración propia (con signo) que detiene la nave exactamente en
+ * `remainingLy`: la distancia de frenado (cosh θ − 1)/|α| coincide con lo
+ * que falta. Null si no hay velocidad hacia el destino o no queda distancia.
+ */
+export function brakeAccelGToStop(
+  speedC: number,
+  remainingLy: number,
+): number | null {
+  if (!(remainingLy > 0) || !(speedC > 1e-9)) return null;
+
+  const theta = rapidityFromSpeed(speedC);
+  const g = (Math.cosh(theta) - 1) / (remainingLy * G_LIGHT);
+  if (!(g > 0) || !Number.isFinite(g)) return null;
+
+  // Un frenado un pelo más suave evita que el redondeo deje cosh(θ₁) < 1
+  // y el tramo se marque imposible.
+  const mag = Number(g.toPrecision(6));
+  const safe = mag <= g ? mag : Number((g * (1 - 2e-6)).toPrecision(6));
+  return -(safe > 0 ? Math.min(g, safe) : g);
 }
 
 /** Tiempo propio necesario para consumir un tiempo coordenado dado. */
@@ -317,6 +362,7 @@ export function computeFlight(plan: FlightPlan): FlightResult {
     x: 0,
     v: 0,
     gamma: 1,
+    accelG: plan.legs[0]?.kind === "burn" ? plan.legs[0].accelG : 0,
     legIndex: 0,
   });
 
@@ -375,6 +421,7 @@ export function computeFlight(plan: FlightPlan): FlightResult {
         x: s.x,
         v: Math.tanh(s.theta),
         gamma: Math.cosh(s.theta),
+        accelG: isBurn ? leg.accelG : 0,
         legIndex: index,
       });
     }
@@ -463,7 +510,7 @@ export function sampleFlightAt(
   tau: number,
 ): FlightSample {
   if (samples.length === 0) {
-    return { tau: 0, t: 0, x: 0, v: 0, gamma: 1, legIndex: 0 };
+    return { tau: 0, t: 0, x: 0, v: 0, gamma: 1, accelG: 0, legIndex: 0 };
   }
 
   const first = samples[0];
@@ -490,6 +537,7 @@ export function sampleFlightAt(
     x: a.x + (b.x - a.x) * f,
     v: a.v + (b.v - a.v) * f,
     gamma: a.gamma + (b.gamma - a.gamma) * f,
+    accelG: f < 0.5 ? a.accelG : b.accelG,
     legIndex: f < 0.5 ? a.legIndex : b.legIndex,
   };
 }
@@ -532,7 +580,7 @@ function emptyLegResult(
 export function formatSpeed(v: number, oneMinusV?: number): string {
   const sign = v < 0 ? "−" : "";
   const a = Math.abs(v);
-  if (a < 0.99999) return `${sign}${a.toFixed(5)}`;
+  if (a < 0.99999) return `${sign}${formatDecimal(a, 5)}`;
 
   const eps =
     oneMinusV !== undefined && oneMinusV > 0 ? oneMinusV : Math.max(1 - a, 0);
@@ -540,11 +588,35 @@ export function formatSpeed(v: number, oneMinusV?: number): string {
   return `${sign}1 − ${formatExponential(eps)}`;
 }
 
+/**
+ * Número en locale es-CO: coma decimal y punto de miles.
+ * Se arma a mano para que el HTML del servidor y el del navegador coincidan;
+ * toLocaleString("es-CO") cambia de ICU a ICU (p. ej. 4,00 vs 4,0).
+ */
+export function formatDecimal(
+  value: number,
+  digits: number,
+  grouping?: boolean,
+): string {
+  if (!Number.isFinite(value)) return "—";
+  const sign = value < 0 || Object.is(value, -0) ? "−" : "";
+  const abs = Math.abs(value);
+  const fixed = abs.toFixed(digits);
+  const [intRaw, fracRaw] = fixed.split(".");
+  const useGrouping = grouping ?? abs >= 1000;
+  const intPart = useGrouping
+    ? intRaw.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    : intRaw;
+  if (digits === 0) return `${sign}${intPart}`;
+  return `${sign}${intPart},${fracRaw}`;
+}
+
 export function formatExponential(value: number, digits = 2): string {
   if (value === 0) return "0";
+  const sign = value < 0 ? "−" : "";
   const exponent = Math.floor(Math.log10(Math.abs(value)));
   const mantissa = value / 10 ** exponent;
-  return `${mantissa.toFixed(digits)}×10${toSuperscript(exponent)}`;
+  return `${sign}${formatDecimal(Math.abs(mantissa), digits)}×10${toSuperscript(exponent)}`;
 }
 
 const SUPERSCRIPTS: Record<string, string> = {
@@ -573,9 +645,9 @@ export function formatYears(value: number): string {
   const a = Math.abs(value);
   if (a === 0) return "0";
   if (a < 1e-3) return formatExponential(value);
-  if (a < 1) return value.toFixed(4);
-  if (a < 100) return value.toFixed(3);
-  if (a < 1e6) return value.toLocaleString("es-CO", { maximumFractionDigits: 1 });
+  if (a < 1) return formatDecimal(value, 4);
+  if (a < 100) return formatDecimal(value, 3);
+  if (a < 1e6) return formatDecimal(value, 1, true);
   return formatExponential(value);
 }
 
@@ -585,41 +657,41 @@ export function formatYears(value: number): string {
  */
 export function formatHudSpeed(v: number): string {
   const sign = v < 0 ? "−" : "";
-  return `${sign}${Math.abs(v).toFixed(5)}`;
+  return `${sign}${formatDecimal(Math.abs(v), 5)}`;
 }
 
 export function formatHudYears(value: number): string {
-  return value.toFixed(3);
+  return formatDecimal(value, 3, Math.abs(value) >= 1000);
 }
 
 export function formatHudDistance(value: number): string {
-  return value.toFixed(3);
+  return formatDecimal(value, 3, Math.abs(value) >= 1000);
 }
 
 export function formatHudGamma(gamma: number): string {
-  if (gamma >= 1000) return gamma.toExponential(2);
-  return gamma.toFixed(3);
+  if (gamma >= 1000) return formatExponential(gamma);
+  return formatDecimal(gamma, 3);
 }
 
 export function formatDistance(value: number): string {
   const a = Math.abs(value);
   if (a === 0) return "0";
   if (a < 1e-3) return formatExponential(value);
-  if (a < 100) return value.toFixed(3);
-  if (a < 1e6) return value.toLocaleString("es-CO", { maximumFractionDigits: 1 });
+  if (a < 100) return formatDecimal(value, 3);
+  if (a < 1e6) return formatDecimal(value, 1, true);
   return formatExponential(value);
 }
 
 /**
- * Convierte una duración en años a una etiqueta legible ("3.2 a", "8 meses",
+ * Convierte una duración en años a una etiqueta legible ("3,2 a", "8 meses",
  * "12 días") para las cifras pequeñas del reporte.
  */
 export function humanizeYears(value: number): string {
   const a = Math.abs(value);
   if (a >= 1) return `${formatYears(value)} a`;
   const days = a * 365.25;
-  if (days >= 1) return `${days.toFixed(1)} d`;
+  if (days >= 1) return `${formatDecimal(days, 1)} d`;
   const hours = days * 24;
-  if (hours >= 1) return `${hours.toFixed(1)} h`;
-  return `${(hours * 60).toFixed(1)} min`;
+  if (hours >= 1) return `${formatDecimal(hours, 1)} h`;
+  return `${formatDecimal(hours * 60, 1)} min`;
 }

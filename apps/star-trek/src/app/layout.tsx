@@ -19,7 +19,7 @@ const orbitron = Orbitron({
 });
 
 export const metadata: Metadata = {
-  title: "Viaje a las estrellas",
+  title: "Star trek",
   description:
     "Diseña un plan de vuelo interestelar con aceleración propia constante y observa la cinemática relativista desde el puente de mando.",
 };

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { FlightSample, LegResult } from "../lib/relativity";
+import { formatDecimal, formatExponential } from "../lib/relativity";
 
 export type ChartAxis = "ship" | "earth";
 
@@ -55,10 +56,15 @@ function formatTick(value: number, span: number): string {
   if (value === 0) return "0";
   const abs = Math.abs(value);
   if (abs >= 1e5 || abs < 1e-3) {
-    return value.toExponential(0).replace("e+", "e");
+    return formatExponential(value, 0);
   }
   const decimals = span >= 50 ? 0 : span >= 5 ? 1 : span >= 0.5 ? 2 : 3;
-  return value.toFixed(decimals);
+  return formatDecimal(value, decimals, abs >= 1000);
+}
+
+/** Coordenada SVG como string fija: Node y V8 no serializan el mismo float. */
+function px(n: number): string {
+  return n.toFixed(3);
 }
 
 /** Rango vertical de un panel, con un margen para que la curva respire. */
@@ -127,7 +133,7 @@ export function FlightProfileChart({
   const axisLabel =
     axis === "ship"
       ? "Tiempo propio de la nave τ [a]"
-      : "Tiempo en la Tierra t [a]";
+      : "Tiempo en el planeta t [a]";
 
   const xs = useMemo(
     () => samples.map((sample) => (axis === "ship" ? sample.tau : sample.t)),
@@ -203,25 +209,25 @@ export function FlightProfileChart({
           return (
             <g key={panel.key}>
               <rect
-                x={padL}
-                y={plotTop}
-                width={width - padL - padR}
-                height={plotBottom - plotTop}
+                x={px(padL)}
+                y={px(plotTop)}
+                width={px(width - padL - padR)}
+                height={px(plotBottom - plotTop)}
                 className="chart-plot-bg"
               />
 
               {yTicks.map((tick) => (
                 <g key={`y-${tick}`}>
                   <line
-                    x1={padL}
-                    x2={width - padR}
-                    y1={scaleY(tick)}
-                    y2={scaleY(tick)}
+                    x1={px(padL)}
+                    x2={px(width - padR)}
+                    y1={px(scaleY(tick))}
+                    y2={px(scaleY(tick))}
                     className="chart-grid"
                   />
                   <text
-                    x={padL - 7}
-                    y={scaleY(tick)}
+                    x={px(padL - 7)}
+                    y={px(scaleY(tick))}
                     className="chart-tick chart-tick--y"
                   >
                     {formatTick(tick, yMax - yMin)}
@@ -232,10 +238,10 @@ export function FlightProfileChart({
               {boundaries.slice(0, -1).map((boundary, i) => (
                 <line
                   key={`b-${i}`}
-                  x1={scaleX(boundary)}
-                  x2={scaleX(boundary)}
-                  y1={plotTop}
-                  y2={plotBottom}
+                  x1={px(scaleX(boundary))}
+                  x2={px(scaleX(boundary))}
+                  y1={px(plotTop)}
+                  y2={px(plotBottom)}
                   className="chart-leg-line"
                 />
               ))}
@@ -252,23 +258,23 @@ export function FlightProfileChart({
 
               {markerX !== null && (
                 <line
-                  x1={scaleX(markerX)}
-                  x2={scaleX(markerX)}
-                  y1={plotTop}
-                  y2={plotBottom}
+                  x1={px(scaleX(markerX))}
+                  x2={px(scaleX(markerX))}
+                  y1={px(plotTop)}
+                  y2={px(plotBottom)}
                   className="chart-marker"
                 />
               )}
 
-              <text x={padL} y={offsetY + 11} className="chart-panel-title">
+              <text x={px(padL)} y={px(offsetY + 11)} className="chart-panel-title">
                 {panel.label} [{panel.unit}]
               </text>
 
               {xTicks.map((tick) => (
                 <text
                   key={`x-${tick}`}
-                  x={scaleX(tick)}
-                  y={plotBottom + 14}
+                  x={px(scaleX(tick))}
+                  y={px(plotBottom + 14)}
                   className="chart-tick chart-tick--x"
                 >
                   {formatTick(tick, xMax)}
@@ -277,8 +283,8 @@ export function FlightProfileChart({
 
               {isLast && (
                 <text
-                  x={(padL + width - padR) / 2}
-                  y={plotBottom + 28}
+                  x={px((padL + width - padR) / 2)}
+                  y={px(plotBottom + 28)}
                   className="chart-axis-label"
                 >
                   {axisLabel}
@@ -348,39 +354,39 @@ export function SpacetimeChart({
         aria-label="Diagrama de espacio-tiempo de la nave"
       >
         <rect
-          x={pad.l}
-          y={pad.t}
-          width={size - pad.l - pad.r}
-          height={size - pad.t - pad.b}
+          x={px(pad.l)}
+          y={px(pad.t)}
+          width={px(size - pad.l - pad.r)}
+          height={px(size - pad.t - pad.b)}
           className="chart-plot-bg"
         />
 
         {ticks.map((tick) => (
           <g key={tick}>
             <line
-              x1={pad.l}
-              x2={size - pad.r}
-              y1={scale(tick, "y")}
-              y2={scale(tick, "y")}
+              x1={px(pad.l)}
+              x2={px(size - pad.r)}
+              y1={px(scale(tick, "y"))}
+              y2={px(scale(tick, "y"))}
               className="chart-grid"
             />
             <line
-              x1={scale(tick, "x")}
-              x2={scale(tick, "x")}
-              y1={pad.t}
-              y2={size - pad.b}
+              x1={px(scale(tick, "x"))}
+              x2={px(scale(tick, "x"))}
+              y1={px(pad.t)}
+              y2={px(size - pad.b)}
               className="chart-grid"
             />
             <text
-              x={pad.l - 7}
-              y={scale(tick, "y")}
+              x={px(pad.l - 7)}
+              y={px(scale(tick, "y"))}
               className="chart-tick chart-tick--y"
             >
               {formatTick(tick, span)}
             </text>
             <text
-              x={scale(tick, "x")}
-              y={size - pad.b + 14}
+              x={px(scale(tick, "x"))}
+              y={px(size - pad.b + 14)}
               className="chart-tick chart-tick--x"
             >
               {formatTick(tick, span)}
@@ -389,15 +395,17 @@ export function SpacetimeChart({
         ))}
 
         <line
-          x1={scale(0, "x")}
-          y1={scale(0, "y")}
-          x2={scale(span, "x")}
-          y2={scale(span, "y")}
+          x1={px(scale(0, "x"))}
+          y1={px(scale(0, "y"))}
+          x2={px(scale(span, "x"))}
+          y2={px(scale(span, "y"))}
           className="chart-lightline"
         />
         <text
-          x={scale(span * 0.7, "x")}
-          y={scale(span * 0.78, "y")}
+          x={px(scale(span * 0.62, "x"))}
+          y={px(scale(span * 0.62, "y"))}
+          dy="-0.7em"
+          transform={`rotate(-45 ${px(scale(span * 0.62, "x"))} ${px(scale(span * 0.62, "y"))})`}
           className="chart-lightline-label"
         >
           rayo de luz
@@ -409,9 +417,9 @@ export function SpacetimeChart({
           .map((leg) => (
             <circle
               key={leg.index}
-              cx={scale(leg.endT, "x")}
-              cy={scale(leg.endX, "y")}
-              r={3.5}
+              cx={px(scale(leg.endT, "x"))}
+              cy={px(scale(leg.endX, "y"))}
+              r="3.5"
               className="chart-leg-dot"
             />
           ))}
@@ -426,22 +434,22 @@ export function SpacetimeChart({
 
         {marker && (
           <circle
-            cx={scale(marker.t, "x")}
-            cy={scale(marker.x, "y")}
-            r={5}
+            cx={px(scale(marker.t, "x"))}
+            cy={px(scale(marker.x, "y"))}
+            r="5"
             className="chart-marker-dot"
           />
         )}
 
         <text
-          x={(pad.l + size - pad.r) / 2}
-          y={size - 8}
+          x={px((pad.l + size - pad.r) / 2)}
+          y={px(size - 8)}
           className="chart-axis-label"
         >
           Tiempo coordenado t [a]
         </text>
         <text
-          transform={`translate(14 ${(pad.t + size - pad.b) / 2}) rotate(-90)`}
+          transform={`translate(14 ${px((pad.t + size - pad.b) / 2)}) rotate(-90)`}
           className="chart-axis-label"
         >
           Distancia x [a-l]
