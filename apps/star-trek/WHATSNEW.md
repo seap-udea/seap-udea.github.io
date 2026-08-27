@@ -4,6 +4,64 @@ Registro de cambios por versión. La app está en [seap-udea.github.io/apps/star
 
 ---
 
+## 0.2.0
+
+Iteración sobre el puente de mando: el plan se puede completar solo, el reporte
+dice a dónde se llegó de verdad, y el tablero deja de hablar de «la Tierra» y
+del «capitán».
+
+### Ajuste automático del plan
+
+- **Ajustar crucero** añade un tramo final a la velocidad ya alcanzada que cubre
+  lo que falte. Se desactiva si la nave está en reposo o retrocede.
+- **Ajustar impulso** añade un tramo de aceleración hasta el destino. Si con la
+  última *g* se puede frenar y alcanzar, frena; si no, impulsa hacia adelante.
+- **Ajustar frenado** calcula la desaceleración para llegar **en reposo**. Si el
+  plan era un sobrevuelo desde el reposo, lo convierte en giro a mitad de camino
+  (+*g* y luego −*g*).
+- **Reiniciar** y **Compartir plan** viven bajo el título Tramos; abajo quedan
+  Añadir tramo y los tres ajustes.
+
+### Reporte y lenguaje
+
+- **Distancia (planeta)** y el resto de casillas muestran el final del plan
+  actual, no el destino del selector. Si el viaje se queda corto aparece
+  *alcanzada · faltan … a-l*.
+- Las etiquetas **Tierra** pasan a **planeta** (duración, ejes de los gráficos,
+  bitácora). El tiempo de la nave va antes que el del planeta.
+- El tablero habla de **comandante** (*tiempo de comandante*, *entrada
+  comandante*) en lugar del masculino genérico «capitán».
+
+### Puente de mando
+
+- Cabecera en dos columnas: silueta **Daedalus** a la izquierda, título en
+  cursiva, byline e introducción. Se quitó el cinto «Cinemática relativista
+  interactiva».
+- La teoría queda **plegada** hasta que se pide; la cita del libro va antes de
+  la nota sobre Daedalus.
+- Pie en una línea: versión, fecha, GitHub y WHATSNEW.
+- El reproductor carga a **mitad de viaje, en pausa**, con el cielo animado; al
+  llegar no se congela.
+- **G a bordo** en la esquina del visor: aceleración propia con signo (cero en
+  crucero).
+- En pantallas estrechas el reporte va justo bajo el visor y el plan, antes de
+  la teoría.
+
+### Enlaces y números
+
+- Los planes compartidos usan `URLSearchParams` y tramos unidos con `~`, de modo
+  que un vuelo de varios tramos sobrevive al primer pintado. Al compartir, la
+  barra de direcciones se actualiza.
+- Cifras y fechas **deterministas** (sin `Intl`) para que el HTML del servidor y
+  el del navegador coincidan; las coordenadas SVG se redondean igual en ambos.
+
+### Documentación
+
+- README con las ecuaciones en LaTeX y un ejemplo numérico completo (0,2 g hasta
+  Próxima). Divulgación de IA y licencia MIT.
+
+---
+
 ## 0.1.0
 
 Primera versión.
