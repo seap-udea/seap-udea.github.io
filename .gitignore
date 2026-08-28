@@ -33,3 +33,6 @@ temp/
 **/.wrangler/
 **/dist/
 .devtools/
+
+# Quices
+quices/
