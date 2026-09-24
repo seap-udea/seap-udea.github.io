@@ -2,6 +2,10 @@
 context/
 context/**
 
+# Agent-generated instructions (never publish)
+AGENTS.md
+CLAUDE.md
+
 # Assembled site (built locally / by CI)
 _site/
 

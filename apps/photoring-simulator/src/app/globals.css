@@ -1155,12 +1155,18 @@ footer a:hover {
   }
 
   .hero h1 {
-    max-width: 100%;
+    max-width: calc(100% - 140px);
     font-size: clamp(1.75rem, 8.5vw, 2.55rem);
   }
 
+  .hero-logo-link {
+    position: absolute;
+    top: 38px;
+    right: 0;
+  }
+
   .hero-seap-logo {
-    width: 120px;
+    width: clamp(140px, 36vw, 180px);
   }
 
   main {
@@ -1198,8 +1204,8 @@ footer a:hover {
   }
 
   .light-curve {
-    width: 155%;
-    margin-left: -18%;
+    width: 100%;
+    margin-left: 0;
   }
 
   .metrics {
