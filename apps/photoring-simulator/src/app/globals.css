@@ -204,6 +204,10 @@ main {
   justify-content: space-between;
 }
 
+.summary-metric--inferred-density {
+  order: -1;
+}
+
 .summary-metric {
   padding: 9px 10px;
   border-radius: 9px;
@@ -277,6 +281,32 @@ main {
 
 .summary-metric--accent strong {
   color: var(--aqua);
+}
+
+.summary-metric--pr {
+  border-width: 1px;
+}
+
+.summary-metric--pr-negative {
+  border-color: rgba(251, 113, 133, 0.42);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(251, 113, 133, 0.16), transparent 65%),
+    rgba(16, 24, 32, 0.6);
+}
+
+.summary-metric--pr-negative strong {
+  color: #fb7185;
+}
+
+.summary-metric--pr-positive {
+  border-color: rgba(74, 222, 128, 0.42);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(74, 222, 128, 0.16), transparent 65%),
+    rgba(16, 24, 32, 0.6);
+}
+
+.summary-metric--pr-positive strong {
+  color: #4ade80;
 }
 
 .controls-card {
@@ -795,6 +825,11 @@ main {
   fill: #f0c77f;
   font-size: 11px;
   font-weight: 700;
+}
+
+.event-time-label {
+  fill: #c6d4d2;
+  font-size: 8px;
 }
 
 .event-line-equivalent {

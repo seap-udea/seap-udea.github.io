@@ -136,6 +136,7 @@ const URL_OPTION_KEYS = {
   showEquivalentPlanet: "showRingless",
   showPlanetToScale: "planetToScale",
   zoomIn: "zoom2",
+  flipPlanet: "flipPlanet",
   autoScaleDepth: "autoDepth",
   showEquivalentCurve: "showEquivalent",
 } as const;
@@ -151,6 +152,7 @@ type UrlConfiguration = {
   showEquivalentPlanet: boolean;
   showPlanetToScale: boolean;
   zoomIn: boolean;
+  flipPlanet: boolean;
   autoScaleDepth: boolean;
   showEquivalentCurve: boolean;
 };
@@ -170,6 +172,7 @@ const DEFAULT_CONFIGURATION: UrlConfiguration = {
   showEquivalentPlanet: false,
   showPlanetToScale: false,
   zoomIn: false,
+  flipPlanet: false,
   autoScaleDepth: false,
   showEquivalentCurve: true,
 };
@@ -191,7 +194,7 @@ function createPresetConfiguration(
   planetMassJupiter: number,
   options: Pick<
     UrlConfiguration,
-    "showEquivalentPlanet" | "showPlanetToScale" | "zoomIn" | "autoScaleDepth" | "showEquivalentCurve"
+    "showEquivalentPlanet" | "showPlanetToScale" | "zoomIn" | "flipPlanet" | "autoScaleDepth" | "showEquivalentCurve"
   >,
 ): UrlConfiguration {
   const periodDays =
@@ -234,6 +237,7 @@ const PRESET_CONFIGURATIONS: Record<PresetKey, UrlConfiguration> = {
       showEquivalentPlanet: false,
       showPlanetToScale: true,
       zoomIn: false,
+      flipPlanet: false,
       autoScaleDepth: true,
       showEquivalentCurve: true,
     },
@@ -256,6 +260,7 @@ const PRESET_CONFIGURATIONS: Record<PresetKey, UrlConfiguration> = {
       showEquivalentPlanet: false,
       showPlanetToScale: true,
       zoomIn: false,
+      flipPlanet: false,
       autoScaleDepth: false,
       showEquivalentCurve: true,
     },
@@ -278,6 +283,7 @@ const PRESET_CONFIGURATIONS: Record<PresetKey, UrlConfiguration> = {
       showEquivalentPlanet: false,
       showPlanetToScale: true,
       zoomIn: false,
+      flipPlanet: false,
       autoScaleDepth: false,
       showEquivalentCurve: true,
     },
@@ -406,6 +412,11 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
       URL_OPTION_KEYS.zoomIn,
       DEFAULT_CONFIGURATION.zoomIn,
     ),
+    flipPlanet: readBooleanParameter(
+      searchParams,
+      URL_OPTION_KEYS.flipPlanet,
+      DEFAULT_CONFIGURATION.flipPlanet,
+    ),
     autoScaleDepth: readBooleanParameter(
       searchParams,
       URL_OPTION_KEYS.autoScaleDepth,
@@ -442,6 +453,7 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
     configuration.showPlanetToScale ? "1" : "0",
   );
   url.searchParams.set(URL_OPTION_KEYS.zoomIn, configuration.zoomIn ? "1" : "0");
+  url.searchParams.set(URL_OPTION_KEYS.flipPlanet, configuration.flipPlanet ? "1" : "0");
   url.searchParams.set(
     URL_OPTION_KEYS.autoScaleDepth,
     configuration.autoScaleDepth ? "1" : "0",
@@ -628,9 +640,11 @@ function TransitScene({
   showEquivalentPlanet,
   showPlanetToScale,
   zoomIn,
+  flipPlanet,
   onShowEquivalentPlanetChange,
   onShowPlanetToScaleChange,
   onZoomInChange,
+  onFlipPlanetChange,
   onPhase,
   onToggle,
 }: {
@@ -642,12 +656,15 @@ function TransitScene({
   showEquivalentPlanet: boolean;
   showPlanetToScale: boolean;
   zoomIn: boolean;
+  flipPlanet: boolean;
   onShowEquivalentPlanetChange: (value: boolean) => void;
   onShowPlanetToScaleChange: (value: boolean) => void;
   onZoomInChange: (value: boolean) => void;
+  onFlipPlanetChange: (value: boolean) => void;
   onPhase: (phase: number) => void;
   onToggle: () => void;
 }) {
+  const visualTilt = flipPlanet ? -parameters.tilt : parameters.tilt;
   const spectralAppearance = getSpectralAppearance(starMassSolar);
   const starX = 400;
   const starY = 165;
@@ -724,14 +741,34 @@ function TransitScene({
         ]
       : visualPlanetContacts;
   const visualPadding = 0.16;
+  const normalPhysicalAnchors = [
+    firstCurveX,
+    ...model.contacts,
+    lastCurveX,
+  ];
+  const normalVisualAnchors = [
+    visualContacts[0] - visualPadding,
+    ...visualContacts,
+    visualContacts[3] + visualPadding,
+  ];
   const visualX = mapThroughContacts(
     physicalX,
-    [firstCurveX, ...model.contacts, lastCurveX],
-    [
-      visualContacts[0] - visualPadding,
-      ...visualContacts,
-      visualContacts[3] + visualPadding,
-    ],
+    flipPlanet
+      ? [
+          -lastCurveX,
+          -model.contacts[3],
+          -model.contacts[2],
+          -model.contacts[1],
+          -model.contacts[0],
+          -firstCurveX,
+        ]
+      : normalPhysicalAnchors,
+    flipPlanet
+      ? normalVisualAnchors
+          .slice()
+          .reverse()
+          .map((anchor) => -anchor)
+      : normalVisualAnchors,
   );
   const planetX = starX + visualX * starR;
   const planetY = starY + parameters.impact * starR;
@@ -809,7 +846,7 @@ function TransitScene({
               rx={outerR}
               ry={outerR * projected}
               fill="white"
-              transform={`rotate(${parameters.tilt} ${planetX} ${planetY})`}
+              transform={`rotate(${visualTilt} ${planetX} ${planetY})`}
             />
             <ellipse
               suppressHydrationWarning
@@ -818,7 +855,7 @@ function TransitScene({
               rx={innerR}
               ry={innerR * projected}
               fill="black"
-              transform={`rotate(${parameters.tilt} ${planetX} ${planetY})`}
+              transform={`rotate(${visualTilt} ${planetX} ${planetY})`}
             />
           </mask>
           <linearGradient id="ringColor" x1="0" x2="1">
@@ -977,6 +1014,14 @@ function TransitScene({
           />
           <span>Zoom in x2</span>
         </label>
+        <label className="simulation-option">
+          <input
+            type="checkbox"
+            checked={Boolean(flipPlanet)}
+            onChange={(event) => onFlipPlanetChange(event.currentTarget.checked)}
+          />
+          <span>Flip planet</span>
+        </label>
       </div>
     </section>
   );
@@ -987,6 +1032,7 @@ function LightCurve({
   phase,
   autoScaleDepth,
   showEquivalent,
+  flipPlanet,
   onAutoScaleDepthChange,
   onShowEquivalentChange,
 }: {
@@ -994,6 +1040,7 @@ function LightCurve({
   phase: number;
   autoScaleDepth: boolean;
   showEquivalent: boolean;
+  flipPlanet: boolean;
   onAutoScaleDepthChange: (value: boolean) => void;
   onShowEquivalentChange: (value: boolean) => void;
 }) {
@@ -1031,7 +1078,15 @@ function LightCurve({
   const current = model.lightCurve[
     Math.max(0, Math.min(model.lightCurve.length - 1, currentIndex))
   ];
-  const events = model.contacts.map((x, index) => ({
+  const displayedContacts = flipPlanet
+    ? [
+        -model.contacts[3],
+        -model.contacts[2],
+        -model.contacts[1],
+        -model.contacts[0],
+      ]
+    : model.contacts;
+  const events = displayedContacts.map((x, index) => ({
     x,
     label: `T${index + 1}`,
     anchor: index < 2 ? ("start" as const) : ("end" as const),
@@ -1115,6 +1170,14 @@ function LightCurve({
                 textAnchor={event.anchor}
               >
                 {event.label}
+              </text>
+              <text
+                x={x + (event.anchor === "start" ? 6 : -6)}
+                y={height - margin.bottom + 28}
+                className="event-time-label"
+                textAnchor={event.anchor}
+              >
+                {time >= 0 ? "+" : ""}{time.toFixed(2)} h
               </text>
             </g>
           );
@@ -1288,16 +1351,12 @@ function CalculatedHelp({
 
 function PhotoRingSummaryCard({
   model,
-  equivalentPlanetRadius,
-  equivalentRadiusRatio,
   observedPlanetDensityRatio,
   observedPlanetDensityGcm3,
   planetTrueDensityGcm3,
   densityClass,
 }: {
   model: TransitModel;
-  equivalentPlanetRadius: number;
-  equivalentRadiusRatio: number;
   observedPlanetDensityRatio: number;
   observedPlanetDensityGcm3: number;
   planetTrueDensityGcm3: number;
@@ -1311,7 +1370,13 @@ function PhotoRingSummaryCard({
         </div>
       </div>
       <div className="summary-metrics-list">
-        <div className="summary-metric summary-metric--accent">
+        <div
+          className={`summary-metric summary-metric--pr ${
+            model.prAnomaly < 0
+              ? "summary-metric--pr-negative"
+              : "summary-metric--pr-positive"
+          }`}
+        >
           <div className="summary-metric-header">
             <span className="summary-metric-label">
               PR Anomaly
@@ -1321,30 +1386,12 @@ function PhotoRingSummaryCard({
                 label="PR anomaly"
               />
             </span>
-            <span className="summary-metric-tag">{densityClass}</span>
           </div>
           <strong>
             {model.prAnomaly >= 0 ? "+" : ""}
             {model.prAnomaly.toFixed(2)}
           </strong>
           <small>10 log₁₀(ρobs / ρ★) · asterodensity</small>
-        </div>
-
-        <div className="summary-metric">
-          <div className="summary-metric-header">
-            <span className="summary-metric-label">
-              Equivalent Planet Radius
-              <CalculatedHelp
-                help="Radius of a ringless planet that would block the same total amount of light as the ringed planet."
-                helpId="help-equivalent-radius"
-                label="equivalent planet radius"
-              />
-            </span>
-          </div>
-          <strong>{equivalentPlanetRadius.toFixed(3)} R★</strong>
-          <small>
-            {equivalentRadiusRatio.toFixed(2)} Rₚ · {(100 * (equivalentRadiusRatio - 1)).toFixed(0)}% larger from depth
-          </small>
         </div>
 
         <div className="summary-metric">
@@ -1378,6 +1425,22 @@ function PhotoRingSummaryCard({
             {(observedPlanetDensityRatio * 100).toFixed(0)}% of true ρₚ
           </small>
         </div>
+
+        <div className="summary-metric summary-metric--inferred-density">
+          <div className="summary-metric-header">
+            <span className="summary-metric-label">
+              Inferred density
+              <CalculatedHelp
+                help="Stellar density inferred by interpreting the ringed transit as a ringless transit."
+                helpId="help-summary-inferred-density"
+                label="inferred density"
+              />
+            </span>
+            <span className="summary-metric-tag">{densityClass}</span>
+          </div>
+          <strong>{model.observedDensityRatio.toFixed(3)} ρ★</strong>
+          <small>stellar density from the ringless interpretation</small>
+        </div>
       </div>
     </aside>
   );
@@ -1402,6 +1465,7 @@ export default function PhotoRingSimulator() {
     showEquivalentPlanet,
     showPlanetToScale,
     zoomIn,
+    flipPlanet,
     autoScaleDepth,
     showEquivalentCurve,
   } = configuration;
@@ -1561,7 +1625,8 @@ export default function PhotoRingSimulator() {
                 <p className="parameter-assumptions">
                   M★ = {starMassSolar.toFixed(2)} M☉ · R★ ={" "}
                   {starRadiusSolar.toFixed(2)} R☉ · Mp = {planetMassJupiter.toFixed(3)} Mjup · a = {aInAu.toFixed(3)} AU ={" "}
-                  {aInRStar.toFixed(1)} R★ · Porb = {periodDays.toFixed(2)} days
+                  {aInRStar.toFixed(1)} R★ · Porb = {periodDays.toFixed(2)} days · ρ★ ={" "}
+                  {(densityKgM3 / 1000).toFixed(3)} g/cm³
                 </p>
               </div>
             </div>
@@ -1621,6 +1686,7 @@ export default function PhotoRingSimulator() {
                 showEquivalentPlanet={showEquivalentPlanet}
                 showPlanetToScale={showPlanetToScale}
                 zoomIn={zoomIn}
+                flipPlanet={flipPlanet}
                 onShowEquivalentPlanetChange={(value) =>
                   setConfiguration((current) => ({
                     ...current,
@@ -1639,6 +1705,12 @@ export default function PhotoRingSimulator() {
                     zoomIn: value,
                   }))
                 }
+                onFlipPlanetChange={(value) =>
+                  setConfiguration((current) => ({
+                    ...current,
+                    flipPlanet: value,
+                  }))
+                }
                 onPhase={(value) => {
                   setPhase(value);
                   setPlaying(false);
@@ -1647,8 +1719,6 @@ export default function PhotoRingSimulator() {
               />
               <PhotoRingSummaryCard
                 model={model}
-                equivalentPlanetRadius={equivalentPlanetRadius}
-                equivalentRadiusRatio={equivalentRadiusRatio}
                 observedPlanetDensityRatio={observedPlanetDensityRatio}
                 observedPlanetDensityGcm3={observedPlanetDensityGcm3}
                 planetTrueDensityGcm3={planetTrueDensityGcm3}
@@ -1660,6 +1730,7 @@ export default function PhotoRingSimulator() {
               phase={phase}
               autoScaleDepth={autoScaleDepth}
               showEquivalent={showEquivalentCurve}
+              flipPlanet={flipPlanet}
               onAutoScaleDepthChange={(value) =>
                 setConfiguration((current) => ({
                   ...current,
@@ -1716,11 +1787,11 @@ export default function PhotoRingSimulator() {
             helpId="help-observed-b"
           />
           <Metric
-            label="Inferred density"
-            value={`${model.observedDensityRatio.toFixed(3)} ρ★`}
-            note={`stellar density ${densityClass}`}
-            help="Inferred density is the stellar density estimated from the ringless interpretation of the transit, relative to the true density used by the model."
-            helpId="help-inferred-density"
+            label="Equivalent Planet Radius"
+            value={`${equivalentPlanetRadius.toFixed(3)} R★`}
+            note={`${equivalentRadiusRatio.toFixed(2)} Rₚ · ${(100 * (equivalentRadiusRatio - 1)).toFixed(0)}% larger from depth`}
+            help="Radius of a ringless planet that would block the same total amount of light as the ringed planet."
+            helpId="help-equivalent-radius"
           />
         </section>
       </main>
