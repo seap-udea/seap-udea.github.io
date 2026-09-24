@@ -28,6 +28,11 @@ tmp/
 temp/
 .cache/
 
+# Python generated files
+**/__pycache__/
+*.py[cod]
+*$py.class
+
 # Cloudflare Wrangler
 **/node_modules/
 **/.wrangler/

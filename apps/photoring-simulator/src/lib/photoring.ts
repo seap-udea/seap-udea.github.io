@@ -39,8 +39,10 @@ const DAY_SECONDS = 86400;
 const DEG = Math.PI / 180;
 const JUPITER_TO_SUN_RADIUS = 0.10045;
 const SATURN_LIKE_RING_AREA_FACTOR = 1 + 2.5 ** 2 - 1.5 ** 2;
-const FIXED_VERTICAL_SCALE_DEPTH =
-  JUPITER_TO_SUN_RADIUS ** 2 * SATURN_LIKE_RING_AREA_FACTOR;
+const REFERENCE_RING_ALPHA = Math.exp(-1);
+const REFERENCE_VERTICAL_SCALE_DEPTH =
+  JUPITER_TO_SUN_RADIUS ** 2 *
+  (1 + (SATURN_LIKE_RING_AREA_FACTOR - 1) * (1 - REFERENCE_RING_ALPHA));
 
 const STAR_SAMPLES = (() => {
   const points: { x: number; y: number }[] = [];
@@ -178,7 +180,11 @@ function blockedFlux(
   return blocked / STAR_SAMPLES.length;
 }
 
-export function computeTransit(parameters: RingParameters): TransitModel {
+export function computeTransit(
+  parameters: RingParameters,
+  periodDays = PERIOD_DAYS,
+  trueDensityKgM3 = TRUE_DENSITY_KG_M3,
+): TransitModel {
   const p = parameters.planetRadius;
   const b = parameters.impact;
   const theta = parameters.tilt * DEG;
@@ -186,7 +192,7 @@ export function computeTransit(parameters: RingParameters): TransitModel {
   const blocking = ringBlockingFactor(parameters.alpha, cosI);
   const outer = parameters.outerRingRadius * p;
   const aOverR =
-    ((G * TRUE_DENSITY_KG_M3 * (PERIOD_DAYS * DAY_SECONDS) ** 2) /
+    ((G * trueDensityKgM3 * (periodDays * DAY_SECONDS) ** 2) /
       (3 * Math.PI)) **
     (1 / 3);
   const orbitalInclination = Math.acos(Math.min(1, b / aOverR));
@@ -233,14 +239,14 @@ export function computeTransit(parameters: RingParameters): TransitModel {
 
   const orbitalSpeedRPerHour =
     (2 * Math.PI * aOverR * Math.sin(orbitalInclination)) /
-    (PERIOD_DAYS * 24);
+    (periodDays * 24);
   const timeAtX = (x: number) => x / orbitalSpeedRPerHour;
   const durationFromSpan = (span: number) => {
     const argument = Math.min(
       1,
       Math.max(0, span / (aOverR * Math.sin(orbitalInclination))),
     );
-    return (PERIOD_DAYS * 24 * Math.asin(argument)) / (2 * Math.PI);
+    return (periodDays * 24 * Math.asin(argument)) / (2 * Math.PI);
   };
   const totalDuration = durationFromSpan(contacts[3] - contacts[0]);
   const fullDuration = durationFromSpan(Math.max(0, contacts[2] - contacts[1]));
@@ -252,7 +258,7 @@ export function computeTransit(parameters: RingParameters): TransitModel {
   const areas = occultorArea(parameters);
   const depth = areas.total / Math.PI;
   const ringDepth = areas.ring / Math.PI;
-  const verticalScaleDepth = FIXED_VERTICAL_SCALE_DEPTH;
+  const verticalScaleDepth = REFERENCE_VERTICAL_SCALE_DEPTH;
   const equivalentPlanetRadius = Math.sqrt(depth);
 
   const hasFullEquivalentTransit = b <= 1 - equivalentPlanetRadius;
@@ -267,8 +273,8 @@ export function computeTransit(parameters: RingParameters): TransitModel {
     Math.sqrt(Math.max(0, (1 + equivalentPlanetRadius) ** 2 - b * b)),
   ];
 
-  const s14 = Math.sin((Math.PI * totalDuration) / (PERIOD_DAYS * 24));
-  const s23 = Math.sin((Math.PI * fullDuration) / (PERIOD_DAYS * 24));
+  const s14 = Math.sin((Math.PI * totalDuration) / (periodDays * 24));
+  const s23 = Math.sin((Math.PI * fullDuration) / (periodDays * 24));
   const ratio = s14 > 0 ? (s23 * s23) / (s14 * s14) : 0;
   const fPlus = 1 + Math.sqrt(depth);
   const fMinus = 1 - Math.sqrt(depth);

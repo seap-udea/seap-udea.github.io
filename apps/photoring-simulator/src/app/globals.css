@@ -79,6 +79,29 @@ input {
   font-weight: 700;
 }
 
+.hero-description {
+  max-width: 780px;
+  margin: 14px 0 0;
+  color: #aabbb8;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  text-align: justify;
+}
+
+.hero-description a {
+  color: #d5e8e4;
+  text-decoration: underline;
+  text-decoration-color: rgba(102, 223, 208, 0.45);
+  text-underline-offset: 3px;
+}
+
+.hero-description a:hover,
+.hero-description a:focus-visible {
+  color: var(--aqua);
+  text-decoration-color: var(--aqua);
+  outline: none;
+}
+
 .byline {
   margin: 13px 0 0;
   color: var(--muted);
@@ -112,13 +135,11 @@ input {
   width: clamp(160px, 16vw, 220px);
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 0 24px rgba(239, 100, 30, 0.25));
-  transition: transform 0.25s ease, filter 0.25s ease;
+  transition: transform 0.25s ease;
 }
 
 .hero-logo-link:hover .hero-seap-logo {
   transform: scale(1.05);
-  filter: drop-shadow(0 0 34px rgba(239, 100, 30, 0.45));
 }
 
 main {
@@ -212,6 +233,13 @@ main {
   text-transform: uppercase;
 }
 
+.summary-metric-label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  overflow: visible !important;
+}
+
 .summary-metric-tag {
   font-size: 0.52rem;
   padding: 1px 6px;
@@ -272,6 +300,21 @@ main {
   border-bottom: 1px solid var(--line);
 }
 
+.controls-actions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.controls-actions--bottom {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
 .controls-heading h2,
 .card-heading h2 {
   margin: 0;
@@ -280,6 +323,16 @@ main {
   font-weight: 560;
   line-height: 1;
   letter-spacing: -0.035em;
+}
+
+.parameter-assumptions {
+  max-width: 310px;
+  margin: 9px 0 0;
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .reset-button {
@@ -299,18 +352,46 @@ main {
   outline: none;
 }
 
+.config-link-button {
+  padding: 7px 11px;
+  border: 1px solid rgba(102, 223, 208, 0.25);
+  border-radius: 7px;
+  background: var(--aqua-soft);
+  color: var(--aqua);
+  font-size: 0.67rem;
+  cursor: pointer;
+}
+
+.config-link-button:hover,
+.config-link-button:focus-visible {
+  border-color: var(--aqua);
+  background: rgba(102, 223, 208, 0.2);
+  outline: none;
+}
+
+.config-link-feedback {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  color: var(--aqua);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.55rem;
+  white-space: nowrap;
+}
+
 .parameter-list {
   display: grid;
   gap: 15px;
 }
 
 .parameter {
+  position: relative;
   display: block;
 }
 
 .parameter-title {
   display: grid;
-  grid-template-columns: 27px minmax(0, 1fr) auto;
+  grid-template-columns: 27px minmax(0, 1fr) auto auto;
   align-items: baseline;
   gap: 7px;
 }
@@ -321,16 +402,87 @@ main {
   font-size: 1rem;
 }
 
-.parameter-title span {
+.parameter-title label {
   color: #bdc9c7;
   font-size: 0.68rem;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .parameter-title output {
   color: var(--ink);
   font-family: var(--font-mono), monospace;
   font-size: 0.68rem;
+}
+
+.parameter-help-button {
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+  border: 1px solid rgba(102, 223, 208, 0.35);
+  border-radius: 999px;
+  background: rgba(102, 223, 208, 0.08);
+  color: var(--aqua);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.parameter-help-button:hover,
+.parameter-help-button:focus-visible {
+  border-color: var(--aqua);
+  background: rgba(102, 223, 208, 0.16);
+  outline: none;
+}
+
+.parameter-help {
+  position: absolute;
+  z-index: 5;
+  top: 25px;
+  right: 0;
+  left: 34px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(102, 223, 208, 0.28);
+  border-radius: 7px;
+  background: var(--panel-raised);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+  color: var(--ink);
+  font-size: 0.63rem;
+  line-height: 1.45;
+}
+
+.parameter-help--left {
+  right: 0;
+  left: auto;
+  width: min(320px, calc(100vw - 40px));
+}
+
+.parameter-help span {
+  flex: 1;
+}
+
+.parameter-help-close {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 0.9;
+  cursor: pointer;
+}
+
+.parameter-help-close:hover,
+.parameter-help-close:focus-visible {
+  color: var(--aqua);
+  outline: none;
 }
 
 .parameter input,
@@ -427,6 +579,56 @@ main {
   width: 100%;
   max-height: 410px;
   margin-top: 3px;
+}
+
+.simulation-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0 3px;
+  color: var(--muted);
+  font-size: 0.58rem;
+  cursor: pointer;
+}
+
+.simulation-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.simulation-options-title {
+  margin: 0;
+  color: var(--faint);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.curve-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(206, 235, 231, 0.08);
+}
+
+.simulation-option input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--aqua);
+  cursor: pointer;
+}
+
+.simulation-option input:focus-visible {
+  outline: 1px solid var(--aqua);
+  outline-offset: 3px;
 }
 
 .playback {
@@ -637,6 +839,16 @@ main {
   margin-top: 12px;
 }
 
+.other-observables-title {
+  margin: 28px 0 0;
+  color: var(--ink);
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  font-weight: 560;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
 @media (max-width: 1060px) {
   .metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -656,9 +868,9 @@ main {
   border-radius: 10px;
 }
 
-.metric span {
+.metric-label {
   display: block;
-  overflow: hidden;
+  overflow: visible;
   color: var(--muted);
   font-size: 0.64rem;
   font-weight: 700;
@@ -667,7 +879,103 @@ main {
   white-space: nowrap;
 }
 
-.metric span sub {
+.calculated-help {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.calculated-help-button {
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 1px solid rgba(102, 223, 208, 0.35);
+  border-radius: 999px;
+  background: rgba(102, 223, 208, 0.08);
+  color: var(--aqua);
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.calculated-help-button:hover,
+.calculated-help-button:focus-visible {
+  border-color: var(--aqua);
+  background: rgba(102, 223, 208, 0.16);
+  outline: none;
+}
+
+.calculated-help-tooltip {
+  position: absolute;
+  z-index: 8;
+  top: 22px;
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: min(250px, 75vw);
+  padding: 9px 10px;
+  border: 1px solid rgba(102, 223, 208, 0.28);
+  border-radius: 7px;
+  background: var(--panel-raised);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+  color: var(--ink);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-transform: none;
+  white-space: normal;
+}
+
+.calculated-help-tooltip--left {
+  right: 0;
+  left: auto;
+}
+
+.calculated-help-tooltip > span {
+  display: block;
+  flex: 1;
+  overflow: visible;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  white-space: normal;
+}
+
+.summary-metric-header .calculated-help-tooltip > span {
+  color: var(--ink);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.calculated-help-close {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 0.9;
+  cursor: pointer;
+}
+
+.calculated-help-close:hover,
+.calculated-help-close:focus-visible {
+  color: var(--aqua);
+  outline: none;
+}
+
+.metric-label sub {
   font-size: 0.78em;
   vertical-align: baseline;
   position: relative;
