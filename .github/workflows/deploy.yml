@@ -33,6 +33,7 @@ jobs:
             apps/cloud_academy/package-lock.json
             apps/drake-calculator/package-lock.json
             apps/star-trek/package-lock.json
+            apps/photoring-simulator/package-lock.json
 
       - name: Build Lighting Black Holes app
         working-directory: apps/lighting-black-holes
@@ -58,6 +59,12 @@ jobs:
         working-directory: apps/star-trek
         env:
           NEXT_PUBLIC_LAST_PUSH_DATE: ${{ github.event.head_commit.timestamp }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build PhotoRing Simulator app
+        working-directory: apps/photoring-simulator
         run: |
           npm ci
           npm run build
@@ -102,6 +109,7 @@ jobs:
           cp -r apps/cloud_academy/out _site/apps/cloud_academy
           cp -r apps/drake-calculator/out _site/apps/drake-calculator
           cp -r apps/star-trek/out _site/apps/star-trek
+          cp -r apps/photoring-simulator/out _site/apps/photoring-simulator
 
           # Books: prefer vendored ./books/, else cache/.cache (clone only on miss)
           ./bin/sync_books.sh _site

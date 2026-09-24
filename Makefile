@@ -36,6 +36,8 @@ build-apps:
 	@cd apps/drake-calculator && npm ci && npm run build
 	@echo "▶  Building Star Trek…"
 	@cd apps/star-trek && npm ci && npm run build
+	@echo "▶  Building PhotoRing Simulator…"
+	@cd apps/photoring-simulator && npm ci && npm run build
 	@echo "✓  Apps built"
 
 sync-site:
@@ -47,6 +49,7 @@ sync-site:
 	test -f apps/cloud_academy/out/index.html || missing=1; \
 	test -f apps/drake-calculator/out/index.html || missing=1; \
 	test -f apps/star-trek/out/index.html || missing=1; \
+	test -f apps/photoring-simulator/out/index.html || missing=1; \
 	if [ "$$missing" = 1 ]; then $(MAKE) build-apps; fi
 	@rm -rf $(SITE)
 	@mkdir -p $(SITE)/apps
@@ -63,6 +66,7 @@ sync-site:
 	@cp -r apps/cloud_academy/out $(SITE)/apps/cloud_academy
 	@cp -r apps/drake-calculator/out $(SITE)/apps/drake-calculator
 	@cp -r apps/star-trek/out $(SITE)/apps/star-trek
+	@cp -r apps/photoring-simulator/out $(SITE)/apps/photoring-simulator
 	@$(MAKE) sync-books
 	@touch $(SITE)/.nojekyll
 	@echo "✓  Site ready in $(SITE)/"
@@ -70,6 +74,7 @@ sync-site:
 	@echo "         http://$(HOST):$(PORT)/apps/cloud_academy/"
 	@echo "         http://$(HOST):$(PORT)/apps/drake-calculator/"
 	@echo "         http://$(HOST):$(PORT)/apps/star-trek/"
+	@echo "         http://$(HOST):$(PORT)/apps/photoring-simulator/"
 	@echo "   Book:  http://$(HOST):$(PORT)/books/Relatividad-Zuluaga/"
 	@echo "   Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"
 	@echo "   Stats:   http://$(HOST):$(PORT)/stats.html"
@@ -94,6 +99,7 @@ start: sync-site
 		echo "  App:  http://$(HOST):$(PORT)/apps/cloud_academy/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/drake-calculator/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/star-trek/"; \
+		echo "  App:  http://$(HOST):$(PORT)/apps/photoring-simulator/"; \
 		echo "  Book:  http://$(HOST):$(PORT)/books/Relatividad-Zuluaga/"; \
 		echo "  Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"; \
 		echo "  Stats:   http://$(HOST):$(PORT)/stats.html"; \

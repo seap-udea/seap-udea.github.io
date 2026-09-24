@@ -71,6 +71,7 @@ Apps live under `apps/` and are built as static exports in CI.
 - [Lighting Black Holes](https://seap-udea.github.io/apps/lighting-black-holes/) — black-hole light visualization
 - [La calculadora de Drake](https://seap-udea.github.io/apps/drake-calculator/) — interactive Drake equation and Milky Way visualization
 - [Star trek](https://seap-udea.github.io/apps/star-trek/) — relativistic flight planner with constant proper acceleration
+- [PRisma Simulator: PhotoRing Effect Simulator](https://seap-udea.github.io/apps/photoring-simulator/) — interactive exoring transits and asterodensity profiling
 
 Locally:
 
