@@ -379,6 +379,31 @@ main {
   white-space: nowrap;
 }
 
+.preset-selector {
+  display: grid;
+  gap: 5px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+.preset-selector select {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel-raised);
+  color: var(--ink);
+  font-size: 0.67rem;
+  cursor: pointer;
+}
+
+.preset-selector select:focus-visible {
+  border-color: var(--aqua);
+  outline: 1px solid var(--aqua);
+  outline-offset: 2px;
+}
+
 .parameter-list {
   display: grid;
   gap: 15px;

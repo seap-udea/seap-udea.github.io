@@ -285,19 +285,19 @@ The links below open the simulator with reproducible configurations. The first c
 
 1. **Default configuration** — $p=0.084$, $f_i=1.58$, $f_e=2.35$, $\theta=25^\circ$, $i_R=55^\circ$, $b=0.25$, $\alpha=\exp(-1)$, $M_\star=1\,M_\odot$, $R_\star=1\,R_\odot$, $a=0.999997\mathrm{AU}$.
 
-	[Open the default configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.084&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mstar=1&rstar=1&aau=0.9999974887698985&showRingless=0&planetToScale=0&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open the default configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.084&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mstar=1&rstar=1&aau=0.9999974887698985&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 2. **TOI-2449b reference configuration** — $P=106.14468$ days, $p=0.0967$, $b=0.704$, Saturn-like rings $f_i=1.526$, $f_e=2.269$, $\alpha=\exp(-1)$, $M_\star=1.079\,M_\odot$, $R_\star=1.065\,R_\odot$, $a=0.450\mathrm{AU}$.
 
-	[Open the TOI-2449b reference configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.0967&fi=1.526&fe=2.269&tilt=25&ir=55&b=0.704&alpha=0.36787944117144233&mstar=1.079&rstar=1.065&aau=0.450&showRingless=1&planetToScale=0&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open the TOI-2449b reference configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.0967&fi=1.526&fe=2.269&tilt=25&ir=55&b=0.704&alpha=0.36787944117144233&mstar=1.079&rstar=1.065&aau=0.450&showRingless=0&planetToScale=1&zoom2=0&autoDepth=1&showEquivalent=1)
 
 3. **Kepler-51b Figure 6 median configuration** — $P=45.154$ days, $p=0.058$, $b=0.33$, $f_i=1$, $f_e=1.93$, $i_R=65.8^\circ$, $\theta=78.8^\circ$, $\alpha=0.33$, $\rho_{\star,\mathrm{true}}=2.11\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9834\,M_\odot$ and $a\simeq0.24678\mathrm{AU}$.
 
-	[Open the Kepler-51b Figure 6 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.058&fi=1&fe=1.93&tilt=78.8&ir=65.8&b=0.33&alpha=0.33&mstar=0.9834202&rstar=0.869&aau=0.2467834&showRingless=1&planetToScale=0&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open the Kepler-51b Figure 6 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.058&fi=1&fe=1.93&tilt=78.8&ir=65.8&b=0.33&alpha=0.33&mstar=0.9834202&rstar=0.869&aau=0.2467834&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 4. **Kepler-51d Figure 7 median configuration** — $P=130.186$ days, $p=0.081$, $b=0.28$, $f_i=1$, $f_e=1.73$, $i_R=70.87^\circ$, $\theta=67.39^\circ$, $\alpha=0.34$, $\rho_{\star,\mathrm{true}}=2.14\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9974\,M_\odot$ and $a\simeq0.50227\,\mathrm{AU}$.
 
-	[Open the Kepler-51d Figure 7 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.081&fi=1&fe=1.73&tilt=67.39&ir=70.87&b=0.28&alpha=0.34&mstar=0.9974025&rstar=0.869&aau=0.5022714&showRingless=1&planetToScale=0&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open the Kepler-51d Figure 7 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.081&fi=1&fe=1.73&tilt=67.39&ir=70.87&b=0.28&alpha=0.34&mstar=0.9974025&rstar=0.869&aau=0.5022714&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 
 ## AI Assistance Disclosure

@@ -169,6 +169,111 @@ const DEFAULT_CONFIGURATION: UrlConfiguration = {
   showEquivalentCurve: true,
 };
 
+type PresetKey = "default" | "toi2449b" | "kepler51b" | "kepler51d";
+
+const PRESET_LABELS: Record<PresetKey, string> = {
+  default: "Default configuration",
+  toi2449b: "TOI-2449b reference configuration",
+  kepler51b: "Kepler-51b Figure 6 configuration",
+  kepler51d: "Kepler-51d Figure 7 configuration",
+};
+
+function createPresetConfiguration(
+  parameters: RingParameters,
+  starMassSolar: number,
+  starRadiusSolar: number,
+  semiMajorAxisAu: number,
+  options: Pick<
+    UrlConfiguration,
+    "showEquivalentPlanet" | "showPlanetToScale" | "zoomIn" | "autoScaleDepth" | "showEquivalentCurve"
+  >,
+): UrlConfiguration {
+  const periodDays =
+    2 *
+    Math.PI *
+    Math.sqrt(
+      (semiMajorAxisAu * AU_METERS) ** 3 /
+        (GRAVITATIONAL_CONSTANT * starMassSolar * SOLAR_MASS_KG),
+    ) /
+    86400;
+  return {
+    parameters,
+    starMassSolar,
+    starRadiusSolar,
+    semiMajorAxisAu,
+    periodDays,
+    densityKgM3: SOLAR_DENSITY_KG_M3 * starMassSolar / starRadiusSolar ** 3,
+    ...options,
+  };
+}
+
+const PRESET_CONFIGURATIONS: Record<PresetKey, UrlConfiguration> = {
+  default: DEFAULT_CONFIGURATION,
+  toi2449b: createPresetConfiguration(
+    {
+      planetRadius: 0.0967,
+      innerRingRadius: 1.526,
+      outerRingRadius: 2.269,
+      tilt: 25,
+      inclination: 55,
+      impact: 0.704,
+      alpha: Math.exp(-1),
+    },
+    1.079,
+    1.065,
+    0.45,
+    {
+      showEquivalentPlanet: false,
+      showPlanetToScale: true,
+      zoomIn: false,
+      autoScaleDepth: true,
+      showEquivalentCurve: true,
+    },
+  ),
+  kepler51b: createPresetConfiguration(
+    {
+      planetRadius: 0.058,
+      innerRingRadius: 1,
+      outerRingRadius: 1.93,
+      tilt: 78.8,
+      inclination: 65.8,
+      impact: 0.33,
+      alpha: 0.33,
+    },
+    0.9834202,
+    0.869,
+    0.2467834,
+    {
+      showEquivalentPlanet: false,
+      showPlanetToScale: true,
+      zoomIn: false,
+      autoScaleDepth: false,
+      showEquivalentCurve: true,
+    },
+  ),
+  kepler51d: createPresetConfiguration(
+    {
+      planetRadius: 0.081,
+      innerRingRadius: 1,
+      outerRingRadius: 1.73,
+      tilt: 67.39,
+      inclination: 70.87,
+      impact: 0.28,
+      alpha: 0.34,
+    },
+    0.9974025,
+    0.869,
+    0.5022714,
+    {
+      showEquivalentPlanet: false,
+      showPlanetToScale: true,
+      zoomIn: false,
+      autoScaleDepth: false,
+      showEquivalentCurve: true,
+    },
+  ),
+};
+
 function readBooleanParameter(
   searchParams: URLSearchParams,
   key: string,
@@ -368,6 +473,43 @@ function mapThroughContacts(
   return visualAnchors[visualAnchors.length - 1];
 }
 
+function getSpectralAppearance(starMassSolar: number) {
+  if (starMassSolar <= 0.6) {
+    return {
+      type: "M",
+      core: "#ffb08a",
+      middle: "#d9573f",
+      edge: "#7d1f2a",
+      glow: "#e34b32",
+    };
+  }
+  if (starMassSolar <= 0.9) {
+    return {
+      type: "K",
+      core: "#fff0b0",
+      middle: "#f5a33b",
+      edge: "#b84b24",
+      glow: "#ed8a2f",
+    };
+  }
+  if (starMassSolar <= 1.1) {
+    return {
+      type: "G",
+      core: "#fff9cf",
+      middle: "#ffc85c",
+      edge: "#e86f2a",
+      glow: "#ff9d36",
+    };
+  }
+  return {
+    type: "F",
+    core: "#ffffff",
+    middle: "#f5f4dc",
+    edge: "#d8c98c",
+    glow: "#fff3b0",
+  };
+}
+
 function ParameterControls({
   parameters,
   onChange,
@@ -460,6 +602,7 @@ function ParameterControls({
 function TransitScene({
   parameters,
   model,
+  starMassSolar,
   phase,
   playing,
   showEquivalentPlanet,
@@ -473,6 +616,7 @@ function TransitScene({
 }: {
   parameters: RingParameters;
   model: TransitModel;
+  starMassSolar: number;
   phase: number;
   playing: boolean;
   showEquivalentPlanet: boolean;
@@ -484,6 +628,7 @@ function TransitScene({
   onPhase: (phase: number) => void;
   onToggle: () => void;
 }) {
+  const spectralAppearance = getSpectralAppearance(starMassSolar);
   const starX = 400;
   const starY = 165;
   const starR = 116;
@@ -628,9 +773,9 @@ function TransitScene({
       >
         <defs>
           <radialGradient id="starSurface" cx="42%" cy="38%">
-            <stop offset="0" stopColor="#fff9cf" />
-            <stop offset="0.55" stopColor="#ffc85c" />
-            <stop offset="1" stopColor="#e86f2a" />
+            <stop offset="0" stopColor={spectralAppearance.core} />
+            <stop offset="0.55" stopColor={spectralAppearance.middle} />
+            <stop offset="1" stopColor={spectralAppearance.edge} />
           </radialGradient>
           <filter id="starGlow" x="-70%" y="-70%" width="240%" height="240%">
             <feGaussianBlur stdDeviation="13" />
@@ -672,11 +817,18 @@ function TransitScene({
           cx={starX}
           cy={starY}
           r={starR + 13}
-          fill="#ff9d36"
+          fill={spectralAppearance.glow}
           opacity="0.22"
           filter="url(#starGlow)"
         />
-        <circle cx={starX} cy={starY} r={starR} fill="url(#starSurface)" />
+        <circle
+          cx={starX}
+          cy={starY}
+          r={starR}
+          fill="url(#starSurface)"
+        >
+          <title>{`Spectral type ${spectralAppearance.type} star`}</title>
+        </circle>
         <line
           x1="0"
           x2="800"
@@ -1144,7 +1296,7 @@ function PhotoRingSummaryCard({
             <span className="summary-metric-label">
               PR Anomaly
               <CalculatedHelp
-                help="PR anomaly = 10 log10(rho_obs / rho_true). It is the logarithmic difference between the stellar density inferred from the ringed transit and the true stellar density."
+                help="PR anomaly = 10 log10(rho_obs / rho★). It is the logarithmic difference between the stellar density inferred from the ringed transit and the true stellar density."
                 helpId="help-pr-anomaly"
                 label="PR anomaly"
               />
@@ -1155,7 +1307,7 @@ function PhotoRingSummaryCard({
             {model.prAnomaly >= 0 ? "+" : ""}
             {model.prAnomaly.toFixed(2)}
           </strong>
-          <small>10 log₁₀(ρobs / ρtrue) · asterodensity</small>
+          <small>10 log₁₀(ρobs / ρ★) · asterodensity</small>
         </div>
 
         <div className="summary-metric">
@@ -1173,6 +1325,21 @@ function PhotoRingSummaryCard({
           <small>
             {equivalentRadiusRatio.toFixed(2)} Rₚ · {(100 * (equivalentRadiusRatio - 1)).toFixed(0)}% larger from depth
           </small>
+        </div>
+
+        <div className="summary-metric">
+          <div className="summary-metric-header">
+            <span className="summary-metric-label">
+              Planet true density
+              <CalculatedHelp
+                help="True bulk density assumed for the planet. The current simulator uses Saturn's density as the reference: rings change the transit-inferred density, not the planet's physical density."
+                helpId="help-planet-true-density"
+                label="planet true density"
+              />
+            </span>
+          </div>
+          <strong>{SATURN_TRUE_DENSITY_G_CM3.toFixed(3)} g/cm³</strong>
+          <small>reference planetary density</small>
         </div>
 
         <div className="summary-metric">
@@ -1199,6 +1366,9 @@ function PhotoRingSummaryCard({
 export default function PhotoRingSimulator() {
   const [configuration, setConfiguration] =
     useState<UrlConfiguration>(DEFAULT_CONFIGURATION);
+  const [selectedPreset, setSelectedPreset] = useState<PresetKey | "custom">(
+    "default",
+  );
   const [phase, setPhase] = useState(-0.76);
   const [playing, setPlaying] = useState(false);
   const [copyLinkFeedback, setCopyLinkFeedback] = useState<string | null>(null);
@@ -1222,7 +1392,10 @@ export default function PhotoRingSimulator() {
   useEffect(() => {
     const urlConfiguration = readConfigurationFromUrl(window.location.search);
     if (!urlConfiguration) return;
-    startTransition(() => setConfiguration(urlConfiguration));
+    startTransition(() => {
+      setSelectedPreset("custom");
+      setConfiguration(urlConfiguration);
+    });
   }, []);
 
   useEffect(() => {
@@ -1234,6 +1407,7 @@ export default function PhotoRingSimulator() {
   }, [playing]);
 
   const changeParameter = (key: ParameterKey, value: number) => {
+    setSelectedPreset("custom");
     setConfiguration((currentConfiguration) => {
       const current = currentConfiguration.parameters;
       const next = { ...current, [key]: value };
@@ -1247,8 +1421,16 @@ export default function PhotoRingSimulator() {
     });
   };
 
-  const resetConfiguration = () =>
+  const resetConfiguration = () => {
+    setSelectedPreset("default");
     setConfiguration(DEFAULT_CONFIGURATION);
+  };
+
+  const selectPreset = (preset: PresetKey | "custom") => {
+    if (preset === "custom") return;
+    setSelectedPreset(preset);
+    setConfiguration(PRESET_CONFIGURATIONS[preset]);
+  };
 
   const handleCopyConfiguration = async () => {
     try {
@@ -1382,6 +1564,24 @@ export default function PhotoRingSimulator() {
                 </span>
               )}
             </div>
+            <label className="preset-selector">
+              <span>Preset configuration</span>
+              <select
+                value={selectedPreset}
+                onChange={(event) =>
+                  selectPreset(event.currentTarget.value as PresetKey | "custom")
+                }
+              >
+                {selectedPreset === "custom" && (
+                  <option value="custom">Custom configuration</option>
+                )}
+                {Object.entries(PRESET_LABELS).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </aside>
 
           <div className="visual-stack">
@@ -1389,6 +1589,7 @@ export default function PhotoRingSimulator() {
               <TransitScene
                 parameters={parameters}
                 model={model}
+                starMassSolar={starMassSolar}
                 phase={phase}
                 playing={playing}
                 showEquivalentPlanet={showEquivalentPlanet}
@@ -1489,7 +1690,7 @@ export default function PhotoRingSimulator() {
           />
           <Metric
             label="Inferred density"
-            value={`${model.observedDensityRatio.toFixed(3)} ρtrue`}
+            value={`${model.observedDensityRatio.toFixed(3)} ρ★`}
             note={`stellar density ${densityClass}`}
             help="Inferred density is the stellar density estimated from the ringless interpretation of the transit, relative to the true density used by the model."
             helpId="help-inferred-density"
