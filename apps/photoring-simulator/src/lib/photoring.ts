@@ -10,15 +10,25 @@ export type RingParameters = {
 
 export type TransitModel = {
   depth: number;
+  equivalentPlanetRadius: number;
+  hasFullEquivalentTransit: boolean;
   contacts: [number, number, number, number];
   planetContacts: [number, number, number, number];
+  equivalentContacts: [number, number, number, number];
   durations: { total: number; full: number; ingress: number };
   aOverR: number;
+  observedA: number;
+  observedB: number;
   observedDensityRatio: number;
   prAnomaly: number;
   ringDepth: number;
   verticalScaleDepth: number;
-  lightCurve: { time: number; flux: number; x: number }[];
+  lightCurve: {
+    time: number;
+    flux: number;
+    equivalentFlux: number;
+    x: number;
+  }[];
   timeAtX: (x: number) => number;
 };
 
@@ -52,6 +62,31 @@ function ringBlockingFactor(alpha: number, cosInclination: number) {
   if (cosInclination <= 1e-6 || alpha >= 1) return 0;
   if (alpha <= 0) return 1;
   return 1 - alpha ** (1 / cosInclination);
+}
+
+/**
+ * Analytical intersection area between stellar disk (radius R)
+ * and spherical planet (radius r) separated by center-to-center distance d.
+ */
+export function circleOverlapArea(d: number, R: number, r: number): number {
+  if (r <= 0 || R <= 0) return 0;
+  if (d >= R + r) return 0;
+  if (d <= Math.abs(R - r)) {
+    return Math.PI * Math.min(R, r) ** 2;
+  }
+  const r2 = r * r;
+  const R2 = R * R;
+  const d2 = d * d;
+
+  const cosAlpha = Math.max(-1, Math.min(1, (d2 + r2 - R2) / (2 * d * r)));
+  const cosBeta = Math.max(-1, Math.min(1, (d2 + R2 - r2) / (2 * d * R)));
+  const alpha = Math.acos(cosAlpha);
+  const beta = Math.acos(cosBeta);
+
+  const term = (-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R);
+  const triangle = 0.5 * Math.sqrt(Math.max(0, term));
+
+  return r2 * alpha + R2 * beta - triangle;
 }
 
 function ellipseSupport(
@@ -218,6 +253,20 @@ export function computeTransit(parameters: RingParameters): TransitModel {
   const depth = areas.total / Math.PI;
   const ringDepth = areas.ring / Math.PI;
   const verticalScaleDepth = FIXED_VERTICAL_SCALE_DEPTH;
+  const equivalentPlanetRadius = Math.sqrt(depth);
+
+  const hasFullEquivalentTransit = b <= 1 - equivalentPlanetRadius;
+  const equivalentContacts: [number, number, number, number] = [
+    -Math.sqrt(Math.max(0, (1 + equivalentPlanetRadius) ** 2 - b * b)),
+    hasFullEquivalentTransit
+      ? -Math.sqrt(Math.max(0, (1 - equivalentPlanetRadius) ** 2 - b * b))
+      : 0,
+    hasFullEquivalentTransit
+      ? Math.sqrt(Math.max(0, (1 - equivalentPlanetRadius) ** 2 - b * b))
+      : 0,
+    Math.sqrt(Math.max(0, (1 + equivalentPlanetRadius) ** 2 - b * b)),
+  ];
+
   const s14 = Math.sin((Math.PI * totalDuration) / (PERIOD_DAYS * 24));
   const s23 = Math.sin((Math.PI * fullDuration) / (PERIOD_DAYS * 24));
   const ratio = s14 > 0 ? (s23 * s23) / (s14 * s14) : 0;
@@ -233,39 +282,55 @@ export function computeTransit(parameters: RingParameters): TransitModel {
     (fPlus * fPlus - observedB2 * (1 - s14 * s14)) /
       Math.max(1e-12, s14 * s14),
   );
+  const observedB = Math.sqrt(observedB2);
+  const observedA = Math.sqrt(observedA2);
   const observedDensityRatio = Math.max(
     1e-6,
-    (Math.sqrt(observedA2) / aOverR) ** 3,
+    (observedA / aOverR) ** 3,
   );
   const prAnomaly = 10 * Math.log10(observedDensityRatio);
 
   const cosTilt = Math.cos(theta);
   const sinTilt = Math.sin(theta);
-  const extent = Math.max(Math.abs(contacts[0]), Math.abs(contacts[3])) + 0.16;
+  const extent =
+    Math.max(
+      Math.abs(contacts[0]),
+      Math.abs(contacts[3]),
+      Math.abs(equivalentContacts[0]),
+      Math.abs(equivalentContacts[3]),
+    ) + 0.16;
   const lightCurve = Array.from({ length: 181 }, (_, index) => {
     const x = -extent + (2 * extent * index) / 180;
     const inFullTransit = x >= contacts[1] && x <= contacts[2];
+    const ringedBlocked = inFullTransit
+      ? depth
+      : blockedFlux(x, parameters, cosTilt, sinTilt, cosI);
+    const d = Math.hypot(x, b);
+    const eqBlocked = circleOverlapArea(d, 1, equivalentPlanetRadius) / Math.PI;
+
     return {
       x,
       time: timeAtX(x),
-      flux:
-        1 -
-        (inFullTransit
-          ? depth
-          : blockedFlux(x, parameters, cosTilt, sinTilt, cosI)),
+      flux: 1 - ringedBlocked,
+      equivalentFlux: 1 - eqBlocked,
     };
   });
 
   return {
     depth,
+    equivalentPlanetRadius,
+    hasFullEquivalentTransit,
     contacts,
     planetContacts,
+    equivalentContacts,
     durations: {
       total: totalDuration,
       full: fullDuration,
       ingress: ingressDuration,
     },
     aOverR,
+    observedA,
+    observedB,
     observedDensityRatio,
     prAnomaly,
     ringDepth,

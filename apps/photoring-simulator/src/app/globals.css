@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --night: #05080b;
-  --panel: #0b1117;
-  --panel-raised: #101820;
+  --night: #000000;
+  --panel: #07090b;
+  --panel-raised: #0d1115;
   --ink: #eef6f5;
   --muted: #81918f;
   --faint: #50605f;
@@ -19,16 +19,13 @@
 
 html {
   min-width: 320px;
-  background: var(--night);
+  background: #000000;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 77% 6%, rgba(34, 106, 104, 0.12), transparent 24rem),
-    radial-gradient(circle at 18% 31%, rgba(173, 103, 38, 0.07), transparent 23rem),
-    var(--night);
+  background: #000000;
   color: var(--ink);
   font-family: var(--font-sans), Arial, sans-serif;
 }
@@ -43,6 +40,7 @@ input {
   min-height: 100vh;
   margin: 0 auto;
   padding: 0 clamp(18px, 4vw, 68px);
+  background: #000000;
 }
 
 .hero {
@@ -71,15 +69,14 @@ input {
   max-width: 860px;
   margin: 0;
   font-family: var(--font-sans), Arial, sans-serif;
-  font-size: clamp(1.75rem, 3.5vw, 3.25rem);
-  font-weight: 620;
-  line-height: 0.98;
-  letter-spacing: -0.055em;
+  font-size: clamp(1.85rem, 3.8vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
 }
 
-.hero h1 em {
-  color: #a8bab7;
-  font-weight: 320;
+.hero h1 strong {
+  font-weight: 700;
 }
 
 .byline {
@@ -102,50 +99,26 @@ input {
   outline: none;
 }
 
-.hero-orbit {
-  position: relative;
-  flex: 0 0 148px;
-  width: 148px;
-  height: 92px;
-  border: 1px solid rgba(102, 223, 208, 0.22);
-  border-radius: 50%;
-  transform: rotate(-16deg);
+.hero-logo-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  flex: 0 0 auto;
 }
 
-.hero-orbit::after,
-.hero-orbit::before {
-  position: absolute;
-  content: "";
-  border: 1px solid rgba(102, 223, 208, 0.1);
-  border-radius: 50%;
-  inset: 12px 23px;
+.hero-seap-logo {
+  display: block;
+  width: clamp(160px, 16vw, 220px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 24px rgba(239, 100, 30, 0.25));
+  transition: transform 0.25s ease, filter 0.25s ease;
 }
 
-.hero-orbit::after {
-  inset: 27px 49px;
-}
-
-.hero-orbit span {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--amber);
-  box-shadow: 0 0 28px rgba(239, 184, 95, 0.7);
-  transform: translate(-50%, -50%);
-}
-
-.hero-orbit i {
-  position: absolute;
-  top: 15px;
-  right: 14px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--aqua);
-  box-shadow: 0 0 9px var(--aqua);
+.hero-logo-link:hover .hero-seap-logo {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 34px rgba(239, 100, 30, 0.45));
 }
 
 main {
@@ -165,9 +138,17 @@ main {
   gap: 18px;
 }
 
+.simulation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 16vw, 205px);
+  align-items: stretch;
+  gap: 16px;
+}
+
 .controls-card,
 .scene-card,
 .curve-card,
+.simulation-summary-card,
 .metric {
   border: 1px solid var(--line);
   background: linear-gradient(145deg, rgba(16, 24, 32, 0.97), rgba(7, 12, 17, 0.97));
@@ -176,8 +157,98 @@ main {
 
 .controls-card,
 .scene-card,
-.curve-card {
+.curve-card,
+.simulation-summary-card {
   border-radius: 14px;
+}
+
+.simulation-summary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 14px;
+}
+
+.simulation-summary-card .card-heading h2 {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.summary-metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 12px;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.summary-metric {
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.summary-metric:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(102, 223, 208, 0.22);
+}
+
+.summary-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.summary-metric-header span:first-child {
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.summary-metric-tag {
+  font-size: 0.52rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(102, 223, 208, 0.12);
+  color: var(--aqua);
+  font-family: var(--font-mono), monospace;
+  text-transform: uppercase;
+}
+
+.summary-metric strong {
+  display: block;
+  margin: 3px 0 1px;
+  color: #f7fbfa;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: clamp(1.05rem, 1.25vw, 1.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.summary-metric small {
+  display: block;
+  color: var(--faint);
+  font-size: 0.54rem;
+  line-height: 1.28;
+}
+
+.summary-metric--accent {
+  border-color: rgba(102, 223, 208, 0.35);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(102, 223, 208, 0.14), transparent 65%),
+    rgba(16, 24, 32, 0.6);
+}
+
+.summary-metric--accent strong {
+  color: var(--aqua);
 }
 
 .controls-card {
@@ -408,7 +479,8 @@ main {
   font-size: 0.61rem;
 }
 
-.curve-legend span {
+.curve-legend span,
+.curve-legend button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -424,8 +496,42 @@ main {
   background: var(--aqua);
 }
 
+.equivalent-swatch {
+  background: repeating-linear-gradient(
+    90deg,
+    #fb7185 0px,
+    #fb7185 4px,
+    transparent 4px,
+    transparent 7px
+  );
+}
+
 .cursor-swatch {
   background: var(--amber);
+}
+
+.legend-toggle {
+  background: transparent;
+  border: 1px solid rgba(251, 113, 133, 0.25);
+  border-radius: 4px;
+  padding: 1px 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.legend-toggle:hover {
+  background: rgba(251, 113, 133, 0.12);
+  border-color: rgba(251, 113, 133, 0.45);
+  color: #f7fbfa;
+}
+
+.legend-toggle.inactive {
+  opacity: 0.45;
+  border-color: transparent;
+  text-decoration: line-through;
 }
 
 .light-curve {
@@ -441,7 +547,8 @@ main {
 
 .axis-label,
 .axis-title,
-.event-label {
+.event-label,
+.event-label-equivalent {
   fill: var(--muted);
   font-family: var(--font-mono), monospace;
   font-size: 9px;
@@ -463,6 +570,19 @@ main {
   font-weight: 700;
 }
 
+.event-line-equivalent {
+  stroke: #ef4444;
+  stroke-width: 1.4;
+  stroke-dasharray: 4 4;
+  opacity: 0.88;
+}
+
+.event-label-equivalent {
+  fill: #f87171;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .curve-path {
   fill: none;
   stroke: var(--aqua);
@@ -474,6 +594,22 @@ main {
 .curve-glow {
   stroke-width: 8;
   opacity: 0.08;
+}
+
+.curve-path-equivalent {
+  fill: none;
+  stroke: #fb7185;
+  stroke-dasharray: 6 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.curve-glow-equivalent {
+  stroke: #fb7185;
+  stroke-width: 7;
+  opacity: 0.14;
+  stroke-dasharray: none;
 }
 
 .position-line {
@@ -488,11 +624,29 @@ main {
   stroke-width: 2;
 }
 
+.position-dot-equivalent {
+  fill: #fb7185;
+  stroke: #2e101b;
+  stroke-width: 2;
+}
+
 .metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   margin-top: 12px;
+}
+
+@media (max-width: 1060px) {
+  .metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .metric {
@@ -506,12 +660,18 @@ main {
   display: block;
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.61rem;
+  font-size: 0.64rem;
   font-weight: 700;
-  letter-spacing: 0.055em;
+  letter-spacing: 0.035em;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
+}
+
+.metric span sub {
+  font-size: 0.78em;
+  vertical-align: baseline;
+  position: relative;
+  top: 0.18em;
 }
 
 .metric strong {
@@ -545,20 +705,22 @@ main {
 
 footer {
   display: grid;
-  grid-template-columns: 128px minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  padding: 26px 0 34px;
+  gap: 28px;
+  padding: 32px 0 42px;
   border-top: 1px solid var(--line);
+  background: #000000;
 }
 
 .footer-logo {
   display: block;
-  width: 118px;
-  height: 58px;
+  width: 360px;
+  max-width: 100%;
+  height: auto;
   border-radius: 4px;
   object-fit: contain;
-  background: #000;
+  background: transparent;
 }
 
 footer strong {
@@ -587,6 +749,12 @@ footer a:hover {
   color: var(--aqua);
 }
 
+@media (max-width: 980px) {
+  .simulation-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1050px) {
   .workspace {
     grid-template-columns: 1fr;
@@ -613,18 +781,18 @@ footer a:hover {
 
   .hero {
     min-height: auto;
-    padding: 28px 4px 24px;
-  }
-
-  .hero-orbit {
-    position: absolute;
-    right: -55px;
-    opacity: 0.45;
+    padding: 24px 4px 20px;
+    align-items: center;
+    gap: 16px;
   }
 
   .hero h1 {
-    max-width: 92%;
+    max-width: 100%;
     font-size: clamp(1.75rem, 8.5vw, 2.55rem);
+  }
+
+  .hero-seap-logo {
+    width: 120px;
   }
 
   main {
@@ -637,7 +805,8 @@ footer a:hover {
 
   .scene-card,
   .curve-card,
-  .controls-card {
+  .controls-card,
+  .simulation-summary-card {
     padding: 18px 15px;
   }
 
@@ -670,16 +839,17 @@ footer a:hover {
   }
 
   footer {
-    grid-template-columns: 100px 1fr;
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   .footer-logo {
-    width: 92px;
-    height: 48px;
+    width: 280px;
+    height: auto;
   }
 
   footer nav {
-    grid-column: 2;
+    grid-column: 1;
   }
 }
 

@@ -419,6 +419,7 @@ function LightCurve({
   model: TransitModel;
   phase: number;
 }) {
+  const [showEquivalent, setShowEquivalent] = useState(true);
   const width = 900;
   const height = 270;
   const margin = { left: 60, right: 28, top: 22, bottom: 42 };
@@ -428,7 +429,7 @@ function LightCurve({
   const last = model.lightCurve[model.lightCurve.length - 1];
   const tMin = first.time;
   const tMax = last.time;
-  const yMin = 1 - model.verticalScaleDepth;
+  const yMin = 1 - Math.max(model.verticalScaleDepth, model.depth * 1.08);
   const xScale = (time: number) =>
     margin.left + ((time - tMin) / (tMax - tMin)) * plotW;
   const yScale = (flux: number) =>
@@ -437,6 +438,12 @@ function LightCurve({
     .map(
       (point, index) =>
         `${index ? "L" : "M"} ${xScale(point.time).toFixed(2)} ${yScale(point.flux).toFixed(2)}`,
+    )
+    .join(" ");
+  const equivalentPath = model.lightCurve
+    .map(
+      (point, index) =>
+        `${index ? "L" : "M"} ${xScale(point.time).toFixed(2)} ${yScale(point.equivalentFlux).toFixed(2)}`,
     )
     .join(" ");
   const currentIndex = Math.round(
@@ -450,6 +457,16 @@ function LightCurve({
     label: `T${index + 1}`,
     anchor: index < 2 ? ("start" as const) : ("end" as const),
   }));
+  const equivalentEvents = [
+    { x: model.equivalentContacts[0], label: "T1" },
+    ...(model.hasFullEquivalentTransit
+      ? [
+          { x: model.equivalentContacts[1], label: "T2" },
+          { x: model.equivalentContacts[2], label: "T3" },
+        ]
+      : []),
+    { x: model.equivalentContacts[3], label: "T4" },
+  ];
 
   return (
     <section className="curve-card" aria-labelledby="curve-title">
@@ -459,8 +476,21 @@ function LightCurve({
           <h2 id="curve-title">Light curve</h2>
         </div>
         <div className="curve-legend">
-          <span><i className="ring-swatch" /> Ringed planet</span>
-          <span><i className="cursor-swatch" /> Current position</span>
+          <span className="legend-item">
+            <i className="ring-swatch" /> Ringed planet
+          </span>
+          <button
+            type="button"
+            className={`legend-item legend-toggle ${showEquivalent ? "active" : "inactive"}`}
+            onClick={() => setShowEquivalent((prev) => !prev)}
+            aria-pressed={showEquivalent}
+            title="Toggle equivalent ringless planet curve and contact lines (T1-T4)"
+          >
+            <i className="equivalent-swatch" /> Ringless planet (R = {model.equivalentPlanetRadius.toFixed(3)} R★)
+          </button>
+          <span className="legend-item">
+            <i className="cursor-swatch" /> Current position
+          </span>
         </div>
       </div>
       <svg
@@ -492,6 +522,7 @@ function LightCurve({
           const x = xScale(time);
           return (
             <g key={event.label}>
+              <title>{`${event.label} (ringed planet): ${time.toFixed(2)} h`}</title>
               <line
                 x1={x}
                 x2={x}
@@ -510,6 +541,40 @@ function LightCurve({
             </g>
           );
         })}
+        {showEquivalent &&
+          equivalentEvents.map((event) => {
+            const time = model.timeAtX(event.x);
+            const x = xScale(time);
+            return (
+              <g key={`eq-${event.label}`}>
+                <title>{`${event.label} (ringless planet): ${time.toFixed(2)} h`}</title>
+                <line
+                  x1={x}
+                  x2={x}
+                  y1={margin.top}
+                  y2={height - margin.bottom}
+                  className="event-line-equivalent"
+                />
+                <text
+                  x={x}
+                  y={margin.top - 8}
+                  className="event-label-equivalent"
+                  textAnchor="middle"
+                >
+                  {event.label}
+                </text>
+              </g>
+            );
+          })}
+        {showEquivalent && (
+          <>
+            <path
+              d={equivalentPath}
+              className="curve-path-equivalent curve-glow-equivalent"
+            />
+            <path d={equivalentPath} className="curve-path-equivalent" />
+          </>
+        )}
         <path d={path} className="curve-path curve-glow" />
         <path d={path} className="curve-path" />
         <line
@@ -519,6 +584,14 @@ function LightCurve({
           y2={height - margin.bottom}
           className="position-line"
         />
+        {showEquivalent && (
+          <circle
+            cx={xScale(current.time)}
+            cy={yScale(current.equivalentFlux)}
+            r="4"
+            className="position-dot-equivalent"
+          />
+        )}
         <circle
           cx={xScale(current.time)}
           cy={yScale(current.flux)}
@@ -548,7 +621,7 @@ function Metric({
   note,
   accent,
 }: {
-  label: string;
+  label: React.ReactNode;
   value: string;
   note: string;
   accent?: boolean;
@@ -559,6 +632,67 @@ function Metric({
       <strong>{value}</strong>
       <small>{note}</small>
     </div>
+  );
+}
+
+const SATURN_TRUE_DENSITY_G_CM3 = 0.687;
+
+function PhotoRingSummaryCard({
+  model,
+  equivalentPlanetRadius,
+  equivalentRadiusRatio,
+  observedPlanetDensityRatio,
+  observedPlanetDensityGcm3,
+  densityClass,
+}: {
+  model: TransitModel;
+  equivalentPlanetRadius: number;
+  equivalentRadiusRatio: number;
+  observedPlanetDensityRatio: number;
+  observedPlanetDensityGcm3: number;
+  densityClass: string;
+}) {
+  return (
+    <aside className="simulation-summary-card" aria-label="PR observables">
+      <div className="card-heading">
+        <div>
+          <h2>PR observables</h2>
+        </div>
+      </div>
+      <div className="summary-metrics-list">
+        <div className="summary-metric summary-metric--accent">
+          <div className="summary-metric-header">
+            <span>PR Anomaly</span>
+            <span className="summary-metric-tag">{densityClass}</span>
+          </div>
+          <strong>
+            {model.prAnomaly >= 0 ? "+" : ""}
+            {model.prAnomaly.toFixed(2)} dB
+          </strong>
+          <small>10 log₁₀(ρobs / ρtrue) · asterodensity</small>
+        </div>
+
+        <div className="summary-metric">
+          <div className="summary-metric-header">
+            <span>Equivalent Planet Radius</span>
+          </div>
+          <strong>{equivalentPlanetRadius.toFixed(3)} R★</strong>
+          <small>
+            {equivalentRadiusRatio.toFixed(2)} Rₚ · {(100 * (equivalentRadiusRatio - 1)).toFixed(0)}% larger from depth
+          </small>
+        </div>
+
+        <div className="summary-metric">
+          <div className="summary-metric-header">
+            <span>Planet observed density</span>
+          </div>
+          <strong>{observedPlanetDensityGcm3.toFixed(3)} g/cm³</strong>
+          <small>
+            {(observedPlanetDensityRatio * 100).toFixed(0)}% of true ρₚ (Saturn = {SATURN_TRUE_DENSITY_G_CM3} g/cm³)
+          </small>
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -595,17 +729,19 @@ export default function PhotoRingSimulator() {
       : model.observedDensityRatio > 1.02
         ? "overestimated"
         : "unchanged";
-  const equivalentPlanetRadius = Math.sqrt(model.depth);
+  const equivalentPlanetRadius = model.equivalentPlanetRadius;
   const equivalentRadiusRatio =
     equivalentPlanetRadius / parameters.planetRadius;
   const observedPlanetDensityRatio = equivalentRadiusRatio ** -3;
+  const observedPlanetDensityGcm3 =
+    SATURN_TRUE_DENSITY_G_CM3 * observedPlanetDensityRatio;
 
   return (
     <div className="app">
       <header className="hero">
         <div>
           <p className="hero-kicker">INTERACTIVE ASTERODENSITY LAB</p>
-          <h1>PRisma Simulator: <em>PhotoRing Effect Simulator</em></h1>
+          <h1><strong>PhotoRing Effect Simulator</strong></h1>
           <p className="byline">
             By{" "}
             <a
@@ -617,10 +753,20 @@ export default function PhotoRingSimulator() {
             </a>
           </p>
         </div>
-        <div className="hero-orbit" aria-hidden="true">
-          <span />
-          <i />
-        </div>
+        <a
+          href="https://seap-udea.github.io/"
+          target="_blank"
+          rel="noreferrer"
+          className="hero-logo-link"
+          aria-label="SEAP - Solar, Earth and Planetary Physics"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="hero-seap-logo"
+            src="/assets/seap-symbol.webp"
+            alt="SEAP Logo Símbolo"
+          />
+        </a>
       </header>
 
       <main>
@@ -650,17 +796,27 @@ export default function PhotoRingSimulator() {
           </aside>
 
           <div className="visual-stack">
-            <TransitScene
-              parameters={parameters}
-              model={model}
-              phase={phase}
-              playing={playing}
-              onPhase={(value) => {
-                setPhase(value);
-                setPlaying(false);
-              }}
-              onToggle={() => setPlaying((current) => !current)}
-            />
+            <div className="simulation-row">
+              <TransitScene
+                parameters={parameters}
+                model={model}
+                phase={phase}
+                playing={playing}
+                onPhase={(value) => {
+                  setPhase(value);
+                  setPlaying(false);
+                }}
+                onToggle={() => setPlaying((current) => !current)}
+              />
+              <PhotoRingSummaryCard
+                model={model}
+                equivalentPlanetRadius={equivalentPlanetRadius}
+                equivalentRadiusRatio={equivalentRadiusRatio}
+                observedPlanetDensityRatio={observedPlanetDensityRatio}
+                observedPlanetDensityGcm3={observedPlanetDensityGcm3}
+                densityClass={densityClass}
+              />
+            </div>
             <LightCurve model={model} phase={phase} />
           </div>
         </div>
@@ -677,52 +833,45 @@ export default function PhotoRingSimulator() {
             note="full transit duration"
           />
           <Metric
-            label="Ingress duration"
-            value={`${model.durations.ingress.toFixed(2)} h`}
-            note="T₁ to T₂"
-          />
-          <Metric
-            label="Egress"
-            value={`+${model.timeAtX(model.contacts[3]).toFixed(2)} h`}
-            note={`fourth contact · T₁₄ ${model.durations.total.toFixed(2)} h`}
-          />
-          <Metric
             label="Transit depth"
             value={`${(model.depth * 1e6).toFixed(0)} ppm`}
             note="maximum blocked flux"
           />
           <Metric
-            label="Equivalent planet radius"
-            value={`${equivalentPlanetRadius.toFixed(3)} R★`}
-            note={`${equivalentRadiusRatio.toFixed(2)} Rₚ · ${(100 * (equivalentRadiusRatio - 1)).toFixed(0)}% larger`}
+            label={<>(a/R★)<sub>obs</sub></>}
+            value={`${model.observedA.toFixed(1)}`}
+            note={`scaled semi-major axis · Eq. 13 (true ${model.aOverR.toFixed(1)})`}
           />
           <Metric
-            label="Observed planet density"
-            value={`${observedPlanetDensityRatio.toFixed(3)} ρₚ,true`}
-            note="assuming the same measured mass"
+            label={<>b<sub>obs</sub></>}
+            value={`${model.observedB.toFixed(2)}`}
+            note={`impact parameter · Eq. 14 (true ${parameters.impact.toFixed(2)})`}
           />
           <Metric
             label="Inferred density"
             value={`${model.observedDensityRatio.toFixed(3)} ρtrue`}
             note={`stellar density ${densityClass}`}
           />
-          <Metric
-            label="PR anomaly"
-            value={`${model.prAnomaly >= 0 ? "+" : ""}${model.prAnomaly.toFixed(2)}`}
-            note="10 log₁₀(ρobs / ρtrue)"
-            accent
-          />
         </section>
       </main>
 
       <footer>
-        {/* The logo is served by the parent SEAP site in production. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className="footer-logo"
-          src="https://seap-udea.github.io/assets/LogoSEAP-BannerNegro.png"
-          alt="SEAP Universidad de Antioquia"
-        />
+        <a
+          href="https://seap-udea.github.io/"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="SEAP Universidad de Antioquia"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="footer-logo"
+            src="https://seap-udea.github.io/assets/LogoSEAP-BannerNegro.png"
+            onError={(e) => {
+              e.currentTarget.src = "/assets/LogoSEAP-BannerNegro.png";
+            }}
+            alt="SEAP Universidad de Antioquia"
+          />
+        </a>
         <div>
           <strong>
             Developed by{" "}
