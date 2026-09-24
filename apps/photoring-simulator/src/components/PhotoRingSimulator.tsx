@@ -1390,7 +1390,7 @@ export default function PhotoRingSimulator() {
     "default",
   );
   const [phase, setPhase] = useState(-0.76);
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(true);
   const [copyLinkFeedback, setCopyLinkFeedback] = useState<string | null>(null);
   const {
     parameters,
