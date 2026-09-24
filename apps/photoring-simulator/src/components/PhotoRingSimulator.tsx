@@ -27,6 +27,9 @@ const GRAVITATIONAL_CONSTANT = 6.6743e-11;
 const SOLAR_DENSITY_KG_M3 = 1408;
 const DEFAULT_SEMI_MAJOR_AXIS_AU = 0.9999974887698985;
 const JUPITER_TO_SUN_RADIUS = 0.10045;
+const JUPITER_DENSITY_G_CM3 = 1.326;
+const SATURN_MASS_JUPITER = 0.2994;
+const DEFAULT_PLANET_DENSITY_G_CM3 = 1;
 
 type ParameterKey = keyof RingParameters;
 
@@ -144,6 +147,7 @@ type UrlConfiguration = {
   semiMajorAxisAu: number;
   periodDays: number;
   densityKgM3: number;
+  planetMassJupiter: number;
   showEquivalentPlanet: boolean;
   showPlanetToScale: boolean;
   zoomIn: boolean;
@@ -162,6 +166,7 @@ const DEFAULT_CONFIGURATION: UrlConfiguration = {
   semiMajorAxisAu: DEFAULT_SEMI_MAJOR_AXIS_AU,
   periodDays: DEFAULT_PERIOD_DAYS,
   densityKgM3: SOLAR_DENSITY_KG_M3,
+  planetMassJupiter: SATURN_MASS_JUPITER,
   showEquivalentPlanet: false,
   showPlanetToScale: false,
   zoomIn: false,
@@ -183,6 +188,7 @@ function createPresetConfiguration(
   starMassSolar: number,
   starRadiusSolar: number,
   semiMajorAxisAu: number,
+  planetMassJupiter: number,
   options: Pick<
     UrlConfiguration,
     "showEquivalentPlanet" | "showPlanetToScale" | "zoomIn" | "autoScaleDepth" | "showEquivalentCurve"
@@ -203,6 +209,7 @@ function createPresetConfiguration(
     semiMajorAxisAu,
     periodDays,
     densityKgM3: SOLAR_DENSITY_KG_M3 * starMassSolar / starRadiusSolar ** 3,
+    planetMassJupiter,
     ...options,
   };
 }
@@ -222,6 +229,7 @@ const PRESET_CONFIGURATIONS: Record<PresetKey, UrlConfiguration> = {
     1.079,
     1.065,
     0.45,
+    0.70,
     {
       showEquivalentPlanet: false,
       showPlanetToScale: true,
@@ -243,6 +251,7 @@ const PRESET_CONFIGURATIONS: Record<PresetKey, UrlConfiguration> = {
     0.9834202,
     0.869,
     0.2467834,
+    6.9 / 317.8,
     {
       showEquivalentPlanet: false,
       showPlanetToScale: true,
@@ -264,6 +273,7 @@ const PRESET_CONFIGURATIONS: Record<PresetKey, UrlConfiguration> = {
     0.9974025,
     0.869,
     0.5022714,
+    6.9 / 317.8,
     {
       showEquivalentPlanet: false,
       showPlanetToScale: true,
@@ -291,6 +301,7 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
     ...Object.values(URL_PARAMETER_KEYS),
     ...Object.values(URL_ASSUMPTION_KEYS),
     ...Object.values(URL_OPTION_KEYS),
+    "mplanet",
     "aRstar",
   ].some((key) => searchParams.has(key));
   if (!hasConfiguration) return null;
@@ -311,6 +322,7 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
   const rawMass = Number(searchParams.get(URL_ASSUMPTION_KEYS.starMass));
   const rawRadius = Number(searchParams.get(URL_ASSUMPTION_KEYS.starRadius));
   const rawPeriod = Number(searchParams.get(URL_ASSUMPTION_KEYS.periodDays));
+  const rawPlanetMass = Number(searchParams.get("mplanet"));
   const rawAu = Number(searchParams.get(URL_ASSUMPTION_KEYS.semiMajorAxisAu));
   const rawRStar = Number(searchParams.get("aRstar"));
   const hasMass = Number.isFinite(rawMass) && rawMass > 0;
@@ -358,6 +370,12 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
 
   const densityKgM3 =
     SOLAR_DENSITY_KG_M3 * resolvedMassSolar / starRadiusSolar ** 3;
+  const planetRadiusJupiter =
+    next.planetRadius * starRadiusSolar / JUPITER_TO_SUN_RADIUS;
+  const planetMassJupiter = Number.isFinite(rawPlanetMass) && rawPlanetMass > 0
+    ? rawPlanetMass
+    : DEFAULT_PLANET_DENSITY_G_CM3 * planetRadiusJupiter ** 3 /
+      JUPITER_DENSITY_G_CM3;
 
   if (next.innerRingRadius >= next.outerRingRadius) {
     next.outerRingRadius = Math.min(4, next.innerRingRadius + 0.1);
@@ -372,6 +390,7 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
     semiMajorAxisAu,
     periodDays,
     densityKgM3,
+    planetMassJupiter,
     showEquivalentPlanet: readBooleanParameter(
       searchParams,
       URL_OPTION_KEYS.showEquivalentPlanet,
@@ -410,6 +429,7 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
   }
   url.searchParams.set(URL_ASSUMPTION_KEYS.starMass, String(configuration.starMassSolar));
   url.searchParams.set(URL_ASSUMPTION_KEYS.starRadius, String(configuration.starRadiusSolar));
+  url.searchParams.set("mplanet", String(configuration.planetMassJupiter));
   url.searchParams.set(URL_ASSUMPTION_KEYS.semiMajorAxisAu, String(aInAu));
   url.searchParams.delete(URL_ASSUMPTION_KEYS.periodDays);
   url.searchParams.delete("aRstar");
@@ -1266,14 +1286,13 @@ function CalculatedHelp({
   );
 }
 
-const SATURN_TRUE_DENSITY_G_CM3 = 0.687;
-
 function PhotoRingSummaryCard({
   model,
   equivalentPlanetRadius,
   equivalentRadiusRatio,
   observedPlanetDensityRatio,
   observedPlanetDensityGcm3,
+  planetTrueDensityGcm3,
   densityClass,
 }: {
   model: TransitModel;
@@ -1281,6 +1300,7 @@ function PhotoRingSummaryCard({
   equivalentRadiusRatio: number;
   observedPlanetDensityRatio: number;
   observedPlanetDensityGcm3: number;
+  planetTrueDensityGcm3: number;
   densityClass: string;
 }) {
   return (
@@ -1332,14 +1352,14 @@ function PhotoRingSummaryCard({
             <span className="summary-metric-label">
               Planet true density
               <CalculatedHelp
-                help="True bulk density assumed for the planet. The current simulator uses Saturn's density as the reference: rings change the transit-inferred density, not the planet's physical density."
+                help="Bulk density of the physical ringed planet. It is higher than the observed density because the latter assumes a much larger ringless planet whose apparent size includes the rings."
                 helpId="help-planet-true-density"
                 label="planet true density"
               />
             </span>
           </div>
-          <strong>{SATURN_TRUE_DENSITY_G_CM3.toFixed(3)} g/cm³</strong>
-          <small>reference planetary density</small>
+          <strong>{planetTrueDensityGcm3.toFixed(3)} g/cm³</strong>
+          <small>density from Mp and Rp</small>
         </div>
 
         <div className="summary-metric">
@@ -1355,7 +1375,7 @@ function PhotoRingSummaryCard({
           </div>
           <strong>{observedPlanetDensityGcm3.toFixed(3)} g/cm³</strong>
           <small>
-            {(observedPlanetDensityRatio * 100).toFixed(0)}% of true ρₚ (Saturn = {SATURN_TRUE_DENSITY_G_CM3} g/cm³)
+            {(observedPlanetDensityRatio * 100).toFixed(0)}% of true ρₚ
           </small>
         </div>
       </div>
@@ -1378,6 +1398,7 @@ export default function PhotoRingSimulator() {
     starRadiusSolar,
     periodDays,
     densityKgM3,
+    planetMassJupiter,
     showEquivalentPlanet,
     showPlanetToScale,
     zoomIn,
@@ -1453,9 +1474,14 @@ export default function PhotoRingSimulator() {
   const equivalentPlanetRadius = model.equivalentPlanetRadius;
   const equivalentRadiusRatio =
     equivalentPlanetRadius / parameters.planetRadius;
-  const observedPlanetDensityRatio = equivalentRadiusRatio ** -3;
+  const planetRadiusJupiter =
+    parameters.planetRadius * starRadiusSolar / JUPITER_TO_SUN_RADIUS;
+  const planetTrueDensityGcm3 =
+    planetMassJupiter * JUPITER_DENSITY_G_CM3 / planetRadiusJupiter ** 3;
+  const observedPlanetDensityRatio =
+    equivalentRadiusRatio ** -3;
   const observedPlanetDensityGcm3 =
-    SATURN_TRUE_DENSITY_G_CM3 * observedPlanetDensityRatio;
+    planetTrueDensityGcm3 * observedPlanetDensityRatio;
   const aInAu = configuration.semiMajorAxisAu;
   const aInRStar = aInAu / (starRadiusSolar * SOLAR_RADIUS_AU);
 
@@ -1534,7 +1560,7 @@ export default function PhotoRingSimulator() {
                 <h2>Shape the transit</h2>
                 <p className="parameter-assumptions">
                   M★ = {starMassSolar.toFixed(2)} M☉ · R★ ={" "}
-                  {starRadiusSolar.toFixed(2)} R☉ · a = {aInAu.toFixed(3)} AU ={" "}
+                  {starRadiusSolar.toFixed(2)} R☉ · Mp = {planetMassJupiter.toFixed(3)} Mjup · a = {aInAu.toFixed(3)} AU ={" "}
                   {aInRStar.toFixed(1)} R★ · Porb = {periodDays.toFixed(2)} days
                 </p>
               </div>
@@ -1625,6 +1651,7 @@ export default function PhotoRingSimulator() {
                 equivalentRadiusRatio={equivalentRadiusRatio}
                 observedPlanetDensityRatio={observedPlanetDensityRatio}
                 observedPlanetDensityGcm3={observedPlanetDensityGcm3}
+                planetTrueDensityGcm3={planetTrueDensityGcm3}
                 densityClass={densityClass}
               />
             </div>
