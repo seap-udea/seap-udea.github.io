@@ -293,6 +293,7 @@ The physical parameters are:
 
 | Parameter | Meaning |
 |---|---|
+| `preset` | Load a saved preset by ID (`saturn-sun`, `saturn-Mdwarf`, `toi2449b`, `kepler51b`, `kepler51d`). Additional URL parameters override individual values on top of the preset |
 | `p` | Planet-to-star radius ratio |
 | `pjup` | Planet radius in Jupiter radii (alternative to `p`; used only when `p` is omitted) |
 | `fi`, `fe` | Inner and outer ring radii in planet radii |
@@ -317,30 +318,31 @@ Visualization options are also shareable. Set them to `1` or `0`:
 | `zoom2` | Zoom the Transit geometry preview by two |
 | `autoDepth` | Scale the synthetic light curve to the current transit depth |
 | `showEquivalent` | Show the equivalent ringless curve and contact markers |
+| `residualsAbs` | Display residuals in absolute units (flux difference) instead of ppm |
 
 ### Saved Configurations
 
 The links below open the simulator with reproducible configurations. The first configuration is the app default. The TOI-2449b link uses the system values and the Saturn-like reference ring defined in the TOI-2449b notebook; that notebook explores a range of ring orientations rather than reporting one unique fitted orientation, so this link uses a representative $\theta=25^\circ$, $i_R=55^\circ$ view. For Kepler-51, the values below are the medians printed in Figures 6 and 7 of the paper, not the separate grid-search results in Table 6.
 
-1. **Default configuration** — $p=0.084$, $f_i=1.58$, $f_e=2.35$, $\theta=25^\circ$, $i_R=55^\circ$, $b=0.25$, $\alpha=\exp(-1)$, $M_\star=1 M_\odot$, $R_\star=1 R_\odot$, $a=0.999997\mathrm{AU}$.
+1. **Default configuration (Saturn around a solar-like star)** — $p=0.084$, $f_i=1.58$, $f_e=2.35$, $\theta=25^\circ$, $i_R=55^\circ$, $b=0.25$, $\alpha=\exp(-1)$, $M_\star=1 M_\odot$, $R_\star=1 R_\odot$, $a=0.999997\mathrm{AU}$.
 
-	[Open the default configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.084&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mpjup=0.2994&mstar=1&rstar=1&aau=0.9999974887698985&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=saturn-sun) · [Full parameters URL](https://seap-udea.github.io/apps/photoring-simulator/?p=0.084&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mpjup=0.2994&mstar=1&rstar=1&aau=0.9999974887698985&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 2. **Saturn around an M-dwarf configuration** — $P=10$ days, $p=0.84 R_{\mathrm{Jup}}$, $f_i=1.58$, $f_e=2.35$, $\theta=25^\circ$, $i_R=55^\circ$, $b=0.25$, $\alpha=\exp(-1)$, $M_\star=0.2 M_\odot$.
 
-	[Open the Saturn around an M-dwarf configuration](https://seap-udea.github.io/apps/photoring-simulator/?pjup=0.84&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mpjup=0.2994&mstar=0.2&porb=10&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=saturn-Mdwarf) · [Full parameters URL](https://seap-udea.github.io/apps/photoring-simulator/?pjup=0.84&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mpjup=0.2994&mstar=0.2&porb=10&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
-3. **TOI-2449b configuration (Zuluaga et al. 2026 in prep.)** — $P=106.14468$ days, $p=0.0967$, $b=0.704$, Saturn-like rings $f_i=1.526$, $f_e=2.269$, $\alpha=\exp(-1)$, $M_\star=1.079\,M_\odot$, $R_\star=1.065\,R_\odot$, $a=0.450\mathrm{AU}$.
+3. **TOI-2449b configuration (Zuluaga et al. 2026 in prep.)** — $P=106.14468$ days, $b=0.704$, Saturn-like rings $f_i=1.526$, $f_e=2.269$, $\alpha=\exp(-1)$, $M_\star=1.079\,M_\odot$, $R_\star=1.065\,R_\odot$, $a=0.450\,\mathrm{AU}$. The planet radius $p=0.06329\,R_\star$ is adjusted so that the ringed transit depth matches the observed TESS depth ($p_{\mathrm{obs}}=0.0967\,R_\star$); $i_R=55^\circ$ and $\theta_R=25^\circ$ are representative reference values, not the fitted ring orientation.
 
-	[Open the TOI-2449b reference configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.0967&fi=1.526&fe=2.269&tilt=25&ir=55&b=0.704&alpha=0.36787944117144233&mpjup=0.70&mstar=1.079&rstar=1.065&aau=0.450&showRingless=0&planetToScale=1&zoom2=0&autoDepth=1&showEquivalent=1)
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=toi2449b) · [Full parameters URL](https://seap-udea.github.io/apps/photoring-simulator/?p=0.06329&fi=1.526&fe=2.269&tilt=25&ir=55&b=0.704&alpha=0.36787944117144233&mpjup=0.70&mstar=1.079&rstar=1.065&aau=0.450&showRingless=0&planetToScale=1&zoom2=0&autoDepth=1&showEquivalent=1)
 
 4. **Kepler-51b median configuration (Zuluaga et al. 2026)** — $P=45.154$ days, $p=0.058$, $b=0.33$, $f_i=1$, $f_e=1.93$, $i_R=65.8^\circ$, $\theta=78.8^\circ$, $\alpha=0.33$, $\rho_{\star,\mathrm{true}}=2.11\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9834\,M_\odot$ and $a\simeq0.24678\mathrm{AU}$.
 
-	[Open the Kepler-51b Figure 6 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.058&fi=1&fe=1.93&tilt=78.8&ir=65.8&b=0.33&alpha=0.33&mpjup=0.0217&mstar=0.9834202&rstar=0.869&aau=0.2467834&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=kepler51b) · [Full parameters URL](https://seap-udea.github.io/apps/photoring-simulator/?p=0.058&fi=1&fe=1.93&tilt=78.8&ir=65.8&b=0.33&alpha=0.33&mpjup=0.0217&mstar=0.9834202&rstar=0.869&aau=0.2467834&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 5. **Kepler-51d median configuration (Zuluaga et al. 2026)** — $P=130.186$ days, $p=0.081$, $b=0.28$, $f_i=1$, $f_e=1.73$, $i_R=70.87^\circ$, $\theta=67.39^\circ$, $\alpha=0.34$, $\rho_{\star,\mathrm{true}}=2.14\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9974\,M_\odot$ and $a\simeq0.50227 \mathrm{AU}$.
 
-	[Open the Kepler-51d Figure 7 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.081&fi=1&fe=1.73&tilt=67.39&ir=70.87&b=0.28&alpha=0.34&mpjup=0.0217&mstar=0.9974025&rstar=0.869&aau=0.5022714&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=kepler51d) · [Full parameters URL](https://seap-udea.github.io/apps/photoring-simulator/?p=0.081&fi=1&fe=1.73&tilt=67.39&ir=70.87&b=0.28&alpha=0.34&mpjup=0.0217&mstar=0.9974025&rstar=0.869&aau=0.5022714&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 
 ## AI Assistance Disclosure

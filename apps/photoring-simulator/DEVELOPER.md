@@ -18,6 +18,7 @@ beyond redeploying the site.
 - Selecting a preset overwrites all current System Parameters, star/orbit
   assumptions, and display toggles with the values from that preset. Any manual
   change to a slider afterwards switches the dropdown to "Custom configuration".
+- The URL query parameter `?preset=<preset_id>` loads a preset directly on page load (e.g. `?preset=toi2449b`). Additional URL parameters in the same URL can override specific parameters on top of the preset.
 
 ## Same keys and rules as the "Copy configuration" link
 
@@ -148,6 +149,7 @@ missing value (period, semi-major axis, or star mass) is filled in.
 | `flipPlanet` | Flip the planet/ring silhouette vertically in the transit scene and light curve. |
 | `autoScaleDepth` | Automatically rescale the light-curve y-axis to the transit depth of this preset. |
 | `showEquivalentCurve` | Show the ringless-equivalent light curve alongside the ringed light curve. |
+| `residualsInAbsoluteUnits` | Display residuals in absolute units (flux difference) instead of ppm. |
 
 ## Adding a new preset
 

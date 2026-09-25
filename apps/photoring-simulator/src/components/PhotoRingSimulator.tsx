@@ -139,6 +139,7 @@ const URL_OPTION_KEYS = {
   flipPlanet: "flipPlanet",
   autoScaleDepth: "autoDepth",
   showEquivalentCurve: "showEquivalent",
+  residualsInAbsoluteUnits: "residualsAbs",
 } as const;
 
 type UrlConfiguration = {
@@ -155,6 +156,7 @@ type UrlConfiguration = {
   flipPlanet: boolean;
   autoScaleDepth: boolean;
   showEquivalentCurve: boolean;
+  residualsInAbsoluteUnits: boolean;
 };
 
 function estimateMainSequenceRadiusSolar(massSolar: number) {
@@ -175,6 +177,7 @@ const DEFAULT_CONFIGURATION: UrlConfiguration = {
   flipPlanet: false,
   autoScaleDepth: false,
   showEquivalentCurve: true,
+  residualsInAbsoluteUnits: false,
 };
 
 type PresetEntry = {
@@ -187,7 +190,13 @@ type PresetEntry = {
   display?: Partial<
     Pick<
       UrlConfiguration,
-      "showEquivalentPlanet" | "showPlanetToScale" | "zoomIn" | "flipPlanet" | "autoScaleDepth" | "showEquivalentCurve"
+      | "showEquivalentPlanet"
+      | "showPlanetToScale"
+      | "zoomIn"
+      | "flipPlanet"
+      | "autoScaleDepth"
+      | "showEquivalentCurve"
+      | "residualsInAbsoluteUnits"
     >
   >;
 };
@@ -316,6 +325,8 @@ function buildConfigurationFromPresetEntry(entry: PresetEntry): UrlConfiguration
     flipPlanet: display.flipPlanet ?? DEFAULT_CONFIGURATION.flipPlanet,
     autoScaleDepth: display.autoScaleDepth ?? DEFAULT_CONFIGURATION.autoScaleDepth,
     showEquivalentCurve: display.showEquivalentCurve ?? DEFAULT_CONFIGURATION.showEquivalentCurve,
+    residualsInAbsoluteUnits:
+      display.residualsInAbsoluteUnits ?? DEFAULT_CONFIGURATION.residualsInAbsoluteUnits,
   };
 }
 
@@ -353,12 +364,16 @@ function readBooleanParameter(
   return fallback;
 }
 
-function readConfigurationFromUrl(search: string): UrlConfiguration | null {
+function readConfigurationFromUrl(
+  search: string,
+  baseConfiguration: UrlConfiguration = DEFAULT_CONFIGURATION,
+): UrlConfiguration | null {
   const searchParams = new URLSearchParams(search);
   const hasConfiguration = [
     ...Object.values(URL_PARAMETER_KEYS),
     ...Object.values(URL_ASSUMPTION_KEYS),
     ...Object.values(URL_OPTION_KEYS),
+    "preset",
     "pjup",
     "mpjup",
     "mplanet",
@@ -368,13 +383,16 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
 
   const rawMass = Number(searchParams.get(URL_ASSUMPTION_KEYS.starMass));
   const rawRadius = Number(searchParams.get(URL_ASSUMPTION_KEYS.starRadius));
-  const hasMass = Number.isFinite(rawMass) && rawMass > 0;
-  const starMassSolar = hasMass ? rawMass : ASSUMED_STAR_MASS_SOLAR;
-  const starRadiusSolar = Number.isFinite(rawRadius) && rawRadius > 0
+  const hasMass = searchParams.has(URL_ASSUMPTION_KEYS.starMass) && Number.isFinite(rawMass) && rawMass > 0;
+  const starMassSolar = hasMass ? rawMass : baseConfiguration.starMassSolar;
+  const hasRadius = searchParams.has(URL_ASSUMPTION_KEYS.starRadius) && Number.isFinite(rawRadius) && rawRadius > 0;
+  const starRadiusSolar = hasRadius
     ? rawRadius
-    : estimateMainSequenceRadiusSolar(starMassSolar);
+    : hasMass
+      ? estimateMainSequenceRadiusSolar(starMassSolar)
+      : baseConfiguration.starRadiusSolar;
 
-  const next = { ...DEFAULTS };
+  const next = { ...baseConfiguration.parameters };
   for (const control of CONTROLS) {
     const rawValue = searchParams.get(URL_PARAMETER_KEYS[control.key]);
     if (rawValue !== null) {
@@ -389,7 +407,7 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
     }
     if (control.key === "planetRadius") {
       const rawPjup = Number(searchParams.get("pjup"));
-      if (Number.isFinite(rawPjup) && rawPjup > 0) {
+      if (searchParams.has("pjup") && Number.isFinite(rawPjup) && rawPjup > 0) {
         const converted = (rawPjup * JUPITER_TO_SUN_RADIUS) / starRadiusSolar;
         next.planetRadius = Math.min(
           control.max,
@@ -404,15 +422,15 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
     Number(searchParams.get("mpjup")) || Number(searchParams.get("mplanet"));
   const rawAu = Number(searchParams.get(URL_ASSUMPTION_KEYS.semiMajorAxisAu));
   const rawRStar = Number(searchParams.get("aRstar"));
-  const hasPeriod = Number.isFinite(rawPeriod) && rawPeriod > 0;
-  const hasAu = Number.isFinite(rawAu) && rawAu > 0;
-  const hasRStarAxis = Number.isFinite(rawRStar) && rawRStar > 0;
+  const hasPeriod = searchParams.has(URL_ASSUMPTION_KEYS.periodDays) && Number.isFinite(rawPeriod) && rawPeriod > 0;
+  const hasAu = searchParams.has(URL_ASSUMPTION_KEYS.semiMajorAxisAu) && Number.isFinite(rawAu) && rawAu > 0;
+  const hasRStarAxis = searchParams.has("aRstar") && Number.isFinite(rawRStar) && rawRStar > 0;
   let semiMajorAxisAu = hasAu
     ? rawAu
     : hasRStarAxis
       ? rawRStar * starRadiusSolar * SOLAR_RADIUS_AU
-      : 1;
-  let periodDays = hasPeriod ? rawPeriod : DEFAULT_PERIOD_DAYS;
+      : baseConfiguration.semiMajorAxisAu;
+  let periodDays = hasPeriod ? rawPeriod : baseConfiguration.periodDays;
   let resolvedMassSolar = starMassSolar;
 
   const isLegacyDefault =
@@ -438,7 +456,7 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
     resolvedMassSolar =
       (4 * Math.PI ** 2 * (semiMajorAxisAu * AU_METERS) ** 3) /
       (GRAVITATIONAL_CONSTANT * (periodDays * 86400) ** 2 * SOLAR_MASS_KG);
-  } else if (hasPeriod && !hasAu && !hasRStarAxis) {
+  } else if (hasPeriod && !hasAu && !hasRStarAxis && !searchParams.has("preset")) {
     semiMajorAxisAu = 1;
   }
 
@@ -446,10 +464,13 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
     SOLAR_DENSITY_KG_M3 * resolvedMassSolar / starRadiusSolar ** 3;
   const planetRadiusJupiter =
     next.planetRadius * starRadiusSolar / JUPITER_TO_SUN_RADIUS;
-  const planetMassJupiter = Number.isFinite(rawPlanetMass) && rawPlanetMass > 0
+  const hasExplicitPlanetMass =
+    (searchParams.has("mpjup") || searchParams.has("mplanet")) &&
+    Number.isFinite(rawPlanetMass) &&
+    rawPlanetMass > 0;
+  const planetMassJupiter = hasExplicitPlanetMass
     ? rawPlanetMass
-    : DEFAULT_PLANET_DENSITY_G_CM3 * planetRadiusJupiter ** 3 /
-    JUPITER_DENSITY_G_CM3;
+    : baseConfiguration.planetMassJupiter;
 
   if (next.innerRingRadius >= next.outerRingRadius) {
     next.outerRingRadius = Math.min(4, next.innerRingRadius + 0.1);
@@ -465,36 +486,55 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
     periodDays,
     densityKgM3,
     planetMassJupiter,
-    showEquivalentPlanet: readBooleanParameter(
-      searchParams,
-      URL_OPTION_KEYS.showEquivalentPlanet,
-      DEFAULT_CONFIGURATION.showEquivalentPlanet,
-    ),
-    showPlanetToScale: readBooleanParameter(
-      searchParams,
-      URL_OPTION_KEYS.showPlanetToScale,
-      DEFAULT_CONFIGURATION.showPlanetToScale,
-    ),
-    zoomIn: readBooleanParameter(
-      searchParams,
-      URL_OPTION_KEYS.zoomIn,
-      DEFAULT_CONFIGURATION.zoomIn,
-    ),
-    flipPlanet: readBooleanParameter(
-      searchParams,
-      URL_OPTION_KEYS.flipPlanet,
-      DEFAULT_CONFIGURATION.flipPlanet,
-    ),
-    autoScaleDepth: readBooleanParameter(
-      searchParams,
-      URL_OPTION_KEYS.autoScaleDepth,
-      DEFAULT_CONFIGURATION.autoScaleDepth,
-    ),
-    showEquivalentCurve: readBooleanParameter(
-      searchParams,
-      URL_OPTION_KEYS.showEquivalentCurve,
-      DEFAULT_CONFIGURATION.showEquivalentCurve,
-    ),
+    showEquivalentPlanet: searchParams.has(URL_OPTION_KEYS.showEquivalentPlanet)
+      ? readBooleanParameter(
+          searchParams,
+          URL_OPTION_KEYS.showEquivalentPlanet,
+          baseConfiguration.showEquivalentPlanet,
+        )
+      : baseConfiguration.showEquivalentPlanet,
+    showPlanetToScale: searchParams.has(URL_OPTION_KEYS.showPlanetToScale)
+      ? readBooleanParameter(
+          searchParams,
+          URL_OPTION_KEYS.showPlanetToScale,
+          baseConfiguration.showPlanetToScale,
+        )
+      : baseConfiguration.showPlanetToScale,
+    zoomIn: searchParams.has(URL_OPTION_KEYS.zoomIn)
+      ? readBooleanParameter(
+          searchParams,
+          URL_OPTION_KEYS.zoomIn,
+          baseConfiguration.zoomIn,
+        )
+      : baseConfiguration.zoomIn,
+    flipPlanet: searchParams.has(URL_OPTION_KEYS.flipPlanet)
+      ? readBooleanParameter(
+          searchParams,
+          URL_OPTION_KEYS.flipPlanet,
+          baseConfiguration.flipPlanet,
+        )
+      : baseConfiguration.flipPlanet,
+    autoScaleDepth: searchParams.has(URL_OPTION_KEYS.autoScaleDepth)
+      ? readBooleanParameter(
+          searchParams,
+          URL_OPTION_KEYS.autoScaleDepth,
+          baseConfiguration.autoScaleDepth,
+        )
+      : baseConfiguration.autoScaleDepth,
+    showEquivalentCurve: searchParams.has(URL_OPTION_KEYS.showEquivalentCurve)
+      ? readBooleanParameter(
+          searchParams,
+          URL_OPTION_KEYS.showEquivalentCurve,
+          baseConfiguration.showEquivalentCurve,
+        )
+      : baseConfiguration.showEquivalentCurve,
+    residualsInAbsoluteUnits: searchParams.has(URL_OPTION_KEYS.residualsInAbsoluteUnits)
+      ? readBooleanParameter(
+          searchParams,
+          URL_OPTION_KEYS.residualsInAbsoluteUnits,
+          baseConfiguration.residualsInAbsoluteUnits,
+        )
+      : baseConfiguration.residualsInAbsoluteUnits,
   };
 }
 
@@ -511,6 +551,7 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
   url.searchParams.set("mpjup", String(configuration.planetMassJupiter));
   url.searchParams.delete("mplanet");
   url.searchParams.delete("pjup");
+  url.searchParams.delete("preset");
   url.searchParams.set(URL_ASSUMPTION_KEYS.semiMajorAxisAu, String(aInAu));
   url.searchParams.delete(URL_ASSUMPTION_KEYS.periodDays);
   url.searchParams.delete("aRstar");
@@ -531,6 +572,10 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
   url.searchParams.set(
     URL_OPTION_KEYS.showEquivalentCurve,
     configuration.showEquivalentCurve ? "1" : "0",
+  );
+  url.searchParams.set(
+    URL_OPTION_KEYS.residualsInAbsoluteUnits,
+    configuration.residualsInAbsoluteUnits ? "1" : "0",
   );
   return url.toString();
 }
@@ -1103,20 +1148,24 @@ function LightCurve({
   autoScaleDepth,
   showEquivalent,
   flipPlanet,
+  residualsInAbsoluteUnits,
   onAutoScaleDepthChange,
   onShowEquivalentChange,
+  onResidualsInAbsoluteUnitsChange,
 }: {
   model: TransitModel;
   phase: number;
   autoScaleDepth: boolean;
   showEquivalent: boolean;
   flipPlanet: boolean;
+  residualsInAbsoluteUnits: boolean;
   onAutoScaleDepthChange: (value: boolean) => void;
   onShowEquivalentChange: (value: boolean) => void;
+  onResidualsInAbsoluteUnitsChange: (value: boolean) => void;
 }) {
   const width = 900;
   const height = 270;
-  const margin = { left: 60, right: 28, top: 22, bottom: 42 };
+  const margin = { left: 80, right: 28, top: 22, bottom: 42 };
   const plotW = width - margin.left - margin.right;
   const plotH = height - margin.top - margin.bottom;
   // The x/time sampling grid is symmetric around mid-transit, so a specular
@@ -1181,7 +1230,7 @@ function LightCurve({
   ];
 
   const residualsHeight = 150;
-  const residualsMargin = { left: 60, right: 28, top: 18, bottom: 34 };
+  const residualsMargin = { left: 80, right: 28, top: 18, bottom: 34 };
   const residualsPlotH = residualsHeight - residualsMargin.top - residualsMargin.bottom;
   const residualsPpm = displayedLightCurve.map(
     (point) => (point.flux - point.equivalentFlux) * 1e6,
@@ -1344,28 +1393,40 @@ function LightCurve({
           Time from mid-transit [hours]
         </text>
         <text
-          x="15"
+          x="14"
           y={height / 2}
           className="axis-title"
           textAnchor="middle"
-          transform={`rotate(-90 15 ${height / 2})`}
+          transform={`rotate(-90 14 ${height / 2})`}
         >
           Relative flux
         </text>
       </svg>
       <div className="residuals-heading">
         <p className="simulation-options-title">Residuals</p>
-        <span className="residuals-subtitle">Ringed − ringless flux, in ppm (autoscaled)</span>
+        <span className="residuals-subtitle">
+          {residualsInAbsoluteUnits
+            ? "Ringed − ringless flux, in absolute units (autoscaled)"
+            : "Ringed − ringless flux, in ppm (autoscaled)"}
+        </span>
       </div>
       <svg
         className="residuals-chart"
         viewBox={`0 0 ${width} ${residualsHeight}`}
         role="img"
-        aria-label="Residual flux between the ringed and ringless light curves, in parts per million"
+        aria-label={
+          residualsInAbsoluteUnits
+            ? "Residual flux between the ringed and ringless light curves, in absolute units"
+            : "Residual flux between the ringed and ringless light curves, in parts per million"
+        }
       >
         {[-1, -0.5, 0, 0.5, 1].map((fraction) => {
           const ppm = fraction * residualYMax;
           const y = residualYScale(ppm);
+          const safePpm = Math.abs(ppm) < 1e-9 ? 0 : ppm;
+          const label = residualsInAbsoluteUnits
+            ? (safePpm / 1e6).toFixed(6)
+            : safePpm.toFixed(0);
           return (
             <g key={fraction}>
               <line
@@ -1376,7 +1437,7 @@ function LightCurve({
                 className={fraction === 0 ? "chart-grid chart-grid-zero" : "chart-grid"}
               />
               <text x={residualsMargin.left - 10} y={y + 3} className="axis-label" textAnchor="end">
-                {ppm.toFixed(0)}
+                {label}
               </text>
             </g>
           );
@@ -1444,18 +1505,24 @@ function LightCurve({
           cy={residualYScale(currentResidualPpm)}
           r="4"
           className="position-dot"
-        />
+        >
+          <title>
+            {residualsInAbsoluteUnits
+              ? `Residual: ${(currentResidualPpm / 1e6).toFixed(6)}`
+              : `Residual: ${currentResidualPpm.toFixed(0)} ppm`}
+          </title>
+        </circle>
         <text x={width / 2} y={residualsHeight - 6} className="axis-title" textAnchor="middle">
           Time from mid-transit [hours]
         </text>
         <text
-          x="15"
+          x="14"
           y={residualsHeight / 2}
           className="axis-title"
           textAnchor="middle"
-          transform={`rotate(-90 15 ${residualsHeight / 2})`}
+          transform={`rotate(-90 14 ${residualsHeight / 2})`}
         >
-          Residual [ppm]
+          {residualsInAbsoluteUnits ? "Residual" : "Residual [ppm]"}
         </text>
       </svg>
       <div className="curve-options">
@@ -1467,6 +1534,15 @@ function LightCurve({
             onChange={(event) => onAutoScaleDepthChange(event.currentTarget.checked)}
           />
           <span>Auto scale depth</span>
+        </label>
+        <label className="simulation-option">
+          <input
+            type="checkbox"
+            id="residuals-absolute-toggle"
+            checked={residualsInAbsoluteUnits}
+            onChange={(event) => onResidualsInAbsoluteUnitsChange(event.currentTarget.checked)}
+          />
+          <span>Residuals in absolute units</span>
         </label>
       </div>
     </section>
@@ -1676,6 +1752,7 @@ export default function PhotoRingSimulator() {
     flipPlanet,
     autoScaleDepth,
     showEquivalentCurve,
+    residualsInAbsoluteUnits,
   } = configuration;
   const model = useMemo(
     () => computeTransit(parameters, periodDays, densityKgM3),
@@ -1688,9 +1765,65 @@ export default function PhotoRingSimulator() {
       .then((options) => {
         if (cancelled || options.length === 0) return;
         setPresetOptions(options);
+
+        const search = window.location.search;
+        const searchParams = new URLSearchParams(search);
+        const presetParam = searchParams.get("preset");
+
+        if (presetParam) {
+          const normalize = (s: string) => s.toLowerCase().replace(/[-_]/g, "");
+          const matchingOption = options.find(
+            (opt) =>
+              opt.id.toLowerCase() === presetParam.toLowerCase() ||
+              normalize(opt.id) === normalize(presetParam),
+          );
+
+          if (matchingOption) {
+            const hasOverrides = [
+              ...Object.values(URL_PARAMETER_KEYS),
+              ...Object.values(URL_ASSUMPTION_KEYS),
+              ...Object.values(URL_OPTION_KEYS),
+              "pjup",
+              "mpjup",
+              "mplanet",
+              "aRstar",
+            ].some((key) => searchParams.has(key));
+
+            if (hasOverrides) {
+              const overridden = readConfigurationFromUrl(search, matchingOption.configuration);
+              if (overridden) {
+                startTransition(() => {
+                  setSelectedPreset("custom");
+                  setConfiguration(overridden);
+                });
+              }
+            } else {
+              startTransition(() => {
+                setSelectedPreset(matchingOption.id);
+                setConfiguration(matchingOption.configuration);
+              });
+            }
+            return;
+          }
+        }
+
+        const urlConfig = readConfigurationFromUrl(search);
+        if (urlConfig) {
+          startTransition(() => {
+            setSelectedPreset("custom");
+            setConfiguration(urlConfig);
+          });
+        }
       })
       .catch((error) => {
         console.error("Could not load presets.json, using built-in default only.", error);
+        const urlConfig = readConfigurationFromUrl(window.location.search);
+        if (urlConfig) {
+          startTransition(() => {
+            setSelectedPreset("custom");
+            setConfiguration(urlConfig);
+          });
+        }
       });
     return () => {
       cancelled = true;
@@ -1698,7 +1831,12 @@ export default function PhotoRingSimulator() {
   }, []);
 
   useEffect(() => {
-    const urlConfiguration = readConfigurationFromUrl(window.location.search);
+    const search = window.location.search;
+    const searchParams = new URLSearchParams(search);
+    if (searchParams.has("preset")) {
+      return;
+    }
+    const urlConfiguration = readConfigurationFromUrl(search);
     if (!urlConfiguration) return;
     startTransition(() => {
       setSelectedPreset("custom");
@@ -1955,6 +2093,7 @@ export default function PhotoRingSimulator() {
               autoScaleDepth={autoScaleDepth}
               showEquivalent={showEquivalentCurve}
               flipPlanet={flipPlanet}
+              residualsInAbsoluteUnits={residualsInAbsoluteUnits}
               onAutoScaleDepthChange={(value) =>
                 setConfiguration((current) => ({
                   ...current,
@@ -1965,6 +2104,12 @@ export default function PhotoRingSimulator() {
                 setConfiguration((current) => ({
                   ...current,
                   showEquivalentCurve: value,
+                }))
+              }
+              onResidualsInAbsoluteUnitsChange={(value) =>
+                setConfiguration((current) => ({
+                  ...current,
+                  residualsInAbsoluteUnits: value,
                 }))
               }
             />
@@ -1999,14 +2144,14 @@ export default function PhotoRingSimulator() {
           <Metric
             label={<>(a/R★)<sub>obs</sub></>}
             value={`${model.observedA.toFixed(1)}`}
-            note={`scaled semi-major axis · Eq. 13 (true ${model.aOverR.toFixed(1)})`}
+            note={`scaled semi-major axis (true ${model.aOverR.toFixed(1)})`}
             help="a/R★ inferred from the observed transit durations and depth. The true value is shown in the note."
             helpId="help-observed-a"
           />
           <Metric
             label={<>b<sub>obs</sub></>}
             value={`${model.observedB.toFixed(2)}`}
-            note={`impact parameter · Eq. 14 (true ${parameters.impact.toFixed(2)})`}
+            note={`impact parameter (true ${parameters.impact.toFixed(2)})`}
             help="b_obs is the impact parameter inferred under the ringless-planet assumption. The true input b is shown in the note."
             helpId="help-observed-b"
           />
