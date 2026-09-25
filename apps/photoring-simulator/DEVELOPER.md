@@ -109,8 +109,8 @@ range is clamped to the slider's min/max, exactly like the URL parameters.
 |---|---|---|---|---|
 | `p` | `p` | stellar radii (R★) | 0.03 – 0.16 | Planet radius relative to the star. A larger planet blocks more light during transit. Takes priority over `pjup` if both are given. |
 | `pjup` | `pjup` | Jupiter radii (Rjup) | — | Alternative way to set the planet radius, in Jupiter radii instead of stellar radii. Only used when `p` is omitted; converted internally using the resolved star radius. |
-| `fi` | `fi` | planet radii (Rₚ) | 1.05 – 2.8 | Inner edge of the ring system, measured in planet radii from the planet center. Must be smaller than `fe`. |
-| `fe` | `fe` | planet radii (Rₚ) | 1.2 – 4 | Outer edge of the ring system, measured in planet radii from the planet center. Must be larger than `fi`. |
+| `fi` | `fi` | planet radii (Rₚ) | 1 – 2.8 | Inner edge of the ring system, measured in planet radii from the planet center. Must be smaller than `fe`. When `fe` is 1, `fi` is also set to 1. |
+| `fe` | `fe` | planet radii (Rₚ) | 1 – 4 | Outer edge of the ring system, measured in planet radii from the planet center. Must be larger than `fi`. A value of 1 removes the ring and simulates a spherical planet. |
 | `tilt` | `tilt` | degrees | 0 – 90 | Rotation of the ring plane around the planet's apparent axis. Changes the ring orientation across the transit. |
 | `ir` | `ir` | degrees | 0 – 90 | Angle between the ring plane and the line of sight (ring inclination). 0° = rings seen edge-on, 90° = face-on. |
 | `b` | `b` | dimensionless | 0 – 0.85 | Impact parameter: distance between the transit path and the stellar disk center, in stellar radii. 0 is a central transit. |

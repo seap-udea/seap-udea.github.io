@@ -57,7 +57,7 @@ const CONTROLS: {
       key: "innerRingRadius",
       symbol: "fᵢ",
       label: "Inner ring radius",
-      min: 1.05,
+      min: 1,
       max: 2.8,
       step: 0.01,
       unit: " Rₚ",
@@ -67,11 +67,11 @@ const CONTROLS: {
       key: "outerRingRadius",
       symbol: "fₑ",
       label: "Outer ring radius",
-      min: 1.2,
+      min: 1,
       max: 4,
       step: 0.01,
       unit: " Rₚ",
-      help: "Outer edge of the ring system, measured in planet radii from the planet center.",
+      help: "Outer edge of the ring system, measured in planet radii from the planet center. A value of 1 removes the ring and simulates a spherical planet.",
     },
     {
       key: "tilt",
@@ -472,10 +472,13 @@ function readConfigurationFromUrl(
     ? rawPlanetMass
     : baseConfiguration.planetMassJupiter;
 
-  if (next.innerRingRadius >= next.outerRingRadius) {
+  if (next.outerRingRadius <= 1) {
+    next.outerRingRadius = 1;
+    next.innerRingRadius = 1;
+  } else if (next.innerRingRadius >= next.outerRingRadius) {
     next.outerRingRadius = Math.min(4, next.innerRingRadius + 0.1);
     if (next.innerRingRadius >= next.outerRingRadius) {
-      next.innerRingRadius = Math.max(1.05, next.outerRingRadius - 0.1);
+      next.innerRingRadius = Math.max(1, next.outerRingRadius - 0.1);
     }
   }
   return {
@@ -794,8 +797,10 @@ function TransitScene({
     0.055,
     Math.cos((parameters.inclination * Math.PI) / 180),
   );
-  const ringOpacity =
-    parameters.alpha >= 1
+  const sphericalPlanet = parameters.outerRingRadius <= 1;
+  const ringOpacity = sphericalPlanet
+    ? 0
+    : parameters.alpha >= 1
       ? 0
       : parameters.alpha <= 0
         ? 0.88
@@ -1142,6 +1147,32 @@ function TransitScene({
   );
 }
 
+/**
+ * Hides the stair steps left by the stellar-pixel flux grid. The kernel is only
+ * a few samples wide, so the residual shape stays while the grid jumps do not.
+ */
+function smoothResidualSeries(values: number[]): number[] {
+  const sigma = 1.2;
+  const radius = 4;
+  const weights = Array.from({ length: radius * 2 + 1 }, (_, index) => {
+    const offset = index - radius;
+    return Math.exp(-(offset * offset) / (2 * sigma * sigma));
+  });
+
+  return values.map((_, index) => {
+    let sum = 0;
+    let weightSum = 0;
+    for (let offset = -radius; offset <= radius; offset += 1) {
+      const sample = index + offset;
+      if (sample < 0 || sample >= values.length) continue;
+      const weight = weights[offset + radius];
+      sum += values[sample] * weight;
+      weightSum += weight;
+    }
+    return weightSum > 0 ? sum / weightSum : values[index];
+  });
+}
+
 function LightCurve({
   model,
   phase,
@@ -1232,8 +1263,8 @@ function LightCurve({
   const residualsHeight = 150;
   const residualsMargin = { left: 80, right: 28, top: 18, bottom: 34 };
   const residualsPlotH = residualsHeight - residualsMargin.top - residualsMargin.bottom;
-  const residualsPpm = displayedLightCurve.map(
-    (point) => (point.flux - point.equivalentFlux) * 1e6,
+  const residualsPpm = smoothResidualSeries(
+    displayedLightCurve.map((point) => (point.flux - point.equivalentFlux) * 1e6),
   );
   const residualPeak = Math.max(
     1e-6,
@@ -1857,11 +1888,13 @@ export default function PhotoRingSimulator() {
     setConfiguration((currentConfiguration) => {
       const current = currentConfiguration.parameters;
       const next = { ...current, [key]: value };
-      if (key === "innerRingRadius" && value >= next.outerRingRadius) {
+      if (next.outerRingRadius <= 1) {
+        next.outerRingRadius = 1;
+        next.innerRingRadius = 1;
+      } else if (key === "innerRingRadius" && value >= next.outerRingRadius) {
         next.outerRingRadius = Math.min(4, value + 0.1);
-      }
-      if (key === "outerRingRadius" && value <= next.innerRingRadius) {
-        next.innerRingRadius = Math.max(1.05, value - 0.1);
+      } else if (key === "outerRingRadius" && value <= next.innerRingRadius) {
+        next.innerRingRadius = Math.max(1, value - 0.1);
       }
       return { ...currentConfiguration, parameters: next };
     });

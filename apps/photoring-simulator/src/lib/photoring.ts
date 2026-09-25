@@ -212,7 +212,9 @@ export function computeTransit(
     outer * cosI,
     theta,
   );
+  const sphericalPlanet = parameters.outerRingRadius <= 1;
   const ringVisible =
+    !sphericalPlanet &&
     cosI * blocking * (parameters.outerRingRadius ** 2 - parameters.innerRingRadius ** 2) >
     1e-5;
 
@@ -255,7 +257,7 @@ export function computeTransit(
     timeAtX(contacts[1]) - timeAtX(contacts[0]),
   );
 
-  const areas = occultorArea(parameters);
+  const areas = sphericalPlanet ? { total: Math.PI * p * p, ring: 0 } : occultorArea(parameters);
   const depth = areas.total / Math.PI;
   const ringDepth = areas.ring / Math.PI;
   const verticalScaleDepth = REFERENCE_VERTICAL_SCALE_DEPTH;
@@ -307,11 +309,13 @@ export function computeTransit(
     ) + 0.16;
   const lightCurve = Array.from({ length: 181 }, (_, index) => {
     const x = -extent + (2 * extent * index) / 180;
-    const inFullTransit = x >= contacts[1] && x <= contacts[2];
-    const ringedBlocked = inFullTransit
-      ? depth
-      : blockedFlux(x, parameters, cosTilt, sinTilt, cosI);
     const d = Math.hypot(x, b);
+    const inFullTransit = x >= contacts[1] && x <= contacts[2];
+    const ringedBlocked = sphericalPlanet
+      ? circleOverlapArea(d, 1, p) / Math.PI
+      : inFullTransit
+        ? depth
+        : blockedFlux(x, parameters, cosTilt, sinTilt, cosI);
     const eqBlocked = circleOverlapArea(d, 1, equivalentPlanetRadius) / Math.PI;
 
     return {
