@@ -210,7 +210,7 @@ The residuals panel shows $\Delta F(t)=F_{\mathrm{ringed}}(t)-F_{\mathrm{ringles
 
 The web app computes a simplified numerical model. For science-grade light curves that include stellar limb darkening, cadence integration, and full ring geometry, use one of the following Python packages:
 
-- **[PyPplusS](https://github.com/EdanRein/pyPplusS)** — implements the Polynomial plus Step (P+S) analytic ring-transit model. It computes ringed-planet light curves with arbitrary limb-darkening laws using fast analytic area integrals, making it ideal for fitting observed transit data.
+- **[PyPplusS](https://github.com/EdanRein/pyPplusS)** — implements the Polynomial plus Step (P+S) analytic ring-transit model. It computes ringed-planet light curves with arbitrary limb-darkening laws using fast analytic area integrals, making it ideal for fitting observed transit data. The simulator can export a Google Colab cell for the current configuration from the **pyPplusS / Colab** button.
 
 - **[Pryngles](https://pypi.org/project/pryngles/)** — a general-purpose ringed-planet simulator that models scattered and transmitted light through rings with configurable opacity and particle properties, including phase-angle dependence. Useful for photometric modeling beyond the transit regime.
 
@@ -344,6 +344,25 @@ The links below open the simulator with reproducible configurations. The first c
 
 	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=kepler51d) · [Full parameters URL](https://seap-udea.github.io/apps/photoring-simulator/?p=0.081&fi=1&fe=1.73&tilt=67.39&ir=70.87&b=0.28&alpha=0.34&mpjup=0.0217&mstar=0.9974025&rstar=0.869&aau=0.5022714&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
+## Transit demo
+
+The presets labeled **(demo.)** are teaching configurations. They share one Saturn-like planet ($p=0.84\,R_{\mathrm{Jup}}$, $M_p=0.2994\,M_{\mathrm{Jup}}$) on the same orbit around a solar-like star, with the same impact parameter $b=0.25$. Only the ring changes. That isolation is the point: a student can watch one control move the light curve, the contacts, and the residuals, and see which part of the transit that control is responsible for.
+
+1. **Ringless saturn (demo.)** — $f_i=f_e=1$. The outer edge sits on the planetary limb, so the simulator drops the ring and integrates a spherical planet. The curve, the depth, and the equivalent ringless planet all describe the same body, and the residual is zero. This is the baseline.
+
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=ringless-saturn-demo)
+
+	From here, raise $f_e$. A ring grows outside the planet. The transit deepens, ingress and egress lengthen, and the residual against the equivalent ringless planet leaves zero. Those changes are the photometric signature of ring area, read off a system the student already understands as an ordinary sphere.
+
+2. **Face-on ringed saturn (demo.)** — $f_i=1$, $f_e=2$, $i_R=0^\circ$, $\theta_R=0^\circ$, $\alpha=0.37$. At $i_R=0^\circ$ the projected ring is a circle ($B=A\cos i_R=A$). The ring is partly transmitting. Compare it with the ringless case, then with the opaque case below, to separate the effect of extra area from the effect of how much starlight the ring removes.
+
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=face-on-ringed-saturn-demo)
+
+3. **Face-on opaque saturn (demo.)** — the same face-on ring with $\alpha=0$. An opaque, circular ring that begins at the planetary limb blocks exactly the same stellar area as a larger spherical planet of radius $f_e p$. Depth, duration, and the equivalent-planet curve line up with that bigger sphere: every ring parameter has been absorbed into a single larger radius. The degeneracy is the lesson. Raise $\alpha$ from zero so the ring transmits more starlight. The solid-planet match breaks, and the residual shows what attenuation does once size alone can no longer explain the transit.
+
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=face-on-opaque-saturn-demo)
+
+Used in that order, the three presets teach the effect without a fitted system or a paper figure. Students first see a bare transit, then add ring radius, then discover that an opaque face-on ring hides inside a larger planet, and finally watch partial transmission give the ring away.
 
 ## AI Assistance Disclosure
 

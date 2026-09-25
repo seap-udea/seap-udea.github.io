@@ -409,6 +409,86 @@ main {
   white-space: nowrap;
 }
 
+.code-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: rgba(3, 8, 12, 0.72);
+}
+
+.code-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(760px, 100%);
+  max-height: min(86vh, 820px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(16, 24, 32, 0.98), rgba(7, 12, 17, 0.98));
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.4);
+}
+
+.code-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 18px 0;
+}
+
+.code-dialog-heading h2 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.code-dialog-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.code-dialog-heading a {
+  color: var(--aqua);
+}
+
+.code-dialog-close {
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.code-dialog-pre {
+  margin: 14px 18px;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #071018;
+  color: #d7ece8;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  white-space: pre;
+}
+
+.code-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 18px 18px;
+}
+
 .preset-selector {
   display: grid;
   gap: 5px;
@@ -1231,6 +1311,19 @@ footer a:hover {
 @media (max-width: 1050px) {
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .visual-stack {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .curve-card {
+    order: 1;
+  }
+
+  .simulation-row {
+    order: 2;
   }
 
   .parameter-list {

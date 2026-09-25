@@ -583,6 +583,120 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
   return url.toString();
 }
 
+function pyNumber(value: number) {
+  if (!Number.isFinite(value)) return "0.0";
+  const text = JSON.stringify(value);
+  return /[.eE]/.test(text) ? text : `${text}.0`;
+}
+
+function ringBlockingForExport(alpha: number, inclinationDeg: number) {
+  const cosI = Math.max(0, Math.cos((inclinationDeg * Math.PI) / 180));
+  if (cosI <= 1e-6 || alpha >= 1) return 0;
+  if (alpha <= 0) return 1;
+  return 1 - alpha ** (1 / cosI);
+}
+
+function buildPypplussColabCode(
+  configuration: UrlConfiguration,
+  model: TransitModel,
+  aInAu: number,
+) {
+  const { parameters, starMassSolar, starRadiusSolar, periodDays, planetMassJupiter } =
+    configuration;
+  const spherical = parameters.outerRingRadius <= 1;
+  const p = parameters.planetRadius;
+  const rin = spherical ? p : p * parameters.innerRingRadius;
+  const rout = spherical ? p : p * parameters.outerRingRadius;
+  const opacity = spherical
+    ? 0
+    : ringBlockingForExport(parameters.alpha, parameters.inclination);
+  const first = model.lightCurve[0];
+  const last = model.lightCurve[model.lightCurve.length - 1];
+  const speed =
+    last.time === first.time ? 0 : (last.x - first.x) / (last.time - first.time);
+  const aInRStar = aInAu / (starRadiusSolar * SOLAR_RADIUS_AU);
+
+  return `# PhotoRing → pyPplusS (Rein & Ofir 2019)
+# Paste this cell into Google Colab:
+# https://colab.research.google.com/
+# Generated from the current PRisma configuration.
+
+# Uncomment in Colab if pyppluss is not installed yet:
+# %pip install -q pyppluss matplotlib
+
+import numpy as np
+
+# Colab ships NumPy 2, which removed np.NaN. pyPplusS still uses that name.
+if not hasattr(np, "NaN"):
+    np.NaN = np.nan
+
+import matplotlib.pyplot as plt
+from pyppluss.segment_models import LC_ringed
+
+# --- PRisma configuration ---
+p = ${pyNumber(p)}                 # planet radius [R★]
+fi = ${pyNumber(parameters.innerRingRadius)}                # inner ring [Rp]
+fe = ${pyNumber(parameters.outerRingRadius)}                # outer ring [Rp]
+tilt_deg = ${pyNumber(parameters.tilt)}          # θ_R [deg]
+ir_deg = ${pyNumber(parameters.inclination)}            # i_R [deg]
+b = ${pyNumber(parameters.impact)}                 # impact parameter
+alpha = ${pyNumber(parameters.alpha)}             # ring transmission along the normal
+mstar = ${pyNumber(starMassSolar)}             # M★ [M☉]
+rstar = ${pyNumber(starRadiusSolar)}             # R★ [R☉]
+mpjup = ${pyNumber(planetMassJupiter)}             # Mp [Mjup]
+a_au = ${pyNumber(aInAu)}              # a [AU]
+porb = ${pyNumber(periodDays)}            # Porb [days]
+a_rs = ${pyNumber(aInRStar)}             # a/R★
+
+# pyPplusS wants lengths in stellar radii and angles in radians.
+# Opacity is the blocked fraction of the projected ring: 1 − α^{1/cos i_R}.
+rp = p
+rin = ${spherical ? "rp" : "p * fi"}
+rout = ${spherical ? "rp" : "p * fe"}
+ir = np.radians(ir_deg)
+tilt = np.radians(tilt_deg)
+cos_i = max(0.0, float(np.cos(ir)))
+if ${spherical ? "True" : "False"} or cos_i <= 1e-6 or alpha >= 1.0:
+    opacity = 0.0
+elif alpha <= 0.0:
+    opacity = 1.0
+else:
+    opacity = 1.0 - alpha ** (1.0 / cos_i)
+
+t_hours = np.linspace(${pyNumber(first.time)}, ${pyNumber(last.time)}, 181)
+x = t_hours * ${pyNumber(speed)}
+y = np.full_like(x, b)
+
+# Uniform star (no limb darkening), matching the web app.
+ones = np.ones_like(x)
+flux = LC_ringed(
+    ones * rp,
+    ones * rin,
+    ones * rout,
+    x,
+    y,
+    ir,
+    tilt,
+    opacity,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+)
+
+fig, ax = plt.subplots(figsize=(8, 3.6))
+ax.plot(t_hours, flux, color="#66dfd0", lw=2)
+ax.set_xlabel("Time from mid-transit [hours]")
+ax.set_ylabel("Relative flux")
+ax.set_title("pyPplusS ringed transit")
+ax.grid(True, alpha=0.25)
+plt.show()
+
+print(f"opacity = {opacity:.6f}, rin = {rin:.6f} R★, rout = {rout:.6f} R★")
+print("Rein & Ofir (2019), MNRAS, 490, 1111. Package: pip install pyppluss")
+`;
+}
+
 function semiMajorAxisFromMassAndPeriod(starMassSolar: number, periodDays: number) {
   const periodSeconds = periodDays * 86400;
   const meters = Math.cbrt(
@@ -717,6 +831,10 @@ function formatSteppedValue(value: number, coarseStep: number) {
     .toFixed(decimals)
     .replace(/(\.\d*?)0+$/, "$1")
     .replace(/\.$/, "");
+}
+
+function svgNum(value: number) {
+  return value.toFixed(4);
 }
 
 function formatControlValue(key: ParameterKey, value: number, unit: string) {
@@ -1687,23 +1805,23 @@ function LightCurve({
         <path d={path} className="curve-path curve-glow" />
         <path d={path} className="curve-path" />
         <line
-          x1={xScale(current.time)}
-          x2={xScale(current.time)}
+          x1={svgNum(xScale(current.time))}
+          x2={svgNum(xScale(current.time))}
           y1={margin.top}
           y2={height - margin.bottom}
           className="position-line"
         />
         {showEquivalent && (
           <circle
-            cx={xScale(current.time)}
-            cy={yScale(current.equivalentFlux)}
+            cx={svgNum(xScale(current.time))}
+            cy={svgNum(yScale(current.equivalentFlux))}
             r="4"
             className="position-dot-equivalent"
           />
         )}
         <circle
-          cx={xScale(current.time)}
-          cy={yScale(current.flux)}
+          cx={svgNum(xScale(current.time))}
+          cy={svgNum(yScale(current.flux))}
           r="4.5"
           className="position-dot"
         />
@@ -1812,15 +1930,15 @@ function LightCurve({
         <path d={residualPath} className="residual-path residual-glow" />
         <path d={residualPath} className="residual-path" />
         <line
-          x1={xScale(current.time)}
-          x2={xScale(current.time)}
+          x1={svgNum(xScale(current.time))}
+          x2={svgNum(xScale(current.time))}
           y1={residualsMargin.top}
           y2={residualsHeight - residualsMargin.bottom}
           className="position-line"
         />
         <circle
-          cx={xScale(current.time)}
-          cy={residualYScale(currentResidualPpm)}
+          cx={svgNum(xScale(current.time))}
+          cy={svgNum(residualYScale(currentResidualPpm))}
           r="4"
           className="position-dot"
         >
@@ -1949,6 +2067,73 @@ function CalculatedHelp({
   );
 }
 
+function PypplussCodeDialog({
+  code,
+  onClose,
+}: {
+  code: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+    window.setTimeout(() => setCopied(false), 2500);
+  };
+
+  return (
+    <div className="code-dialog-backdrop" onClick={onClose}>
+      <div
+        className="code-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pyppluss-dialog-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="code-dialog-heading">
+          <div>
+            <h2 id="pyppluss-dialog-title">pyPplusS for Google Colab</h2>
+            <p>
+              Copy this cell and paste it in{" "}
+              <a href="https://colab.research.google.com/" target="_blank" rel="noreferrer">
+                Colab
+              </a>
+              . The install line is commented out so the script also runs as a standalone file; uncomment it in Colab if <code>pyppluss</code> is missing.
+            </p>
+          </div>
+          <button type="button" className="code-dialog-close" aria-label="Close" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <pre className="code-dialog-pre">
+          <code>{code}</code>
+        </pre>
+        <div className="code-dialog-actions">
+          <button type="button" className="config-link-button" onClick={() => void copyCode()}>
+            {copied ? "Copied" : "Copy code"}
+          </button>
+          <button type="button" className="reset-button" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PhotoRingSummaryCard({
   model,
   observedPlanetDensityRatio,
@@ -2057,6 +2242,7 @@ export default function PhotoRingSimulator() {
   const [phase, setPhase] = useState(-0.76);
   const [playing, setPlaying] = useState(true);
   const [copyLinkFeedback, setCopyLinkFeedback] = useState<string | null>(null);
+  const [showPypplussCode, setShowPypplussCode] = useState(false);
   const [radiusFollowsMass, setRadiusFollowsMass] = useState(false);
   const [massFollowsPlanetRadius, setMassFollowsPlanetRadius] = useState(false);
   const {
@@ -2403,6 +2589,13 @@ export default function PhotoRingSimulator() {
               <button
                 type="button"
                 className="reset-button"
+                onClick={() => setShowPypplussCode(true)}
+              >
+                pyPplusS / Colab
+              </button>
+              <button
+                type="button"
+                className="reset-button"
                 onClick={resetConfiguration}
               >
                 Reset
@@ -2615,6 +2808,12 @@ export default function PhotoRingSimulator() {
           </a>
         </nav>
       </footer>
+      {showPypplussCode && (
+        <PypplussCodeDialog
+          code={buildPypplussColabCode(configuration, model, aInAu)}
+          onClose={() => setShowPypplussCode(false)}
+        />
+      )}
     </div>
   );
 }
