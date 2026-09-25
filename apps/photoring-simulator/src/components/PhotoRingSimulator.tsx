@@ -1061,6 +1061,30 @@ function TransitScene({
           mask="url(#ringMask)"
           opacity={ringOpacity}
         />
+        {ringOpacity > 0 && (
+          <g
+            suppressHydrationWarning
+            fill="none"
+            stroke="#000"
+            strokeWidth="0.75"
+            transform={`rotate(${visualTilt} ${planetX} ${planetY})`}
+          >
+            <ellipse
+              suppressHydrationWarning
+              cx={planetX}
+              cy={planetY}
+              rx={outerR}
+              ry={outerR * projected}
+            />
+            <ellipse
+              suppressHydrationWarning
+              cx={planetX}
+              cy={planetY}
+              rx={innerR}
+              ry={innerR * projected}
+            />
+          </g>
+        )}
         <circle
           cx={planetX}
           cy={planetY}

@@ -153,6 +153,99 @@
         "autoScaleDepth": false,
         "showEquivalentCurve": true
       }
+    },
+    {
+      "id": "ringless-saturn-demo",
+      "label": "Ringless saturn (demo.)",
+      "parameters": {
+        "pjup": 0.84,
+        "fi": 1,
+        "fe": 1,
+        "tilt": 0,
+        "ir": 0,
+        "b": 0.25,
+        "alpha": 0.36787944117144233
+      },
+      "star": {
+        "mstar": 1,
+        "rstar": 1
+      },
+      "orbit": {
+        "aau": 0.9999974887698985
+      },
+      "planet": {
+        "mpjup": 0.2994
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": false,
+        "showEquivalentCurve": true
+      }
+    },
+    {
+      "id": "face-on-ringed-saturn-demo",
+      "label": "Face-on ringed saturn (demo.)",
+      "parameters": {
+        "pjup": 0.84,
+        "fi": 1,
+        "fe": 2,
+        "tilt": 0,
+        "ir": 0,
+        "b": 0.25,
+        "alpha": 0.37
+      },
+      "star": {
+        "mstar": 1,
+        "rstar": 1
+      },
+      "orbit": {
+        "aau": 0.9999974887698985
+      },
+      "planet": {
+        "mpjup": 0.2994
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": false,
+        "showEquivalentCurve": true
+      }
+    },
+    {
+      "id": "face-on-opaque-saturn-demo",
+      "label": "Face-on opaque saturn (demo.)",
+      "parameters": {
+        "pjup": 0.84,
+        "fi": 1,
+        "fe": 2,
+        "tilt": 0,
+        "ir": 0,
+        "b": 0.25,
+        "alpha": 0
+      },
+      "star": {
+        "mstar": 1,
+        "rstar": 1
+      },
+      "orbit": {
+        "aau": 0.9999974887698985
+      },
+      "planet": {
+        "mpjup": 0.2994
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": false,
+        "showEquivalentCurve": true
+      }
     }
   ]
 }
