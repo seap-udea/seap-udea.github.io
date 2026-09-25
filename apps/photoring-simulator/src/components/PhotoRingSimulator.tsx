@@ -583,10 +583,145 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
   return url.toString();
 }
 
+function semiMajorAxisFromMassAndPeriod(starMassSolar: number, periodDays: number) {
+  const periodSeconds = periodDays * 86400;
+  const meters = Math.cbrt(
+    (GRAVITATIONAL_CONSTANT * starMassSolar * SOLAR_MASS_KG * periodSeconds ** 2) /
+    (4 * Math.PI ** 2),
+  );
+  return meters / AU_METERS;
+}
+
+function periodDaysFromMassAndAxis(starMassSolar: number, semiMajorAxisAu: number) {
+  const meters = semiMajorAxisAu * AU_METERS;
+  const seconds =
+    2 * Math.PI *
+    Math.sqrt(
+      meters ** 3 /
+      (GRAVITATIONAL_CONSTANT * starMassSolar * SOLAR_MASS_KG),
+    );
+  return seconds / 86400;
+}
+
+function stellarDensityKgM3(starMassSolar: number, starRadiusSolar: number) {
+  return SOLAR_DENSITY_KG_M3 * starMassSolar / starRadiusSolar ** 3;
+}
+
+type SystemControlKey =
+  | "starMassSolar"
+  | "starRadiusSolar"
+  | "planetMassJupiter"
+  | "semiMajorAxisAu"
+  | "periodDays";
+
+const SYSTEM_CONTROLS: {
+  key: SystemControlKey;
+  symbol: string;
+  label: string;
+  min: number;
+  max: number;
+  unit: string;
+  digits: number;
+  step: number;
+  help: string;
+}[] = [
+  {
+    key: "starMassSolar",
+    symbol: "M★",
+    label: "Star mass",
+    min: 0.1,
+    max: 1.4,
+    unit: " M☉",
+    digits: 3,
+    step: 0.01,
+    help: "Host-star mass. The orbital period is updated from this mass and the semi-major axis so Kepler's third law still holds.",
+  },
+  {
+    key: "starRadiusSolar",
+    symbol: "R★",
+    label: "Star radius",
+    min: 0.05,
+    max: 3,
+    unit: " R☉",
+    digits: 3,
+    step: 0.01,
+    help: "Host-star radius. It changes the stellar density and the orbit size in stellar radii. The planet radius stays fixed in units of R★.",
+  },
+  {
+    key: "planetMassJupiter",
+    symbol: "Mₚ",
+    label: "Planet mass",
+    min: 0.001,
+    max: 10,
+    unit: " Mjup",
+    digits: 3,
+    step: 0.001,
+    help: "Planet mass used for the true planetary density. It does not change the transit shape.",
+  },
+  {
+    key: "semiMajorAxisAu",
+    symbol: "a",
+    label: "Semi-major axis",
+    min: 0.01,
+    max: 5,
+    unit: " AU",
+    digits: 3,
+    step: 0.01,
+    help: "Orbital semi-major axis. Changing it updates the orbital period through Kepler's third law, at fixed star mass.",
+  },
+  {
+    key: "periodDays",
+    symbol: "Porb",
+    label: "Orbital period",
+    min: 0.5,
+    max: 2000,
+    unit: " days",
+    digits: 2,
+    step: 0.1,
+    help: "Orbital period. Changing it updates the semi-major axis through Kepler's third law, at fixed star mass.",
+  },
+];
+
+function usePreciseStep() {
+  const [precise, setPrecise] = useState(false);
+
+  useEffect(() => {
+    const enable = (event: KeyboardEvent) => {
+      if (event.key === "Control") setPrecise(true);
+    };
+    const disable = (event: KeyboardEvent) => {
+      if (event.key === "Control") setPrecise(false);
+    };
+    const release = () => setPrecise(false);
+    window.addEventListener("keydown", enable);
+    window.addEventListener("keyup", disable);
+    window.addEventListener("blur", release);
+    return () => {
+      window.removeEventListener("keydown", enable);
+      window.removeEventListener("keyup", disable);
+      window.removeEventListener("blur", release);
+    };
+  }, []);
+
+  return precise;
+}
+
+function stepDecimals(step: number) {
+  if (!Number.isFinite(step) || step >= 1) return 0;
+  return Math.min(6, Math.max(0, Math.round(-Math.log10(step))));
+}
+
+function formatSteppedValue(value: number, coarseStep: number) {
+  const decimals = stepDecimals(coarseStep / 20);
+  return value
+    .toFixed(decimals)
+    .replace(/(\.\d*?)0+$/, "$1")
+    .replace(/\.$/, "");
+}
+
 function formatControlValue(key: ParameterKey, value: number, unit: string) {
-  const digits =
-    key === "planetRadius" ? 3 : key === "tilt" || key === "inclination" ? 0 : 2;
-  const formattedValue = `${value.toFixed(digits)}${unit}`;
+  const step = CONTROLS.find((control) => control.key === key)?.step ?? 0.01;
+  const formattedValue = `${formatSteppedValue(value, step)}${unit}`;
   return key === "planetRadius"
     ? `${formattedValue} (${(value / JUPITER_TO_SUN_RADIUS).toFixed(2)} Rjup)`
     : formattedValue;
@@ -669,6 +804,7 @@ function ParameterControls({
 }) {
   const [openHelp, setOpenHelp] = useState<ParameterKey | null>(null);
   const [helpSide, setHelpSide] = useState<"left" | "right">("right");
+  const precise = usePreciseStep();
 
   return (
     <div className="parameter-list">
@@ -735,9 +871,13 @@ function ParameterControls({
               type="range"
               min={control.min}
               max={control.max}
-              step={control.step}
+              step={precise ? control.step / 20 : control.step}
               value={parameters[control.key]}
+              title="Hold Ctrl while dragging or clicking for a 20× finer step"
               style={{ "--progress": `${progress}%` } as React.CSSProperties}
+              onContextMenu={(event) => {
+                if (event.ctrlKey) event.preventDefault();
+              }}
               onChange={(event) =>
                 onChange(control.key, Number(event.currentTarget.value))
               }
@@ -746,6 +886,129 @@ function ParameterControls({
         );
       })}
     </div>
+  );
+}
+
+function OptionalSystemControls({
+  starMassSolar,
+  starRadiusSolar,
+  planetMassJupiter,
+  semiMajorAxisAu,
+  periodDays,
+  radiusFollowsMass,
+  massFollowsPlanetRadius,
+  onChange,
+  onToggleRadiusScaling,
+  onToggleMassScaling,
+}: {
+  starMassSolar: number;
+  starRadiusSolar: number;
+  planetMassJupiter: number;
+  semiMajorAxisAu: number;
+  periodDays: number;
+  radiusFollowsMass: boolean;
+  massFollowsPlanetRadius: boolean;
+  onChange: (key: SystemControlKey, value: number) => void;
+  onToggleRadiusScaling: () => void;
+  onToggleMassScaling: () => void;
+}) {
+  const values: Record<SystemControlKey, number> = {
+    starMassSolar,
+    starRadiusSolar,
+    planetMassJupiter,
+    semiMajorAxisAu,
+    periodDays,
+  };
+  const [openHelp, setOpenHelp] = useState<SystemControlKey | null>(null);
+  const precise = usePreciseStep();
+
+  return (
+    <details className="system-controls">
+      <summary>Star, planet and orbit</summary>
+      <p className="system-controls-note">
+        Optional. Semi-major axis and orbital period stay tied by Kepler's third law.
+      </p>
+      <div className="parameter-list">
+        {SYSTEM_CONTROLS.map((control) => {
+          const value = Math.min(control.max, Math.max(control.min, values[control.key]));
+          const progress = ((value - control.min) / (control.max - control.min)) * 100;
+          return (
+            <div className="parameter" key={control.key}>
+              <span
+                className={`parameter-title${control.key === "starRadiusSolar" || control.key === "planetMassJupiter" ? " parameter-title--radius" : ""}`}
+              >
+                <i>{control.symbol}</i>
+                <label htmlFor={`system-${control.key}`}>{control.label}</label>
+                <button
+                  type="button"
+                  className="parameter-help-button"
+                  aria-label={`Help: ${control.label}`}
+                  aria-expanded={openHelp === control.key}
+                  onClick={() =>
+                    setOpenHelp((current) => (current === control.key ? null : control.key))
+                  }
+                >
+                  ?
+                </button>
+                <output>
+                  {formatSteppedValue(value, control.step)}
+                  {control.unit}
+                </output>
+                {control.key === "starRadiusSolar" && (
+                  <button
+                    type="button"
+                    className={`radius-scaling-toggle${radiusFollowsMass ? " active" : ""}`}
+                    aria-pressed={radiusFollowsMass}
+                    title="When on, the star radius follows the mass along the main sequence"
+                    onClick={onToggleRadiusScaling}
+                  >
+                    ∝ M★
+                  </button>
+                )}
+                {control.key === "planetMassJupiter" && (
+                  <button
+                    type="button"
+                    className={`radius-scaling-toggle${massFollowsPlanetRadius ? " active" : ""}`}
+                    aria-pressed={massFollowsPlanetRadius}
+                    title="When on, the planet mass keeps the current density as the planet radius changes"
+                    onClick={onToggleMassScaling}
+                  >
+                    ∝ R³
+                  </button>
+                )}
+              </span>
+              {openHelp === control.key && (
+                <div className="parameter-help" role="dialog" aria-label={`Help: ${control.label}`}>
+                  <span>{control.help}</span>
+                  <button
+                    type="button"
+                    className="parameter-help-close"
+                    aria-label={`Close help: ${control.label}`}
+                    onClick={() => setOpenHelp(null)}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              <input
+                id={`system-${control.key}`}
+                type="range"
+                min={control.min}
+                max={control.max}
+                step={precise ? control.step / 20 : control.step}
+                value={value}
+                title="Hold Ctrl while dragging or clicking for a 20× finer step"
+                onContextMenu={(event) => {
+                  if (event.ctrlKey) event.preventDefault();
+                }}
+                style={{ "--progress": `${progress}%` } as React.CSSProperties}
+                onChange={(event) => onChange(control.key, Number(event.currentTarget.value))}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </details>
   );
 }
 
@@ -1794,6 +2057,8 @@ export default function PhotoRingSimulator() {
   const [phase, setPhase] = useState(-0.76);
   const [playing, setPlaying] = useState(true);
   const [copyLinkFeedback, setCopyLinkFeedback] = useState<string | null>(null);
+  const [radiusFollowsMass, setRadiusFollowsMass] = useState(false);
+  const [massFollowsPlanetRadius, setMassFollowsPlanetRadius] = useState(false);
   const {
     parameters,
     starMassSolar,
@@ -1907,6 +2172,49 @@ export default function PhotoRingSimulator() {
     return () => window.clearInterval(timer);
   }, [playing]);
 
+  const changeSystemParameter = (key: SystemControlKey, value: number) => {
+    if (key === "starRadiusSolar") setRadiusFollowsMass(false);
+    if (key === "planetMassJupiter") setMassFollowsPlanetRadius(false);
+    setSelectedPreset("custom");
+    setConfiguration((current) => {
+      const next = { ...current, [key]: value };
+      if (key === "starMassSolar" && radiusFollowsMass) {
+        next.starRadiusSolar = estimateMainSequenceRadiusSolar(next.starMassSolar);
+      }
+      next.densityKgM3 = stellarDensityKgM3(next.starMassSolar, next.starRadiusSolar);
+      if (key === "periodDays") {
+        next.semiMajorAxisAu = semiMajorAxisFromMassAndPeriod(
+          next.starMassSolar,
+          next.periodDays,
+        );
+      } else if (key === "starMassSolar" || key === "semiMajorAxisAu") {
+        next.periodDays = periodDaysFromMassAndAxis(
+          next.starMassSolar,
+          next.semiMajorAxisAu,
+        );
+      }
+      return next;
+    });
+  };
+
+  const toggleRadiusScaling = () => {
+    setRadiusFollowsMass((enabled) => {
+      const nextEnabled = !enabled;
+      if (nextEnabled) {
+        setSelectedPreset("custom");
+        setConfiguration((current) => {
+          const starRadiusSolar = estimateMainSequenceRadiusSolar(current.starMassSolar);
+          return {
+            ...current,
+            starRadiusSolar,
+            densityKgM3: stellarDensityKgM3(current.starMassSolar, starRadiusSolar),
+          };
+        });
+      }
+      return nextEnabled;
+    });
+  };
+
   const changeParameter = (key: ParameterKey, value: number) => {
     setSelectedPreset("custom");
     setConfiguration((currentConfiguration) => {
@@ -1920,8 +2228,25 @@ export default function PhotoRingSimulator() {
       } else if (key === "outerRingRadius" && value <= next.innerRingRadius) {
         next.innerRingRadius = Math.max(1, value - 0.1);
       }
-      return { ...currentConfiguration, parameters: next };
+      const planetMassJupiter =
+        key === "planetRadius" &&
+        massFollowsPlanetRadius &&
+        current.planetRadius > 0
+          ? Math.min(
+            10,
+            Math.max(
+              0.001,
+              currentConfiguration.planetMassJupiter *
+                (next.planetRadius / current.planetRadius) ** 3,
+            ),
+          )
+          : currentConfiguration.planetMassJupiter;
+      return { ...currentConfiguration, parameters: next, planetMassJupiter };
     });
+  };
+
+  const toggleMassScaling = () => {
+    setMassFollowsPlanetRadius((enabled) => !enabled);
   };
 
   const resetConfiguration = () => {
@@ -2054,6 +2379,18 @@ export default function PhotoRingSimulator() {
             <ParameterControls
               parameters={parameters}
               onChange={changeParameter}
+            />
+            <OptionalSystemControls
+              starMassSolar={starMassSolar}
+              starRadiusSolar={starRadiusSolar}
+              planetMassJupiter={planetMassJupiter}
+              semiMajorAxisAu={configuration.semiMajorAxisAu}
+              periodDays={periodDays}
+              radiusFollowsMass={radiusFollowsMass}
+              massFollowsPlanetRadius={massFollowsPlanetRadius}
+              onChange={changeSystemParameter}
+              onToggleRadiusScaling={toggleRadiusScaling}
+              onToggleMassScaling={toggleMassScaling}
             />
             <div className="controls-actions controls-actions--bottom">
               <button

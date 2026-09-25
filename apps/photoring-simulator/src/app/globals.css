@@ -439,6 +439,74 @@ main {
   gap: 15px;
 }
 
+.system-controls {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.system-controls summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.system-controls summary:focus-visible {
+  outline: 1px solid var(--aqua);
+  outline-offset: 3px;
+}
+
+.system-controls-note {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  line-height: 1.4;
+}
+
+.system-controls .parameter-list {
+  margin-bottom: 4px;
+}
+
+.system-controls .parameter-title {
+  grid-template-columns: 3.6rem minmax(0, 1fr) auto auto;
+}
+
+.system-controls .parameter-title i {
+  font-size: 0.78rem;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.system-controls .parameter-title--radius {
+  grid-template-columns: 3.6rem minmax(0, 1fr) auto auto auto;
+}
+
+.radius-scaling-toggle {
+  justify-self: end;
+  padding: 2px 6px;
+  border: 1px solid rgba(102, 223, 208, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.radius-scaling-toggle.active {
+  border-color: var(--aqua);
+  background: rgba(102, 223, 208, 0.16);
+  color: var(--aqua);
+}
+
+.radius-scaling-toggle:focus-visible {
+  outline: 1px solid var(--aqua);
+  outline-offset: 2px;
+}
+
 .parameter {
   position: relative;
   display: block;
