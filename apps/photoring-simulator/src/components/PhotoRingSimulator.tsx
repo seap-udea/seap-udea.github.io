@@ -43,77 +43,77 @@ const CONTROLS: {
   unit: string;
   help: string;
 }[] = [
-  {
-    key: "planetRadius",
-    symbol: "p",
-    label: "Planet radius",
-    min: 0.03,
-    max: 0.16,
-    step: 0.001,
-    unit: " R★",
-    help: "Planet radius relative to the star. A larger planet blocks more light during transit.",
-  },
-  {
-    key: "innerRingRadius",
-    symbol: "fᵢ",
-    label: "Inner ring radius",
-    min: 1.05,
-    max: 2.8,
-    step: 0.01,
-    unit: " Rₚ",
-    help: "Inner edge of the ring system, measured in planet radii from the planet center.",
-  },
-  {
-    key: "outerRingRadius",
-    symbol: "fₑ",
-    label: "Outer ring radius",
-    min: 1.2,
-    max: 4,
-    step: 0.01,
-    unit: " Rₚ",
-    help: "Outer edge of the ring system, measured in planet radii from the planet center.",
-  },
-  {
-    key: "tilt",
-    symbol: "θᵣ",
-    label: "Ring tilt",
-    min: 0,
-    max: 90,
-    step: 1,
-    unit: "°",
-    help: "Rotation of the ring plane around the planet's apparent axis. It changes the ring orientation across the transit.",
-  },
-  {
-    key: "inclination",
-    symbol: "iᵣ",
-    label: "Ring inclination",
-    min: 0,
-    max: 90,
-    step: 1,
-    unit: "°",
-    help: "Angle between the ring plane and the line of sight. At 0°, the rings are seen edge-on; at 90°, face-on.",
-  },
-  {
-    key: "impact",
-    symbol: "b",
-    label: "Impact parameter",
-    min: 0,
-    max: 0.85,
-    step: 0.01,
-    unit: "",
-    help: "Distance between the transit path and the stellar disk center, in stellar radii. Zero is a central transit.",
-  },
-  {
-    key: "alpha",
-    symbol: "α",
-    label: "Normal attenuation",
-    min: 0,
-    max: 1,
-    step: 0.01,
-    unit: "",
-    help: "alpha = exp(-τ) is the fraction of light transmitted through the ring along its normal. alpha = 0 is completely opaque, alpha = 1 is transparent. The default alpha = exp(-1) corresponds to τ = 1.",
-  },
-];
+    {
+      key: "planetRadius",
+      symbol: "p",
+      label: "Planet radius",
+      min: 0.03,
+      max: 0.16,
+      step: 0.001,
+      unit: " R★",
+      help: "Planet radius relative to the star. A larger planet blocks more light during transit.",
+    },
+    {
+      key: "innerRingRadius",
+      symbol: "fᵢ",
+      label: "Inner ring radius",
+      min: 1.05,
+      max: 2.8,
+      step: 0.01,
+      unit: " Rₚ",
+      help: "Inner edge of the ring system, measured in planet radii from the planet center.",
+    },
+    {
+      key: "outerRingRadius",
+      symbol: "fₑ",
+      label: "Outer ring radius",
+      min: 1.2,
+      max: 4,
+      step: 0.01,
+      unit: " Rₚ",
+      help: "Outer edge of the ring system, measured in planet radii from the planet center.",
+    },
+    {
+      key: "tilt",
+      symbol: "θᵣ",
+      label: "Ring tilt",
+      min: 0,
+      max: 90,
+      step: 1,
+      unit: "°",
+      help: "Rotation of the ring plane around the planet's apparent axis. It changes the ring orientation across the transit.",
+    },
+    {
+      key: "inclination",
+      symbol: "iᵣ",
+      label: "Ring inclination",
+      min: 0,
+      max: 90,
+      step: 1,
+      unit: "°",
+      help: "Angle between the ring plane and the line of sight. At 0°, the rings are seen edge-on; at 90°, face-on.",
+    },
+    {
+      key: "impact",
+      symbol: "b",
+      label: "Impact parameter",
+      min: 0,
+      max: 0.85,
+      step: 0.01,
+      unit: "",
+      help: "Distance between the transit path and the stellar disk center, in stellar radii. Zero is a central transit.",
+    },
+    {
+      key: "alpha",
+      symbol: "α",
+      label: "Normal attenuation",
+      min: 0,
+      max: 1,
+      step: 0.01,
+      unit: "",
+      help: "alpha = exp(-τ) is the fraction of light transmitted through the ring along its normal. alpha = 0 is completely opaque, alpha = 1 is transparent. The default alpha = exp(-1) corresponds to τ = 1.",
+    },
+  ];
 
 const URL_PARAMETER_KEYS: Record<ParameterKey, string> = {
   planetRadius: "p",
@@ -264,7 +264,7 @@ function resolvePresetOrbitAndPlanet(
       2 * Math.PI *
       Math.sqrt(
         (semiMajorAxisAu * AU_METERS) ** 3 /
-          (GRAVITATIONAL_CONSTANT * resolvedMassSolar * SOLAR_MASS_KG),
+        (GRAVITATIONAL_CONSTANT * resolvedMassSolar * SOLAR_MASS_KG),
       ) /
       86400;
   } else if (hasPeriod && hasAu) {
@@ -431,7 +431,7 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
       2 * Math.PI *
       Math.sqrt(
         (semiMajorAxisAu * AU_METERS) ** 3 /
-          (GRAVITATIONAL_CONSTANT * resolvedMassSolar * SOLAR_MASS_KG),
+        (GRAVITATIONAL_CONSTANT * resolvedMassSolar * SOLAR_MASS_KG),
       ) /
       86400;
   } else if (hasPeriod && (hasAu || hasRStarAxis)) {
@@ -449,7 +449,7 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
   const planetMassJupiter = Number.isFinite(rawPlanetMass) && rawPlanetMass > 0
     ? rawPlanetMass
     : DEFAULT_PLANET_DENSITY_G_CM3 * planetRadiusJupiter ** 3 /
-      JUPITER_DENSITY_G_CM3;
+    JUPITER_DENSITY_G_CM3;
 
   if (next.innerRingRadius >= next.outerRingRadius) {
     next.outerRingRadius = Math.min(4, next.innerRingRadius + 0.1);
@@ -569,7 +569,7 @@ function mapThroughContacts(
     return (
       visualAnchors[index] +
       Math.max(0, Math.min(1, fraction)) *
-        (visualAnchors[index + 1] - visualAnchors[index])
+      (visualAnchors[index + 1] - visualAnchors[index])
     );
   }
   return visualAnchors[visualAnchors.length - 1];
@@ -804,11 +804,11 @@ function TransitScene({
   const visualContacts =
     ringOpacity > 1e-4
       ? [
-          Math.min(visualRingContacts[0], visualPlanetContacts[0]),
-          Math.max(visualRingContacts[1], visualPlanetContacts[1]),
-          Math.min(visualRingContacts[2], visualPlanetContacts[2]),
-          Math.max(visualRingContacts[3], visualPlanetContacts[3]),
-        ]
+        Math.min(visualRingContacts[0], visualPlanetContacts[0]),
+        Math.max(visualRingContacts[1], visualPlanetContacts[1]),
+        Math.min(visualRingContacts[2], visualPlanetContacts[2]),
+        Math.max(visualRingContacts[3], visualPlanetContacts[3]),
+      ]
       : visualPlanetContacts;
   const visualPadding = 0.16;
   const normalPhysicalAnchors = [
@@ -825,19 +825,19 @@ function TransitScene({
     physicalX,
     flipPlanet
       ? [
-          -lastCurveX,
-          -model.contacts[3],
-          -model.contacts[2],
-          -model.contacts[1],
-          -model.contacts[0],
-          -firstCurveX,
-        ]
+        -lastCurveX,
+        -model.contacts[3],
+        -model.contacts[2],
+        -model.contacts[1],
+        -model.contacts[0],
+        -firstCurveX,
+      ]
       : normalPhysicalAnchors,
     flipPlanet
       ? normalVisualAnchors
-          .slice()
-          .reverse()
-          .map((anchor) => -anchor)
+        .slice()
+        .reverse()
+        .map((anchor) => -anchor)
       : normalVisualAnchors,
   );
   const planetX = starX + visualX * starR;
@@ -848,28 +848,28 @@ function TransitScene({
       Math.max(
         0,
         (1 + equivalentVisualRadius) ** 2 -
-          ((equivalentPlanetY - starY) / starR) ** 2,
+        ((equivalentPlanetY - starY) / starR) ** 2,
       ),
     ),
     -Math.sqrt(
       Math.max(
         0,
         (1 - equivalentVisualRadius) ** 2 -
-          ((equivalentPlanetY - starY) / starR) ** 2,
+        ((equivalentPlanetY - starY) / starR) ** 2,
       ),
     ),
     Math.sqrt(
       Math.max(
         0,
         (1 - equivalentVisualRadius) ** 2 -
-          ((equivalentPlanetY - starY) / starR) ** 2,
+        ((equivalentPlanetY - starY) / starR) ** 2,
       ),
     ),
     Math.sqrt(
       Math.max(
         0,
         (1 + equivalentVisualRadius) ** 2 -
-          ((equivalentPlanetY - starY) / starR) ** 2,
+        ((equivalentPlanetY - starY) / starR) ** 2,
       ),
     ),
   ];
@@ -1123,9 +1123,9 @@ function LightCurve({
   // flip is just reading the flux/equivalentFlux values in reverse order.
   const displayedLightCurve = flipPlanet
     ? model.lightCurve.map((point, index) => {
-        const mirrored = model.lightCurve[model.lightCurve.length - 1 - index];
-        return { ...point, flux: mirrored.flux, equivalentFlux: mirrored.equivalentFlux };
-      })
+      const mirrored = model.lightCurve[model.lightCurve.length - 1 - index];
+      return { ...point, flux: mirrored.flux, equivalentFlux: mirrored.equivalentFlux };
+    })
     : model.lightCurve;
   const first = displayedLightCurve[0];
   const last = displayedLightCurve[displayedLightCurve.length - 1];
@@ -1158,11 +1158,11 @@ function LightCurve({
   ];
   const displayedContacts = flipPlanet
     ? [
-        -model.contacts[3],
-        -model.contacts[2],
-        -model.contacts[1],
-        -model.contacts[0],
-      ]
+      -model.contacts[3],
+      -model.contacts[2],
+      -model.contacts[1],
+      -model.contacts[0],
+    ]
     : model.contacts;
   const events = displayedContacts.map((x, index) => ({
     x,
@@ -1173,9 +1173,9 @@ function LightCurve({
     { x: model.equivalentContacts[0], label: "T1" },
     ...(model.hasFullEquivalentTransit
       ? [
-          { x: model.equivalentContacts[1], label: "T2" },
-          { x: model.equivalentContacts[2], label: "T3" },
-        ]
+        { x: model.equivalentContacts[1], label: "T2" },
+        { x: model.equivalentContacts[2], label: "T3" },
+      ]
       : []),
     { x: model.equivalentContacts[3], label: "T4" },
   ];
@@ -1577,11 +1577,10 @@ function PhotoRingSummaryCard({
       </div>
       <div className="summary-metrics-list">
         <div
-          className={`summary-metric summary-metric--pr ${
-            model.prAnomaly < 0
-              ? "summary-metric--pr-negative"
-              : "summary-metric--pr-positive"
-          }`}
+          className={`summary-metric summary-metric--pr ${model.prAnomaly < 0
+            ? "summary-metric--pr-negative"
+            : "summary-metric--pr-positive"
+            }`}
         >
           <div className="summary-metric-header">
             <span className="summary-metric-label">
@@ -1810,7 +1809,7 @@ export default function PhotoRingSimulator() {
             >
               A Novel Method for Identifying Exoplanetary Rings
             </a>{" "}
-             by J.I. Zuluaga, D. Kipping, M. Sucerquia and J. Alvarado-Montes (2015) and developed further in the paper{" "}
+            by J.I. Zuluaga, D. Kipping, M. Sucerquia and J. Alvarado-Montes (2015) and developed further in the paper{" "}
             <a
               href="https://arxiv.org/abs/2609.25234"
               target="_blank"
@@ -1818,12 +1817,11 @@ export default function PhotoRingSimulator() {
             >
               Probing Exoplanetary Rings with Asterodensity Profiling: A PhotoRing Analysis of Kepler-51
             </a>{" "}
-             by J.I. Zuluaga, S. Numpaque, D. Kipping and J.A. Alvarado-Montes (2026). The effect occurs when rings change the transit silhouette and duration, making the
+            by J.I. Zuluaga, S. Numpaque, D. Kipping and J.A. Alvarado-Montes (2026). The effect occurs when rings change the transit silhouette and duration, making the
             inferred stellar density differ from its true value.
-            Change the System Parameters values and observe how the PR anomaly changes.
-            <br />
-            <a href="https://github.com/seap-udea/seap-udea.github.io/blob/main/apps/photoring-simulator/README.md">
-              Want to know how PR is calculated? See the README.md
+            Change the System Parameters values and observe how the PR anomaly changes.{" "}
+            <a href="https://github.com/seap-udea/seap-udea.github.io/blob/main/apps/photoring-simulator/README.md" target='_blank'>
+              Want to know how PR is calculated? See this document.
             </a>
           </p>
         </div>
