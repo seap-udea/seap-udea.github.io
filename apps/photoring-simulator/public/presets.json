@@ -1,0 +1,159 @@
+{
+  "presets": [
+    {
+      "id": "saturn-sun",
+      "label": "Saturn around a solar-like star",
+      "parameters": {
+        "pjup": 0.84,
+        "fi": 1.58,
+        "fe": 2.35,
+        "tilt": 25,
+        "ir": 55,
+        "b": 0.25,
+        "alpha": 0.36787944117144233
+      },
+      "star": {
+        "mstar": 1,
+        "rstar": 1
+      },
+      "orbit": {
+        "aau": 0.9999974887698985
+      },
+      "planet": {
+        "mpjup": 0.2994
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": false,
+        "showEquivalentCurve": true
+      }
+    },
+    {
+      "id": "saturn-Mdwarf",
+      "label": "Saturn around an M-dwarf",
+      "parameters": {
+        "pjup": 0.84,
+        "fi": 1.58,
+        "fe": 2.35,
+        "tilt": 25,
+        "ir": 55,
+        "b": 0.25,
+        "alpha": 0.36787944117144233
+      },
+      "star": {
+        "mstar": 0.2
+      },
+      "orbit": {
+        "porb": 10
+      },
+      "planet": {
+        "mpjup": 0.2994
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": false,
+        "showEquivalentCurve": true
+      }
+    },
+    {
+      "id": "toi2449b",
+      "label": "TOI-2449b hypothetical rings",
+      "parameters": {
+        "p": 0.0967,
+        "fi": 1.526,
+        "fe": 2.269,
+        "tilt": 25,
+        "ir": 55,
+        "b": 0.704,
+        "alpha": 0.36787944117144233
+      },
+      "star": {
+        "mstar": 1.079,
+        "rstar": 1.065
+      },
+      "orbit": {
+        "aau": 0.45
+      },
+      "planet": {
+        "mpjup": 0.70
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true
+      }
+    },
+    {
+      "id": "kepler51b",
+      "label": "Kepler-51b hypothetical rings (Zuluaga et al. 2026)",
+      "parameters": {
+        "p": 0.058,
+        "fi": 1,
+        "fe": 1.93,
+        "tilt": 78.8,
+        "ir": 65.8,
+        "b": 0.33,
+        "alpha": 0.33
+      },
+      "star": {
+        "mstar": 0.9834202,
+        "rstar": 0.869
+      },
+      "orbit": {
+        "aau": 0.2467834
+      },
+      "planet": {
+        "mpjup": 0.021712397734424172
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": false,
+        "showEquivalentCurve": true
+      }
+    },
+    {
+      "id": "kepler51d",
+      "label": "Kepler-51d hypothetical rings (Zuluaga et al. 2026)",
+      "parameters": {
+        "p": 0.081,
+        "fi": 1,
+        "fe": 1.73,
+        "tilt": 67.39,
+        "ir": 70.87,
+        "b": 0.28,
+        "alpha": 0.34
+      },
+      "star": {
+        "mstar": 0.9974025,
+        "rstar": 0.869
+      },
+      "orbit": {
+        "aau": 0.5022714
+      },
+      "planet": {
+        "mpjup": 0.021712397734424172
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": false,
+        "showEquivalentCurve": true
+      }
+    }
+  ]
+}
+

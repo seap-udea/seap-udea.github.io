@@ -5,8 +5,8 @@
   --panel: #07090b;
   --panel-raised: #0d1115;
   --ink: #eef6f5;
-  --muted: #81918f;
-  --faint: #50605f;
+  --muted: #9caeac;
+  --faint: #86a19d;
   --aqua: #66dfd0;
   --aqua-soft: rgba(102, 223, 208, 0.14);
   --amber: #efb85f;
@@ -884,6 +884,43 @@ main {
   fill: var(--amber);
   stroke: #291d0c;
   stroke-width: 2;
+}
+
+.residuals-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.residuals-subtitle {
+  color: var(--faint);
+  font-size: 0.6rem;
+}
+
+.residuals-chart {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.chart-grid-zero {
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 1.4;
+}
+
+.residual-path {
+  fill: none;
+  stroke: #a78bfa;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.residual-glow {
+  stroke-width: 6;
+  opacity: 0.16;
 }
 
 .position-dot-equivalent {

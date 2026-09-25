@@ -259,18 +259,19 @@ The physical parameters are:
 | Parameter | Meaning |
 |---|---|
 | `p` | Planet-to-star radius ratio |
+| `pjup` | Planet radius in Jupiter radii (alternative to `p`; used only when `p` is omitted) |
 | `fi`, `fe` | Inner and outer ring radii in planet radii |
 | `tilt`, `ir` | Ring tilt and inclination in degrees |
 | `b` | Impact parameter |
 | `alpha` | Ring transmission, $\alpha=\exp(-\tau)$ |
-| `mplanet` | Planet mass in Jupiter masses |
+| `mpjup` | Planet mass in Jupiter masses |
 | `mstar`, `rstar` | Stellar mass and radius in solar units |
 | `aau` | Semimajor axis in AU |
 | `porb` | Orbital period in days |
 
 For the orbital quantities, the simulator accepts equivalent pairs such as `mstar+aau`, `mstar+porb`, `porb+aau`, or `porb+aRstar`. If redundant values are supplied, `mstar+aau` takes priority. When a configuration is copied, the link uses the canonical `mstar+rstar+aau` representation and omits redundant `porb` and `aRstar` values.
 
-The planet mass `mplanet` is used with the physical planet radius to calculate the true planetary density. If `mplanet` is omitted, the simulator derives it by assuming a mean planetary density of $1\,\mathrm{g\,cm^{-3}}$.
+The planet mass `mpjup` is used with the physical planet radius to calculate the true planetary density. If `mpjup` is omitted, the simulator derives it by assuming a mean planetary density of $1\,\mathrm{g\,cm^{-3}}$. The legacy parameter name `mplanet` is still accepted for backward compatibility with previously shared links.
 
 Visualization options are also shareable. Set them to `1` or `0`:
 
@@ -288,19 +289,19 @@ The links below open the simulator with reproducible configurations. The first c
 
 1. **Default configuration** — $p=0.084$, $f_i=1.58$, $f_e=2.35$, $\theta=25^\circ$, $i_R=55^\circ$, $b=0.25$, $\alpha=\exp(-1)$, $M_\star=1\,M_\odot$, $R_\star=1\,R_\odot$, $a=0.999997\mathrm{AU}$.
 
-	[Open the default configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.084&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mplanet=0.2994&mstar=1&rstar=1&aau=0.9999974887698985&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open the default configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.084&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mpjup=0.2994&mstar=1&rstar=1&aau=0.9999974887698985&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 2. **TOI-2449b reference configuration** — $P=106.14468$ days, $p=0.0967$, $b=0.704$, Saturn-like rings $f_i=1.526$, $f_e=2.269$, $\alpha=\exp(-1)$, $M_\star=1.079\,M_\odot$, $R_\star=1.065\,R_\odot$, $a=0.450\mathrm{AU}$.
 
-	[Open the TOI-2449b reference configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.0967&fi=1.526&fe=2.269&tilt=25&ir=55&b=0.704&alpha=0.36787944117144233&mplanet=0.70&mstar=1.079&rstar=1.065&aau=0.450&showRingless=0&planetToScale=1&zoom2=0&autoDepth=1&showEquivalent=1)
+	[Open the TOI-2449b reference configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.0967&fi=1.526&fe=2.269&tilt=25&ir=55&b=0.704&alpha=0.36787944117144233&mpjup=0.70&mstar=1.079&rstar=1.065&aau=0.450&showRingless=0&planetToScale=1&zoom2=0&autoDepth=1&showEquivalent=1)
 
 3. **Kepler-51b Figure 6 median configuration** — $P=45.154$ days, $p=0.058$, $b=0.33$, $f_i=1$, $f_e=1.93$, $i_R=65.8^\circ$, $\theta=78.8^\circ$, $\alpha=0.33$, $\rho_{\star,\mathrm{true}}=2.11\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9834\,M_\odot$ and $a\simeq0.24678\mathrm{AU}$.
 
-	[Open the Kepler-51b Figure 6 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.058&fi=1&fe=1.93&tilt=78.8&ir=65.8&b=0.33&alpha=0.33&mplanet=0.0217&mstar=0.9834202&rstar=0.869&aau=0.2467834&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open the Kepler-51b Figure 6 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.058&fi=1&fe=1.93&tilt=78.8&ir=65.8&b=0.33&alpha=0.33&mpjup=0.0217&mstar=0.9834202&rstar=0.869&aau=0.2467834&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 4. **Kepler-51d Figure 7 median configuration** — $P=130.186$ days, $p=0.081$, $b=0.28$, $f_i=1$, $f_e=1.73$, $i_R=70.87^\circ$, $\theta=67.39^\circ$, $\alpha=0.34$, $\rho_{\star,\mathrm{true}}=2.14\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9974\,M_\odot$ and $a\simeq0.50227\,\mathrm{AU}$.
 
-	[Open the Kepler-51d Figure 7 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.081&fi=1&fe=1.73&tilt=67.39&ir=70.87&b=0.28&alpha=0.34&mplanet=0.0217&mstar=0.9974025&rstar=0.869&aau=0.5022714&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
+	[Open the Kepler-51d Figure 7 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.081&fi=1&fe=1.73&tilt=67.39&ir=70.87&b=0.28&alpha=0.34&mpjup=0.0217&mstar=0.9974025&rstar=0.869&aau=0.5022714&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 
 ## AI Assistance Disclosure

@@ -177,118 +177,170 @@ const DEFAULT_CONFIGURATION: UrlConfiguration = {
   showEquivalentCurve: true,
 };
 
-type PresetKey = "default" | "toi2449b" | "kepler51b" | "kepler51d";
-
-const PRESET_LABELS: Record<PresetKey, string> = {
-  default: "Default configuration",
-  toi2449b: "TOI-2449b reference configuration",
-  kepler51b: "Kepler-51b Figure 6 configuration",
-  kepler51d: "Kepler-51d Figure 7 configuration",
+type PresetEntry = {
+  id: string;
+  label: string;
+  parameters?: Record<string, number>;
+  star?: { mstar?: number; rstar?: number };
+  orbit?: { aau?: number; porb?: number };
+  planet?: Record<string, number>;
+  display?: Partial<
+    Pick<
+      UrlConfiguration,
+      "showEquivalentPlanet" | "showPlanetToScale" | "zoomIn" | "flipPlanet" | "autoScaleDepth" | "showEquivalentCurve"
+    >
+  >;
 };
 
-function createPresetConfiguration(
+type PresetOption = {
+  id: string;
+  label: string;
+  configuration: UrlConfiguration;
+};
+
+const PRESETS_URL = "/apps/photoring-simulator/presets.json";
+
+// Star mass/radius must be known before resolving ring parameters, since a
+// planet radius given in Jupiter radii (`pjup`) needs the star radius to be
+// converted into the stellar-radii `p` used internally.
+function resolvePresetStarRadius(entry: PresetEntry) {
+  const rawMass = entry.star?.mstar;
+  const rawRadius = entry.star?.rstar;
+  const hasMass = typeof rawMass === "number" && rawMass > 0;
+  const hasRadius = typeof rawRadius === "number" && rawRadius > 0;
+  const starMassSolar = hasMass ? rawMass : ASSUMED_STAR_MASS_SOLAR;
+  const starRadiusSolar = hasRadius ? rawRadius : estimateMainSequenceRadiusSolar(starMassSolar);
+  return { starMassSolar, starRadiusSolar, hasMass };
+}
+
+// Ring geometry: same URL codes and slider clamps as readConfigurationFromUrl.
+// `p` (planet radius in stellar radii) takes priority; `pjup` (Jupiter radii) is
+// only used as a fallback and converted using starRadiusSolar.
+function resolvePresetRingParameters(
+  raw: Record<string, number> | undefined,
+  starRadiusSolar: number,
+): RingParameters {
+  const next = { ...DEFAULTS };
+  for (const control of CONTROLS) {
+    const value = raw?.[URL_PARAMETER_KEYS[control.key]];
+    if (value !== undefined && Number.isFinite(value)) {
+      next[control.key] = Math.min(control.max, Math.max(control.min, value));
+      continue;
+    }
+    if (control.key === "planetRadius") {
+      const pjup = raw?.pjup;
+      if (typeof pjup === "number" && Number.isFinite(pjup) && pjup > 0) {
+        const converted = (pjup * JUPITER_TO_SUN_RADIUS) / starRadiusSolar;
+        next.planetRadius = Math.min(control.max, Math.max(control.min, converted));
+      }
+    }
+  }
+  return next;
+}
+
+// Orbit/planet mass: same aau/porb/mpjup derivation rules as readConfigurationFromUrl
+// (mass+aau derives the period, period+aau derives the mass, period-only assumes a = 1 AU).
+// `mpjup` (Jupiter masses) is the canonical planet-mass field; `mplanet` is accepted as a legacy alias.
+function resolvePresetOrbitAndPlanet(
+  entry: PresetEntry,
   parameters: RingParameters,
   starMassSolar: number,
   starRadiusSolar: number,
-  semiMajorAxisAu: number,
-  planetMassJupiter: number,
-  options: Pick<
-    UrlConfiguration,
-    "showEquivalentPlanet" | "showPlanetToScale" | "zoomIn" | "flipPlanet" | "autoScaleDepth" | "showEquivalentCurve"
-  >,
-): UrlConfiguration {
-  const periodDays =
-    2 *
-    Math.PI *
-    Math.sqrt(
-      (semiMajorAxisAu * AU_METERS) ** 3 /
-        (GRAVITATIONAL_CONSTANT * starMassSolar * SOLAR_MASS_KG),
-    ) /
-    86400;
+  hasMass: boolean,
+) {
+  const rawAu = entry.orbit?.aau;
+  const rawPeriod = entry.orbit?.porb;
+  const rawPlanetMass = entry.planet?.mpjup ?? entry.planet?.mplanet;
+
+  const hasAu = typeof rawAu === "number" && rawAu > 0;
+  const hasPeriod = typeof rawPeriod === "number" && rawPeriod > 0;
+
+  let semiMajorAxisAu = hasAu ? rawAu : 1;
+  let periodDays = hasPeriod ? rawPeriod : DEFAULT_PERIOD_DAYS;
+  let resolvedMassSolar = starMassSolar;
+
+  if (hasMass && hasAu) {
+    periodDays =
+      2 * Math.PI *
+      Math.sqrt(
+        (semiMajorAxisAu * AU_METERS) ** 3 /
+          (GRAVITATIONAL_CONSTANT * resolvedMassSolar * SOLAR_MASS_KG),
+      ) /
+      86400;
+  } else if (hasPeriod && hasAu) {
+    resolvedMassSolar =
+      (4 * Math.PI ** 2 * (semiMajorAxisAu * AU_METERS) ** 3) /
+      (GRAVITATIONAL_CONSTANT * (periodDays * 86400) ** 2 * SOLAR_MASS_KG);
+  } else if (hasPeriod && !hasAu) {
+    semiMajorAxisAu = 1;
+  }
+
+  const densityKgM3 = SOLAR_DENSITY_KG_M3 * resolvedMassSolar / starRadiusSolar ** 3;
+  const planetRadiusJupiter = parameters.planetRadius * starRadiusSolar / JUPITER_TO_SUN_RADIUS;
+  const planetMassJupiter =
+    typeof rawPlanetMass === "number" && rawPlanetMass > 0
+      ? rawPlanetMass
+      : DEFAULT_PLANET_DENSITY_G_CM3 * planetRadiusJupiter ** 3 / JUPITER_DENSITY_G_CM3;
+
   return {
-    parameters,
-    starMassSolar,
-    starRadiusSolar,
+    starMassSolar: resolvedMassSolar,
     semiMajorAxisAu,
     periodDays,
-    densityKgM3: SOLAR_DENSITY_KG_M3 * starMassSolar / starRadiusSolar ** 3,
+    densityKgM3,
     planetMassJupiter,
-    ...options,
   };
 }
 
-const PRESET_CONFIGURATIONS: Record<PresetKey, UrlConfiguration> = {
-  default: DEFAULT_CONFIGURATION,
-  toi2449b: createPresetConfiguration(
-    {
-      planetRadius: 0.0967,
-      innerRingRadius: 1.526,
-      outerRingRadius: 2.269,
-      tilt: 25,
-      inclination: 55,
-      impact: 0.704,
-      alpha: Math.exp(-1),
-    },
-    1.079,
-    1.065,
-    0.45,
-    0.70,
-    {
-      showEquivalentPlanet: false,
-      showPlanetToScale: true,
-      zoomIn: false,
-      flipPlanet: false,
-      autoScaleDepth: true,
-      showEquivalentCurve: true,
-    },
-  ),
-  kepler51b: createPresetConfiguration(
-    {
-      planetRadius: 0.058,
-      innerRingRadius: 1,
-      outerRingRadius: 1.93,
-      tilt: 78.8,
-      inclination: 65.8,
-      impact: 0.33,
-      alpha: 0.33,
-    },
-    0.9834202,
-    0.869,
-    0.2467834,
-    6.9 / 317.8,
-    {
-      showEquivalentPlanet: false,
-      showPlanetToScale: true,
-      zoomIn: false,
-      flipPlanet: false,
-      autoScaleDepth: false,
-      showEquivalentCurve: true,
-    },
-  ),
-  kepler51d: createPresetConfiguration(
-    {
-      planetRadius: 0.081,
-      innerRingRadius: 1,
-      outerRingRadius: 1.73,
-      tilt: 67.39,
-      inclination: 70.87,
-      impact: 0.28,
-      alpha: 0.34,
-    },
-    0.9974025,
-    0.869,
-    0.5022714,
-    6.9 / 317.8,
-    {
-      showEquivalentPlanet: false,
-      showPlanetToScale: true,
-      zoomIn: false,
-      flipPlanet: false,
-      autoScaleDepth: false,
-      showEquivalentCurve: true,
-    },
-  ),
-};
+function buildConfigurationFromPresetEntry(entry: PresetEntry): UrlConfiguration {
+  const { starMassSolar, starRadiusSolar, hasMass } = resolvePresetStarRadius(entry);
+  const parameters = resolvePresetRingParameters(entry.parameters, starRadiusSolar);
+  const {
+    starMassSolar: resolvedMassSolar,
+    semiMajorAxisAu,
+    periodDays,
+    densityKgM3,
+    planetMassJupiter,
+  } = resolvePresetOrbitAndPlanet(entry, parameters, starMassSolar, starRadiusSolar, hasMass);
+  const display = entry.display ?? {};
+  return {
+    parameters,
+    starMassSolar: resolvedMassSolar,
+    starRadiusSolar,
+    semiMajorAxisAu,
+    periodDays,
+    densityKgM3,
+    planetMassJupiter,
+    showEquivalentPlanet: display.showEquivalentPlanet ?? DEFAULT_CONFIGURATION.showEquivalentPlanet,
+    showPlanetToScale: display.showPlanetToScale ?? DEFAULT_CONFIGURATION.showPlanetToScale,
+    zoomIn: display.zoomIn ?? DEFAULT_CONFIGURATION.zoomIn,
+    flipPlanet: display.flipPlanet ?? DEFAULT_CONFIGURATION.flipPlanet,
+    autoScaleDepth: display.autoScaleDepth ?? DEFAULT_CONFIGURATION.autoScaleDepth,
+    showEquivalentCurve: display.showEquivalentCurve ?? DEFAULT_CONFIGURATION.showEquivalentCurve,
+  };
+}
+
+function isPresetEntry(value: unknown): value is PresetEntry {
+  if (!value || typeof value !== "object") return false;
+  const entry = value as Record<string, unknown>;
+  return typeof entry.id === "string" && typeof entry.label === "string";
+}
+
+async function loadPresetOptions(): Promise<PresetOption[]> {
+  const response = await fetch(PRESETS_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to load presets.json (${response.status})`);
+  }
+  const data: unknown = await response.json();
+  const rawPresets =
+    data && typeof data === "object" && Array.isArray((data as Record<string, unknown>).presets)
+      ? (data as { presets: unknown[] }).presets
+      : [];
+  return rawPresets.filter(isPresetEntry).map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    configuration: buildConfigurationFromPresetEntry(entry),
+  }));
+}
 
 function readBooleanParameter(
   searchParams: URLSearchParams,
@@ -307,38 +359,54 @@ function readConfigurationFromUrl(search: string): UrlConfiguration | null {
     ...Object.values(URL_PARAMETER_KEYS),
     ...Object.values(URL_ASSUMPTION_KEYS),
     ...Object.values(URL_OPTION_KEYS),
+    "pjup",
+    "mpjup",
     "mplanet",
     "aRstar",
   ].some((key) => searchParams.has(key));
   if (!hasConfiguration) return null;
 
-  const next = { ...DEFAULTS };
-  for (const control of CONTROLS) {
-    const rawValue = searchParams.get(URL_PARAMETER_KEYS[control.key]);
-    if (rawValue === null) continue;
-    const value = Number(rawValue);
-    if (Number.isFinite(value)) {
-      next[control.key] = Math.min(
-        control.max,
-        Math.max(control.min, value),
-      );
-    }
-  }
-
   const rawMass = Number(searchParams.get(URL_ASSUMPTION_KEYS.starMass));
   const rawRadius = Number(searchParams.get(URL_ASSUMPTION_KEYS.starRadius));
-  const rawPeriod = Number(searchParams.get(URL_ASSUMPTION_KEYS.periodDays));
-  const rawPlanetMass = Number(searchParams.get("mplanet"));
-  const rawAu = Number(searchParams.get(URL_ASSUMPTION_KEYS.semiMajorAxisAu));
-  const rawRStar = Number(searchParams.get("aRstar"));
   const hasMass = Number.isFinite(rawMass) && rawMass > 0;
-  const hasPeriod = Number.isFinite(rawPeriod) && rawPeriod > 0;
-  const hasAu = Number.isFinite(rawAu) && rawAu > 0;
-  const hasRStarAxis = Number.isFinite(rawRStar) && rawRStar > 0;
   const starMassSolar = hasMass ? rawMass : ASSUMED_STAR_MASS_SOLAR;
   const starRadiusSolar = Number.isFinite(rawRadius) && rawRadius > 0
     ? rawRadius
     : estimateMainSequenceRadiusSolar(starMassSolar);
+
+  const next = { ...DEFAULTS };
+  for (const control of CONTROLS) {
+    const rawValue = searchParams.get(URL_PARAMETER_KEYS[control.key]);
+    if (rawValue !== null) {
+      const value = Number(rawValue);
+      if (Number.isFinite(value)) {
+        next[control.key] = Math.min(
+          control.max,
+          Math.max(control.min, value),
+        );
+        continue;
+      }
+    }
+    if (control.key === "planetRadius") {
+      const rawPjup = Number(searchParams.get("pjup"));
+      if (Number.isFinite(rawPjup) && rawPjup > 0) {
+        const converted = (rawPjup * JUPITER_TO_SUN_RADIUS) / starRadiusSolar;
+        next.planetRadius = Math.min(
+          control.max,
+          Math.max(control.min, converted),
+        );
+      }
+    }
+  }
+
+  const rawPeriod = Number(searchParams.get(URL_ASSUMPTION_KEYS.periodDays));
+  const rawPlanetMass =
+    Number(searchParams.get("mpjup")) || Number(searchParams.get("mplanet"));
+  const rawAu = Number(searchParams.get(URL_ASSUMPTION_KEYS.semiMajorAxisAu));
+  const rawRStar = Number(searchParams.get("aRstar"));
+  const hasPeriod = Number.isFinite(rawPeriod) && rawPeriod > 0;
+  const hasAu = Number.isFinite(rawAu) && rawAu > 0;
+  const hasRStarAxis = Number.isFinite(rawRStar) && rawRStar > 0;
   let semiMajorAxisAu = hasAu
     ? rawAu
     : hasRStarAxis
@@ -440,7 +508,9 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
   }
   url.searchParams.set(URL_ASSUMPTION_KEYS.starMass, String(configuration.starMassSolar));
   url.searchParams.set(URL_ASSUMPTION_KEYS.starRadius, String(configuration.starRadiusSolar));
-  url.searchParams.set("mplanet", String(configuration.planetMassJupiter));
+  url.searchParams.set("mpjup", String(configuration.planetMassJupiter));
+  url.searchParams.delete("mplanet");
+  url.searchParams.delete("pjup");
   url.searchParams.set(URL_ASSUMPTION_KEYS.semiMajorAxisAu, String(aInAu));
   url.searchParams.delete(URL_ASSUMPTION_KEYS.periodDays);
   url.searchParams.delete("aRstar");
@@ -1049,8 +1119,16 @@ function LightCurve({
   const margin = { left: 60, right: 28, top: 22, bottom: 42 };
   const plotW = width - margin.left - margin.right;
   const plotH = height - margin.top - margin.bottom;
-  const first = model.lightCurve[0];
-  const last = model.lightCurve[model.lightCurve.length - 1];
+  // The x/time sampling grid is symmetric around mid-transit, so a specular
+  // flip is just reading the flux/equivalentFlux values in reverse order.
+  const displayedLightCurve = flipPlanet
+    ? model.lightCurve.map((point, index) => {
+        const mirrored = model.lightCurve[model.lightCurve.length - 1 - index];
+        return { ...point, flux: mirrored.flux, equivalentFlux: mirrored.equivalentFlux };
+      })
+    : model.lightCurve;
+  const first = displayedLightCurve[0];
+  const last = displayedLightCurve[displayedLightCurve.length - 1];
   const tMin = first.time;
   const tMax = last.time;
   const yMin = 1 - (autoScaleDepth
@@ -1060,23 +1138,23 @@ function LightCurve({
     margin.left + ((time - tMin) / (tMax - tMin)) * plotW;
   const yScale = (flux: number) =>
     margin.top + ((1 - flux) / (1 - yMin)) * plotH;
-  const path = model.lightCurve
+  const path = displayedLightCurve
     .map(
       (point, index) =>
         `${index ? "L" : "M"} ${xScale(point.time).toFixed(2)} ${yScale(point.flux).toFixed(2)}`,
     )
     .join(" ");
-  const equivalentPath = model.lightCurve
+  const equivalentPath = displayedLightCurve
     .map(
       (point, index) =>
         `${index ? "L" : "M"} ${xScale(point.time).toFixed(2)} ${yScale(point.equivalentFlux).toFixed(2)}`,
     )
     .join(" ");
   const currentIndex = Math.round(
-    ((phase + 1) / 2) * (model.lightCurve.length - 1),
+    ((phase + 1) / 2) * (displayedLightCurve.length - 1),
   );
-  const current = model.lightCurve[
-    Math.max(0, Math.min(model.lightCurve.length - 1, currentIndex))
+  const current = displayedLightCurve[
+    Math.max(0, Math.min(displayedLightCurve.length - 1, currentIndex))
   ];
   const displayedContacts = flipPlanet
     ? [
@@ -1101,6 +1179,29 @@ function LightCurve({
       : []),
     { x: model.equivalentContacts[3], label: "T4" },
   ];
+
+  const residualsHeight = 150;
+  const residualsMargin = { left: 60, right: 28, top: 18, bottom: 34 };
+  const residualsPlotH = residualsHeight - residualsMargin.top - residualsMargin.bottom;
+  const residualsPpm = displayedLightCurve.map(
+    (point) => (point.flux - point.equivalentFlux) * 1e6,
+  );
+  const residualPeak = Math.max(
+    1e-6,
+    ...residualsPpm.map((value) => Math.abs(value)),
+  );
+  const residualYMax = residualPeak * 1.08;
+  const residualYScale = (ppm: number) =>
+    residualsMargin.top +
+    ((residualYMax - ppm) / (2 * residualYMax)) * residualsPlotH;
+  const residualPath = displayedLightCurve
+    .map(
+      (point, index) =>
+        `${index ? "L" : "M"} ${xScale(point.time).toFixed(2)} ${residualYScale(residualsPpm[index]).toFixed(2)}`,
+    )
+    .join(" ");
+  const currentResidualPpm =
+    residualsPpm[Math.max(0, Math.min(residualsPpm.length - 1, currentIndex))];
 
   return (
     <section className="curve-card" aria-label="Synthetic light curve">
@@ -1250,6 +1351,111 @@ function LightCurve({
           transform={`rotate(-90 15 ${height / 2})`}
         >
           Relative flux
+        </text>
+      </svg>
+      <div className="residuals-heading">
+        <p className="simulation-options-title">Residuals</p>
+        <span className="residuals-subtitle">Ringed − ringless flux, in ppm (autoscaled)</span>
+      </div>
+      <svg
+        className="residuals-chart"
+        viewBox={`0 0 ${width} ${residualsHeight}`}
+        role="img"
+        aria-label="Residual flux between the ringed and ringless light curves, in parts per million"
+      >
+        {[-1, -0.5, 0, 0.5, 1].map((fraction) => {
+          const ppm = fraction * residualYMax;
+          const y = residualYScale(ppm);
+          return (
+            <g key={fraction}>
+              <line
+                x1={residualsMargin.left}
+                x2={width - residualsMargin.right}
+                y1={y}
+                y2={y}
+                className={fraction === 0 ? "chart-grid chart-grid-zero" : "chart-grid"}
+              />
+              <text x={residualsMargin.left - 10} y={y + 3} className="axis-label" textAnchor="end">
+                {ppm.toFixed(0)}
+              </text>
+            </g>
+          );
+        })}
+        {events.map((event) => {
+          const time = model.timeAtX(event.x);
+          const x = xScale(time);
+          return (
+            <g key={`res-${event.label}`}>
+              <title>{`${event.label} (ringed planet): ${time.toFixed(2)} h`}</title>
+              <line
+                x1={x}
+                x2={x}
+                y1={residualsMargin.top}
+                y2={residualsHeight - residualsMargin.bottom}
+                className="event-line"
+              />
+              <text
+                x={x + (event.anchor === "start" ? 6 : -6)}
+                y={residualsHeight - residualsMargin.bottom + 16}
+                className="event-label"
+                textAnchor={event.anchor}
+              >
+                {event.label}
+              </text>
+            </g>
+          );
+        })}
+        {showEquivalent &&
+          equivalentEvents.map((event) => {
+            const time = model.timeAtX(event.x);
+            const x = xScale(time);
+            return (
+              <g key={`res-eq-${event.label}`}>
+                <title>{`${event.label} (ringless planet): ${time.toFixed(2)} h`}</title>
+                <line
+                  x1={x}
+                  x2={x}
+                  y1={residualsMargin.top}
+                  y2={residualsHeight - residualsMargin.bottom}
+                  className="event-line-equivalent"
+                />
+                <text
+                  x={x}
+                  y={residualsMargin.top - 6}
+                  className="event-label-equivalent"
+                  textAnchor="middle"
+                >
+                  {event.label}
+                </text>
+              </g>
+            );
+          })}
+        <path d={residualPath} className="residual-path residual-glow" />
+        <path d={residualPath} className="residual-path" />
+        <line
+          x1={xScale(current.time)}
+          x2={xScale(current.time)}
+          y1={residualsMargin.top}
+          y2={residualsHeight - residualsMargin.bottom}
+          className="position-line"
+        />
+        <circle
+          cx={xScale(current.time)}
+          cy={residualYScale(currentResidualPpm)}
+          r="4"
+          className="position-dot"
+        />
+        <text x={width / 2} y={residualsHeight - 6} className="axis-title" textAnchor="middle">
+          Time from mid-transit [hours]
+        </text>
+        <text
+          x="15"
+          y={residualsHeight / 2}
+          className="axis-title"
+          textAnchor="middle"
+          transform={`rotate(-90 15 ${residualsHeight / 2})`}
+        >
+          Residual [ppm]
         </text>
       </svg>
       <div className="curve-options">
@@ -1449,9 +1655,12 @@ function PhotoRingSummaryCard({
 export default function PhotoRingSimulator() {
   const [configuration, setConfiguration] =
     useState<UrlConfiguration>(DEFAULT_CONFIGURATION);
-  const [selectedPreset, setSelectedPreset] = useState<PresetKey | "custom">(
+  const [selectedPreset, setSelectedPreset] = useState<string | "custom">(
     "default",
   );
+  const [presetOptions, setPresetOptions] = useState<PresetOption[]>([
+    { id: "default", label: "Default configuration", configuration: DEFAULT_CONFIGURATION },
+  ]);
   const [phase, setPhase] = useState(-0.76);
   const [playing, setPlaying] = useState(true);
   const [copyLinkFeedback, setCopyLinkFeedback] = useState<string | null>(null);
@@ -1473,6 +1682,21 @@ export default function PhotoRingSimulator() {
     () => computeTransit(parameters, periodDays, densityKgM3),
     [parameters, periodDays, densityKgM3],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    loadPresetOptions()
+      .then((options) => {
+        if (cancelled || options.length === 0) return;
+        setPresetOptions(options);
+      })
+      .catch((error) => {
+        console.error("Could not load presets.json, using built-in default only.", error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const urlConfiguration = readConfigurationFromUrl(window.location.search);
@@ -1507,14 +1731,18 @@ export default function PhotoRingSimulator() {
   };
 
   const resetConfiguration = () => {
-    setSelectedPreset("default");
-    setConfiguration(DEFAULT_CONFIGURATION);
+    const defaultOption =
+      presetOptions.find((option) => option.id === "default") ?? presetOptions[0];
+    setSelectedPreset(defaultOption?.id ?? "default");
+    setConfiguration(defaultOption?.configuration ?? DEFAULT_CONFIGURATION);
   };
 
-  const selectPreset = (preset: PresetKey | "custom") => {
+  const selectPreset = (preset: string | "custom") => {
     if (preset === "custom") return;
-    setSelectedPreset(preset);
-    setConfiguration(PRESET_CONFIGURATIONS[preset]);
+    const option = presetOptions.find((candidate) => candidate.id === preset);
+    if (!option) return;
+    setSelectedPreset(option.id);
+    setConfiguration(option.configuration);
   };
 
   const handleCopyConfiguration = async () => {
@@ -1582,15 +1810,15 @@ export default function PhotoRingSimulator() {
             >
               A Novel Method for Identifying Exoplanetary Rings
             </a>{" "}
-            and developed further in the paper{" "}
+             by J.I. Zuluaga, D. Kipping, M. Sucerquia and J. Alvarado-Montes (2015) and developed further in the paper{" "}
             <a
               href="https://arxiv.org/abs/2609.25234"
               target="_blank"
               rel="noreferrer"
             >
               Probing Exoplanetary Rings with Asterodensity Profiling: A PhotoRing Analysis of Kepler-51
-            </a>
-            . The effect occurs when rings change the transit silhouette and duration, making the
+            </a>{" "}
+             by J.I. Zuluaga, S. Numpaque, D. Kipping and J.A. Alvarado-Montes (2026). The effect occurs when rings change the transit silhouette and duration, making the
             inferred stellar density differ from its true value.
             Change the System Parameters values and observe how the PR anomaly changes.
             <br />
@@ -1659,16 +1887,14 @@ export default function PhotoRingSimulator() {
               <span>Preset configuration</span>
               <select
                 value={selectedPreset}
-                onChange={(event) =>
-                  selectPreset(event.currentTarget.value as PresetKey | "custom")
-                }
+                onChange={(event) => selectPreset(event.currentTarget.value)}
               >
                 {selectedPreset === "custom" && (
                   <option value="custom">Custom configuration</option>
                 )}
-                {Object.entries(PRESET_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
+                {presetOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
                   </option>
                 ))}
               </select>
