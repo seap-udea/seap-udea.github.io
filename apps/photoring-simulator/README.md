@@ -2,7 +2,7 @@
 
 By [Jorge I. Zuluaga](https://jorgezuluaga.github.io/index.html?lang=en)
 
-![PhotoRing Effect Simulator demo](public/photoring-simulator-screenshot.gif)
+[![PhotoRing Effect Simulator demo](public/photoring-simulator-screenshot.gif)](https://seap-udea.github.io/apps/photoring-simulator/)
 
 This is the interactive page for rigorous PhotoRing (PR) modeling. It lets you vary a ringed planet's geometry and opacity, inspect the synthetic transit, and see how a ringless interpretation changes the inferred stellar properties.
 
@@ -31,28 +31,6 @@ $$
 $$
 
 A negative PR means that the ringless interpretation underestimates the true stellar density. The simulator shows this effect while the parameters are changed interactively.
-
-## Parameters And Defaults
-
-The app opens with the following defaults:
-
-| Symbol | Value | Meaning |
-|---|---:|---|
-| $p$ | $0.084 R_\star$ | Planet-to-star radius ratio |
-| $f_i$ | $1.58 R_p$ | Inner ring radius in planet radii |
-| $f_e$ | $2.35 R_p$ | Outer ring radius in planet radii |
-| $\theta_R$ | $25^\circ$ | Projected ring tilt |
-| $i_R$ | $55^\circ$ | Ring inclination to the line of sight |
-| $b$ | $0.25$ | True impact parameter |
-| $\alpha$ | $\exp(-1)=0.367879$ | Fraction transmitted through the ring normal |
-| $\tau$ | $1$ | Normal optical depth, with $\alpha=\exp(-\tau)$ |
-| $P$ | $365.25$ days | Orbital period |
-| $M_\star$ | $1 M_\odot$ | Stellar mass |
-| $R_\star$ | $1 R_\odot$ | Stellar radius |
-
-For the default star and period, $a\simeq0.999997 \mathrm{AU}$ and $a/R_\star\simeq214.9$.
-
-The app accepts shared configurations in the URL. Its copy button serializes the physical parameters and the active visualization options, so a copied link reproduces the same view.
 
 ## 1. Projected Ring Geometry
 
@@ -175,15 +153,6 @@ $$
 p_{\mathrm{obs}}=\sqrt{\delta}.
 $$
 
-For the app defaults, the reference model gives approximately:
-
-| Quantity | Value |
-|---|---:|
-| $\delta$ | $0.0169169$ |
-| $p_{\mathrm{obs}}$ | $0.130065 R_\star$ |
-| $T_{14}$ | $14.9956$ h |
-| $T_{23}$ | $10.1131$ h |
-
 The numerical area grid in the web app can differ from these analytical values by a small discretization error.
 
 ## 5. Asterodensity Profiling And Kipping Inversion
@@ -224,24 +193,90 @@ $$
 \left(\frac{a_{\mathrm{obs}}}{R_\star}\right)^3.
 $$
 
-When $P$ is expressed in seconds, this produces SI density; the app converts the result to $\mathrm{g cm^{-3}}$. For the app defaults, the reference model gives approximately:
-
-| Quantity | Value |
-|---|---:|
-| $a/R_\star$ (true) | $214.9387$ |
-| $a_{\mathrm{obs}}/R_\star$ | $181.7714$ |
-| $b_{\mathrm{obs}}$ (Kipping) | $0.5681$ |
-| $\rho_{\star,\mathrm{obs}}$ | $0.8516 \mathrm{g cm^{-3}}$ |
-| $\rho_{\star,\mathrm{obs}}/\rho_{\star,\mathrm{true}}$ | $0.6048$ |
-| PR anomaly | $-2.18$ |
+When $P$ is expressed in seconds, this produces SI density; the app converts the result to $\mathrm{g\,cm^{-3}}$.
 
 The value $b_{\mathrm{obs}}\simeq0.57$ is the Kipping convention used by the simulator. The alternate Mallen-Ornelas inversion gives approximately $0.8080$ for the same observables; it is not the convention used for the displayed app value. PR is reported as a dimensionless logarithmic quantity.
 
+## 6. Light Curve And Residuals
+
+The simulator draws two curves in the light-curve panel:
+
+- **Ringed light curve** — the normalized flux $F(t)=1-\delta(t)$ produced by the ringed planet as its projected silhouette crosses the stellar disk. The depth at each time step is computed numerically by integrating the blocked flux over a pixel grid that resolves both the planet disk and the ring annulus, with each ring pixel attenuated by the projected factor $\beta=1-\alpha^{1/\cos i_R}$.
+- **Equivalent ringless curve** — the light curve of the hypothetical ringless planet of radius $p_{\mathrm{obs}}=\sqrt{\delta}$ on the same orbit, shown as a dashed overlay. Comparing the two curves by eye reveals the ingress/egress shape differences that betray the ring.
+
+The residuals panel shows $\Delta F(t)=F_{\mathrm{ringed}}(t)-F_{\mathrm{ringless}}(t)$. Deviations from zero highlight where the ring changes the transit shape beyond a simple depth rescaling.
+
+### Computing Light Curves With External Packages
+
+The web app computes a simplified numerical model. For science-grade light curves that include stellar limb darkening, cadence integration, and full ring geometry, use one of the following Python packages:
+
+- **[PyPplusS](https://github.com/EdanRein/pyPplusS)** — implements the Polynomial plus Step (P+S) analytic ring-transit model. It computes ringed-planet light curves with arbitrary limb-darkening laws using fast analytic area integrals, making it ideal for fitting observed transit data.
+
+- **[Pryngles](https://pypi.org/project/pryngles/)** — a general-purpose ringed-planet simulator that models scattered and transmitted light through rings with configurable opacity and particle properties, including phase-angle dependence. Useful for photometric modeling beyond the transit regime.
+
+Both packages are publicly available and can be used to reproduce and extend the results shown in the simulator.
+
 ## Example: The Defaults Used By The App
 
-The default setup uses a one-year orbit around a solar-mass, solar-radius star. The planet has $p=0.084$, an inner ring at $f_i=1.58$, an outer ring at $f_e=2.35$, tilt $25^\circ$, inclination $55^\circ$, impact parameter $b=0.25$, and $\tau=1$ so $\alpha=0.367879$.
+The app opens with a Saturn-like ringed planet on a one-year orbit around a solar-mass, solar-radius star:
 
-The rings enlarge the projected occulting silhouette and increase the measured duration relative to the solid planet. The equivalent ringless radius becomes $0.1301 R_\star$, larger than the physical planet radius. Interpreting that deeper and longer transit without rings yields $a_{\mathrm{obs}}/R_\star\simeq181.77$ instead of the true $214.94$, and therefore an underestimated stellar density. The resulting PR anomaly is about $-2.18$.
+| Symbol | Value | Meaning |
+|---|---:|---|
+| $p$ | $0.084 R_\star$ | Planet-to-star radius ratio |
+| $f_i$ | $1.58 R_p$ | Inner ring radius in planet radii |
+| $f_e$ | $2.35 R_p$ | Outer ring radius in planet radii |
+| $\theta_R$ | $25^\circ$ | Projected ring tilt |
+| $i_R$ | $55^\circ$ | Ring inclination to the line of sight |
+| $b$ | $0.25$ | True impact parameter |
+| $\alpha$ | $\exp(-1)=0.367879$ | Fraction transmitted through the ring normal |
+| $\tau$ | $1$ | Normal optical depth, with $\alpha=\exp(-\tau)$ |
+| $P$ | $365.25$ days | Orbital period |
+| $M_\star$ | $1 M_\odot$ | Stellar mass |
+| $R_\star$ | $1 R_\odot$ | Stellar radius |
+
+For this star and period, $a\simeq 1$ AU and $a/R_\star\simeq214.94$.
+
+Below is the complete step-by-step calculation following sections 1–5.
+
+**Step 1 — Ring geometry (§1).** With $p=0.084$, $f_e=2.35$, $i_R=55^\circ$, $\theta_R=25^\circ$:
+$$A = f_e\,p = 0.1974\,R_\star,\qquad B = A\cos 55^\circ = 0.1132\,R_\star.$$
+At the left limb $(n_x,n_y)=(-1,0)$: $h_L = \sqrt{(Au)^2+(Bv)^2}=0.1819\,R_\star$ and by symmetry $h_R\approx h_L$.
+
+**Step 2 — Contact positions and durations (§2).** With $b=0.25$, $a/R_\star=214.94$, $P=365.25$ days:
+
+- $x_1 = -\sqrt{(1+h_L)^2-b^2} = -1.1718$, $\quad x_4 = +1.1718$
+- $x_2 = -\sqrt{(1-h_L)^2-b^2} = -0.7979$, $\quad x_3 = +0.7979$
+- $T_{14} = \frac{P}{2\pi}\arcsin\!\left(\frac{x_4-x_1}{a/R_\star}\right) = 14.996\,\mathrm{h}$, $\quad T_{23} = 10.113\,\mathrm{h}$
+
+**Step 3 — Ring opacity and transit depth (§3).** With $\tau=1$ and $i_R=55^\circ$:
+$$\alpha = e^{-1} = 0.3679,\qquad \beta = 1 - \alpha^{1/\cos 55^\circ} = 0.8076.$$
+The effective blocked area gives $\delta\approx 0.016917$.
+
+**Step 4 — Equivalent ringless radius (§4).** $p_{\mathrm{obs}} = \sqrt{\delta} = 0.13007\,R_\star$ — about 55% larger than the true planet radius $p=0.084\,R_\star$.
+
+**Step 5 — Asterodensity profiling (§5).** With $p_{\mathrm{obs}}$, $T_{14}$, $T_{23}$ from above:
+$$q=\frac{\sin^2(\pi T_{23}/P)}{\sin^2(\pi T_{14}/P)}=0.4551,\qquad b_{\mathrm{obs}}=\sqrt{\frac{f_-^2-qf_+^2}{1-q}}=0.568,\qquad \frac{a_{\mathrm{obs}}}{R_\star}=181.77.$$
+$$\rho_{\star,\mathrm{obs}}=\frac{3\pi}{GP^2}\left(\frac{a_{\mathrm{obs}}}{R_\star}\right)^3\approx 0.8516\,\mathrm{g\,cm^{-3}},\qquad \mathrm{PR}=10\log_{10}\!\left(\frac{\rho_{\star,\mathrm{obs}}}{\rho_{\star,\mathrm{true}}}\right)\approx -2.18.$$
+
+Summary of all intermediate and final quantities:
+
+| Quantity | Value |
+|---|---:|
+| $A$ (ring semimajor axis) | $0.1974\,R_\star$ |
+| $B$ (ring semiminor axis) | $0.1132\,R_\star$ |
+| $h_L = h_R$ (support radius) | $0.1819\,R_\star$ |
+| $\beta$ (projected blocking factor) | $0.8076$ |
+| $\delta$ (transit depth) | $0.016917$ |
+| $p_{\mathrm{obs}}$ (equivalent radius) | $0.13007\,R_\star$ |
+| $T_{14}$ (total duration) | $14.996$ h |
+| $T_{23}$ (flat duration) | $10.113$ h |
+| $a_{\mathrm{obs}}/R_\star$ (inferred) | $181.77$ |
+| $b_{\mathrm{obs}}$ (Kipping) | $0.568$ |
+| $\rho_{\star,\mathrm{obs}}$ | $0.8516\,\mathrm{g\,cm^{-3}}$ |
+| $\rho_{\star,\mathrm{obs}}/\rho_{\star,\mathrm{true}}$ | $0.6048$ |
+| PR anomaly | $-2.18$ |
+
+The rings enlarge the projected occulting silhouette and increase the measured duration relative to the solid planet. Interpreting that deeper and longer transit without rings yields $a_{\mathrm{obs}}/R_\star\simeq181.77$ instead of the true $214.94$, and therefore an underestimated stellar density. The resulting PR anomaly is $-2.18$.
 
 Change the ring inclination, tilt, radii, opacity, impact parameter, or period in the app and watch these derived quantities respond.
 
