@@ -2,7 +2,7 @@
 
 By [Jorge I. Zuluaga](https://jorgezuluaga.github.io/index.html?lang=en)
 
-![PhotoRing Effect Simulator screenshot](public/photoring-simulator-screenshot.webp)
+![PhotoRing Effect Simulator demo](public/photoring-simulator-screenshot.gif)
 
 This is the interactive page for rigorous PhotoRing (PR) modeling. It lets you vary a ringed planet's geometry and opacity, inspect the synthetic transit, and see how a ringless interpretation changes the inferred stellar properties.
 
@@ -12,11 +12,11 @@ The complete Bayesian inference pipeline is developed in the [PRisma repository]
 
 The PhotoRing effect was introduced in:
 
-- [Zuluaga et al. (2015), *A Novel Method for Identifying Exoplanetary Rings*](https://doi.org/10.1088/2041-8205/803/1/L14), also available as [arXiv:1502.07818](https://arxiv.org/abs/1502.07818).
+- Zuluaga, J. I., Kipping, D. M., Sucerquia, M., & Alvarado, J. A. (2015). *A Novel Method for Identifying Exoplanetary Rings*, The Astrophysical Journal Letters, 803(1), L14. [[ApJL](https://doi.org/10.1088/2041-8205/803/1/L14)] [[arXiv:1502.07818](https://arxiv.org/abs/1502.07818)]
 
 The model and its application to Kepler-51 were developed further in:
 
-- [Zuluaga et al. (2026), *Probing Exoplanetary Rings with Asterodensity Profiling: A PhotoRing Analysis of Kepler-51*](https://arxiv.org/abs/2609.25234).
+- Zuluaga, J. I., Numpaque, S., Kipping, D. M., & Alvarado-Montes, J. A. (2026). *Probing Exoplanetary Rings with Asterodensity Profiling: A PhotoRing Analysis of Kepler-51*. [[arXiv:2609.25234](https://arxiv.org/abs/2609.25234)]
 
 The equations below follow the PhotoRing geometry and asterodensity-profiling relations implemented in the `exorings` forward model used by PRisma.
 
@@ -38,19 +38,19 @@ The app opens with the following defaults:
 
 | Symbol | Value | Meaning |
 |---|---:|---|
-| $p$ | $0.084\,R_\star$ | Planet-to-star radius ratio |
-| $f_i$ | $1.58\,R_p$ | Inner ring radius in planet radii |
-| $f_e$ | $2.35\,R_p$ | Outer ring radius in planet radii |
+| $p$ | $0.084 R_\star$ | Planet-to-star radius ratio |
+| $f_i$ | $1.58 R_p$ | Inner ring radius in planet radii |
+| $f_e$ | $2.35 R_p$ | Outer ring radius in planet radii |
 | $\theta_R$ | $25^\circ$ | Projected ring tilt |
 | $i_R$ | $55^\circ$ | Ring inclination to the line of sight |
 | $b$ | $0.25$ | True impact parameter |
 | $\alpha$ | $\exp(-1)=0.367879$ | Fraction transmitted through the ring normal |
 | $\tau$ | $1$ | Normal optical depth, with $\alpha=\exp(-\tau)$ |
 | $P$ | $365.25$ days | Orbital period |
-| $M_\star$ | $1\,M_\odot$ | Stellar mass |
-| $R_\star$ | $1\,R_\odot$ | Stellar radius |
+| $M_\star$ | $1 M_\odot$ | Stellar mass |
+| $R_\star$ | $1 R_\odot$ | Stellar radius |
 
-For the default star and period, $a\simeq0.999997\,\mathrm{AU}$ and $a/R_\star\simeq214.9$.
+For the default star and period, $a\simeq0.999997 \mathrm{AU}$ and $a/R_\star\simeq214.9$.
 
 The app accepts shared configurations in the URL. Its copy button serializes the physical parameters and the active visualization options, so a copied link reproduces the same view.
 
@@ -180,7 +180,7 @@ For the app defaults, the reference model gives approximately:
 | Quantity | Value |
 |---|---:|
 | $\delta$ | $0.0169169$ |
-| $p_{\mathrm{obs}}$ | $0.130065\,R_\star$ |
+| $p_{\mathrm{obs}}$ | $0.130065 R_\star$ |
 | $T_{14}$ | $14.9956$ h |
 | $T_{23}$ | $10.1131$ h |
 
@@ -224,14 +224,14 @@ $$
 \left(\frac{a_{\mathrm{obs}}}{R_\star}\right)^3.
 $$
 
-When $P$ is expressed in seconds, this produces SI density; the app converts the result to $\mathrm{g\,cm^{-3}}$. For the app defaults, the reference model gives approximately:
+When $P$ is expressed in seconds, this produces SI density; the app converts the result to $\mathrm{g cm^{-3}}$. For the app defaults, the reference model gives approximately:
 
 | Quantity | Value |
 |---|---:|
 | $a/R_\star$ (true) | $214.9387$ |
 | $a_{\mathrm{obs}}/R_\star$ | $181.7714$ |
 | $b_{\mathrm{obs}}$ (Kipping) | $0.5681$ |
-| $\rho_{\star,\mathrm{obs}}$ | $0.8516\,\mathrm{g\,cm^{-3}}$ |
+| $\rho_{\star,\mathrm{obs}}$ | $0.8516 \mathrm{g cm^{-3}}$ |
 | $\rho_{\star,\mathrm{obs}}/\rho_{\star,\mathrm{true}}$ | $0.6048$ |
 | PR anomaly | $-2.18$ |
 
@@ -241,7 +241,7 @@ The value $b_{\mathrm{obs}}\simeq0.57$ is the Kipping convention used by the sim
 
 The default setup uses a one-year orbit around a solar-mass, solar-radius star. The planet has $p=0.084$, an inner ring at $f_i=1.58$, an outer ring at $f_e=2.35$, tilt $25^\circ$, inclination $55^\circ$, impact parameter $b=0.25$, and $\tau=1$ so $\alpha=0.367879$.
 
-The rings enlarge the projected occulting silhouette and increase the measured duration relative to the solid planet. The equivalent ringless radius becomes $0.1301\,R_\star$, larger than the physical planet radius. Interpreting that deeper and longer transit without rings yields $a_{\mathrm{obs}}/R_\star\simeq181.77$ instead of the true $214.94$, and therefore an underestimated stellar density. The resulting PR anomaly is about $-2.18$.
+The rings enlarge the projected occulting silhouette and increase the measured duration relative to the solid planet. The equivalent ringless radius becomes $0.1301 R_\star$, larger than the physical planet radius. Interpreting that deeper and longer transit without rings yields $a_{\mathrm{obs}}/R_\star\simeq181.77$ instead of the true $214.94$, and therefore an underestimated stellar density. The resulting PR anomaly is about $-2.18$.
 
 Change the ring inclination, tilt, radii, opacity, impact parameter, or period in the app and watch these derived quantities respond.
 
@@ -271,7 +271,7 @@ The physical parameters are:
 
 For the orbital quantities, the simulator accepts equivalent pairs such as `mstar+aau`, `mstar+porb`, `porb+aau`, or `porb+aRstar`. If redundant values are supplied, `mstar+aau` takes priority. When a configuration is copied, the link uses the canonical `mstar+rstar+aau` representation and omits redundant `porb` and `aRstar` values.
 
-The planet mass `mpjup` is used with the physical planet radius to calculate the true planetary density. If `mpjup` is omitted, the simulator derives it by assuming a mean planetary density of $1\,\mathrm{g\,cm^{-3}}$. The legacy parameter name `mplanet` is still accepted for backward compatibility with previously shared links.
+The planet mass `mpjup` is used with the physical planet radius to calculate the true planetary density. If `mpjup` is omitted, the simulator derives it by assuming a mean planetary density of $1 \mathrm{g cm^{-3}}$. The legacy parameter name `mplanet` is still accepted for backward compatibility with previously shared links.
 
 Visualization options are also shareable. Set them to `1` or `0`:
 
@@ -287,28 +287,30 @@ Visualization options are also shareable. Set them to `1` or `0`:
 
 The links below open the simulator with reproducible configurations. The first configuration is the app default. The TOI-2449b link uses the system values and the Saturn-like reference ring defined in the TOI-2449b notebook; that notebook explores a range of ring orientations rather than reporting one unique fitted orientation, so this link uses a representative $\theta=25^\circ$, $i_R=55^\circ$ view. For Kepler-51, the values below are the medians printed in Figures 6 and 7 of the paper, not the separate grid-search results in Table 6.
 
-1. **Default configuration** — $p=0.084$, $f_i=1.58$, $f_e=2.35$, $\theta=25^\circ$, $i_R=55^\circ$, $b=0.25$, $\alpha=\exp(-1)$, $M_\star=1\,M_\odot$, $R_\star=1\,R_\odot$, $a=0.999997\mathrm{AU}$.
+1. **Default configuration** — $p=0.084$, $f_i=1.58$, $f_e=2.35$, $\theta=25^\circ$, $i_R=55^\circ$, $b=0.25$, $\alpha=\exp(-1)$, $M_\star=1 M_\odot$, $R_\star=1 R_\odot$, $a=0.999997\mathrm{AU}$.
 
 	[Open the default configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.084&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mpjup=0.2994&mstar=1&rstar=1&aau=0.9999974887698985&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
-2. **TOI-2449b reference configuration** — $P=106.14468$ days, $p=0.0967$, $b=0.704$, Saturn-like rings $f_i=1.526$, $f_e=2.269$, $\alpha=\exp(-1)$, $M_\star=1.079\,M_\odot$, $R_\star=1.065\,R_\odot$, $a=0.450\mathrm{AU}$.
+2. **Saturn around an M-dwarf configuration** — $P=10$ days, $p=0.84 R_{\mathrm{Jup}}$, $f_i=1.58$, $f_e=2.35$, $\theta=25^\circ$, $i_R=55^\circ$, $b=0.25$, $\alpha=\exp(-1)$, $M_\star=0.2 M_\odot$.
+
+	[Open the Saturn around an M-dwarf configuration](https://seap-udea.github.io/apps/photoring-simulator/?pjup=0.84&fi=1.58&fe=2.35&tilt=25&ir=55&b=0.25&alpha=0.36787944117144233&mpjup=0.2994&mstar=0.2&porb=10&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
+
+3. **TOI-2449b configuration (Zuluaga et al. 2026 in prep.)** — $P=106.14468$ days, $p=0.0967$, $b=0.704$, Saturn-like rings $f_i=1.526$, $f_e=2.269$, $\alpha=\exp(-1)$, $M_\star=1.079\,M_\odot$, $R_\star=1.065\,R_\odot$, $a=0.450\mathrm{AU}$.
 
 	[Open the TOI-2449b reference configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.0967&fi=1.526&fe=2.269&tilt=25&ir=55&b=0.704&alpha=0.36787944117144233&mpjup=0.70&mstar=1.079&rstar=1.065&aau=0.450&showRingless=0&planetToScale=1&zoom2=0&autoDepth=1&showEquivalent=1)
 
-3. **Kepler-51b Figure 6 median configuration** — $P=45.154$ days, $p=0.058$, $b=0.33$, $f_i=1$, $f_e=1.93$, $i_R=65.8^\circ$, $\theta=78.8^\circ$, $\alpha=0.33$, $\rho_{\star,\mathrm{true}}=2.11\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9834\,M_\odot$ and $a\simeq0.24678\mathrm{AU}$.
+4. **Kepler-51b median configuration (Zuluaga et al. 2026)** — $P=45.154$ days, $p=0.058$, $b=0.33$, $f_i=1$, $f_e=1.93$, $i_R=65.8^\circ$, $\theta=78.8^\circ$, $\alpha=0.33$, $\rho_{\star,\mathrm{true}}=2.11\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9834\,M_\odot$ and $a\simeq0.24678\mathrm{AU}$.
 
 	[Open the Kepler-51b Figure 6 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.058&fi=1&fe=1.93&tilt=78.8&ir=65.8&b=0.33&alpha=0.33&mpjup=0.0217&mstar=0.9834202&rstar=0.869&aau=0.2467834&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
-4. **Kepler-51d Figure 7 median configuration** — $P=130.186$ days, $p=0.081$, $b=0.28$, $f_i=1$, $f_e=1.73$, $i_R=70.87^\circ$, $\theta=67.39^\circ$, $\alpha=0.34$, $\rho_{\star,\mathrm{true}}=2.14\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9974\,M_\odot$ and $a\simeq0.50227\,\mathrm{AU}$.
+5. **Kepler-51d median configuration (Zuluaga et al. 2026)** — $P=130.186$ days, $p=0.081$, $b=0.28$, $f_i=1$, $f_e=1.73$, $i_R=70.87^\circ$, $\theta=67.39^\circ$, $\alpha=0.34$, $\rho_{\star,\mathrm{true}}=2.14\,\mathrm{g\,cm^{-3}}$, $R_\star=0.869\,R_\odot$. The corresponding values used by the URL are $M_\star\simeq0.9974\,M_\odot$ and $a\simeq0.50227 \mathrm{AU}$.
 
 	[Open the Kepler-51d Figure 7 configuration](https://seap-udea.github.io/apps/photoring-simulator/?p=0.081&fi=1&fe=1.73&tilt=67.39&ir=70.87&b=0.28&alpha=0.34&mpjup=0.0217&mstar=0.9974025&rstar=0.869&aau=0.5022714&showRingless=0&planetToScale=1&zoom2=0&autoDepth=0&showEquivalent=1)
 
 
 ## AI Assistance Disclosure
 
-This site was developed entirely with AI tools (vibe-coded) under the guidance of a human, the author [Jorge I. Zuluaga](https://jorgezuluaga.github.io/index.html?lang=en). Although all of the web-page code was generated by AI models, the original code used to calculate the PhotoRing effect was extracted from the `exorings` package developed by the human author. The design of this simulator also arose from the author's original ideas. The scientific conception, model selection, interpretation of the results, and responsibility for the final implementation remain with the human author.
-
-AI tools were used as coding, documentation, translation, and writing assistants. They have no intellectual authorship over the scientific content or the original ideas behind the simulator.
+This site was developed entirely with AI tools (vibe-coded) under the guidance of a human, the author [Jorge I. Zuluaga](https://jorgezuluaga.github.io/index.html?lang=en). Although all of the web-page code was generated by AI models, the original code used to calculate the PhotoRing effect was extracted from the [`exorings` package developed by the human author](https://github.com/seap-udea/PRisma). The design of this simulator also arose from the author's original ideas. The scientific conception, model selection, interpretation of the results, and responsibility for the final implementation remain with the human author.
 
 ## License
 

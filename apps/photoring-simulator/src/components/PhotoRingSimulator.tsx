@@ -170,7 +170,7 @@ const DEFAULT_CONFIGURATION: UrlConfiguration = {
   densityKgM3: SOLAR_DENSITY_KG_M3,
   planetMassJupiter: SATURN_MASS_JUPITER,
   showEquivalentPlanet: false,
-  showPlanetToScale: false,
+  showPlanetToScale: true,
   zoomIn: false,
   flipPlanet: false,
   autoScaleDepth: false,
