@@ -212,7 +212,7 @@ The web app computes a simplified numerical model. For science-grade light curve
 
 - **[PyPplusS](https://github.com/EdanRein/pyPplusS)** — implements the Polynomial plus Step (P+S) analytic ring-transit model. It computes ringed-planet light curves with arbitrary limb-darkening laws using fast analytic area integrals, making it ideal for fitting observed transit data. The simulator can export a Google Colab cell for the current configuration from the **pyPplusS / Colab** button.
 
-- **[Pryngles](https://pypi.org/project/pryngles/)** — a general-purpose ringed-planet simulator that models scattered and transmitted light through rings with configurable opacity and particle properties, including phase-angle dependence. Useful for photometric modeling beyond the transit regime.
+- **[Pryngles](https://pypi.org/project/pryngles/)** (Zuluaga et al. 2022, *Astronomy and Computing* 40, 100623) — ringed-planet simulator with the high-level **`System`** interface and `compute_lightcurve` for transits. The **Pryngles / Colab** export includes `rebound>=4.0,<4.7` in the install line because Pryngles still uses particle `hash=` identifiers removed in Rebound 4.7+.
 
 Both packages are publicly available and can be used to reproduce and extend the results shown in the simulator.
 

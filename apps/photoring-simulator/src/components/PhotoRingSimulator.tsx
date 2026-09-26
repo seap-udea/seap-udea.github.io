@@ -491,52 +491,52 @@ function readConfigurationFromUrl(
     planetMassJupiter,
     showEquivalentPlanet: searchParams.has(URL_OPTION_KEYS.showEquivalentPlanet)
       ? readBooleanParameter(
-          searchParams,
-          URL_OPTION_KEYS.showEquivalentPlanet,
-          baseConfiguration.showEquivalentPlanet,
-        )
+        searchParams,
+        URL_OPTION_KEYS.showEquivalentPlanet,
+        baseConfiguration.showEquivalentPlanet,
+      )
       : baseConfiguration.showEquivalentPlanet,
     showPlanetToScale: searchParams.has(URL_OPTION_KEYS.showPlanetToScale)
       ? readBooleanParameter(
-          searchParams,
-          URL_OPTION_KEYS.showPlanetToScale,
-          baseConfiguration.showPlanetToScale,
-        )
+        searchParams,
+        URL_OPTION_KEYS.showPlanetToScale,
+        baseConfiguration.showPlanetToScale,
+      )
       : baseConfiguration.showPlanetToScale,
     zoomIn: searchParams.has(URL_OPTION_KEYS.zoomIn)
       ? readBooleanParameter(
-          searchParams,
-          URL_OPTION_KEYS.zoomIn,
-          baseConfiguration.zoomIn,
-        )
+        searchParams,
+        URL_OPTION_KEYS.zoomIn,
+        baseConfiguration.zoomIn,
+      )
       : baseConfiguration.zoomIn,
     flipPlanet: searchParams.has(URL_OPTION_KEYS.flipPlanet)
       ? readBooleanParameter(
-          searchParams,
-          URL_OPTION_KEYS.flipPlanet,
-          baseConfiguration.flipPlanet,
-        )
+        searchParams,
+        URL_OPTION_KEYS.flipPlanet,
+        baseConfiguration.flipPlanet,
+      )
       : baseConfiguration.flipPlanet,
     autoScaleDepth: searchParams.has(URL_OPTION_KEYS.autoScaleDepth)
       ? readBooleanParameter(
-          searchParams,
-          URL_OPTION_KEYS.autoScaleDepth,
-          baseConfiguration.autoScaleDepth,
-        )
+        searchParams,
+        URL_OPTION_KEYS.autoScaleDepth,
+        baseConfiguration.autoScaleDepth,
+      )
       : baseConfiguration.autoScaleDepth,
     showEquivalentCurve: searchParams.has(URL_OPTION_KEYS.showEquivalentCurve)
       ? readBooleanParameter(
-          searchParams,
-          URL_OPTION_KEYS.showEquivalentCurve,
-          baseConfiguration.showEquivalentCurve,
-        )
+        searchParams,
+        URL_OPTION_KEYS.showEquivalentCurve,
+        baseConfiguration.showEquivalentCurve,
+      )
       : baseConfiguration.showEquivalentCurve,
     residualsInAbsoluteUnits: searchParams.has(URL_OPTION_KEYS.residualsInAbsoluteUnits)
       ? readBooleanParameter(
-          searchParams,
-          URL_OPTION_KEYS.residualsInAbsoluteUnits,
-          baseConfiguration.residualsInAbsoluteUnits,
-        )
+        searchParams,
+        URL_OPTION_KEYS.residualsInAbsoluteUnits,
+        baseConfiguration.residualsInAbsoluteUnits,
+      )
       : baseConfiguration.residualsInAbsoluteUnits,
   };
 }
@@ -589,13 +589,6 @@ function pyNumber(value: number) {
   return /[.eE]/.test(text) ? text : `${text}.0`;
 }
 
-function ringBlockingForExport(alpha: number, inclinationDeg: number) {
-  const cosI = Math.max(0, Math.cos((inclinationDeg * Math.PI) / 180));
-  if (cosI <= 1e-6 || alpha >= 1) return 0;
-  if (alpha <= 0) return 1;
-  return 1 - alpha ** (1 / cosI);
-}
-
 function buildPypplussColabCode(
   configuration: UrlConfiguration,
   model: TransitModel,
@@ -605,95 +598,180 @@ function buildPypplussColabCode(
     configuration;
   const spherical = parameters.outerRingRadius <= 1;
   const p = parameters.planetRadius;
-  const rin = spherical ? p : p * parameters.innerRingRadius;
-  const rout = spherical ? p : p * parameters.outerRingRadius;
-  const opacity = spherical
-    ? 0
-    : ringBlockingForExport(parameters.alpha, parameters.inclination);
   const first = model.lightCurve[0];
   const last = model.lightCurve[model.lightCurve.length - 1];
-  const speed =
-    last.time === first.time ? 0 : (last.x - first.x) / (last.time - first.time);
   const aInRStar = aInAu / (starRadiusSolar * SOLAR_RADIUS_AU);
 
-  return `# PhotoRing → pyPplusS (Rein & Ofir 2019)
-# Paste this cell into Google Colab:
-# https://colab.research.google.com/
-# Generated from the current PRisma configuration.
-
+  return `# PhotoRing Simulator (https://seap-udea.github.io/apps/photoring-simulator) → pyPplusS (Rein & Ofir 2019)
+# Generated from the current photoring-simulator configuration.
 # Uncomment in Colab if pyppluss is not installed yet:
 # %pip install -q pyppluss matplotlib
 
-import numpy as np
-
-# Colab ships NumPy 2, which removed np.NaN. pyPplusS still uses that name.
-if not hasattr(np, "NaN"):
-    np.NaN = np.nan
-
 import matplotlib.pyplot as plt
 from pyppluss.segment_models import LC_ringed
+import numpy as np
+if not hasattr(np, "NaN"):np.NaN = np.nan
 
-# --- PRisma configuration ---
-p = ${pyNumber(p)}                 # planet radius [R★]
-fi = ${pyNumber(parameters.innerRingRadius)}                # inner ring [Rp]
-fe = ${pyNumber(parameters.outerRingRadius)}                # outer ring [Rp]
-tilt_deg = ${pyNumber(parameters.tilt)}          # θ_R [deg]
-ir_deg = ${pyNumber(parameters.inclination)}            # i_R [deg]
-b = ${pyNumber(parameters.impact)}                 # impact parameter
-alpha = ${pyNumber(parameters.alpha)}             # ring transmission along the normal
-mstar = ${pyNumber(starMassSolar)}             # M★ [M☉]
-rstar = ${pyNumber(starRadiusSolar)}             # R★ [R☉]
-mpjup = ${pyNumber(planetMassJupiter)}             # Mp [Mjup]
-a_au = ${pyNumber(aInAu)}              # a [AU]
-porb = ${pyNumber(periodDays)}            # Porb [days]
-a_rs = ${pyNumber(aInRStar)}             # a/R★
+# Constants
+deg = np.pi / 180 # factor from degrees to radians
+rad = 1 / deg
 
-# pyPplusS wants lengths in stellar radii and angles in radians.
-# Opacity is the blocked fraction of the projected ring: 1 − α^{1/cos i_R}.
-rp = p
-rin = ${spherical ? "rp" : "p * fi"}
-rout = ${spherical ? "rp" : "p * fe"}
-ir = np.radians(ir_deg)
-tilt = np.radians(tilt_deg)
-cos_i = max(0.0, float(np.cos(ir)))
-if ${spherical ? "True" : "False"} or cos_i <= 1e-6 or alpha >= 1.0:
-    opacity = 0.0
-elif alpha <= 0.0:
-    opacity = 1.0
-else:
-    opacity = 1.0 - alpha ** (1.0 / cos_i)
+# System parameters
+p = ${pyNumber(p)} # planet radius [R*]
+fi = ${pyNumber(parameters.innerRingRadius)} # inner ring [Rp]
+fe = ${pyNumber(parameters.outerRingRadius)} # outer ring [Rp]
+tilt = ${pyNumber(parameters.tilt)}*deg # sky-plane position angle / tilt
+ir = ${pyNumber(parameters.inclination)}*deg # sky-plane inclination (0=face-on, 90=edge-on)
+b  = ${pyNumber(parameters.impact)} # impact parameter [R*]
+alpha = ${pyNumber(parameters.alpha)} # normal ring transmission exp(-tau_normal)
+mstar = ${pyNumber(starMassSolar)} # M* [M_sun]
+rstar = ${pyNumber(starRadiusSolar)} # R* [R_sun]
+mpjup = ${pyNumber(planetMassJupiter)} # Mp [Mjup]
+porb= ${pyNumber(periodDays)} # Porb [days]
+a_rs= ${pyNumber(aInRStar)} # a/R*
 
-t_hours = np.linspace(${pyNumber(first.time)}, ${pyNumber(last.time)}, 181)
-x = t_hours * ${pyNumber(speed)}
-y = np.full_like(x, b)
+# Derivative properties
+iorb = np.arccos(b/a_rs)
+vorb = 2*np.pi*a_rs*np.sin(iorb) / (porb * 24)
 
-# Uniform star (no limb darkening), matching the web app.
-ones = np.ones_like(x)
-flux = LC_ringed(
-    ones * rp,
-    ones * rin,
-    ones * rout,
-    x,
-    y,
-    ir,
-    tilt,
-    opacity,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
+# Light curve parameters
+ts_ppp = np.linspace(${pyNumber(first.time)}, ${pyNumber(last.time)}, 100) # in hours
+xs = vorb * ts_ppp
+ones = np.ones_like(xs)
+ys = b*ones
+
+# Parameters in the units of the package
+rps = p*ones
+rins = p*fi*ones
+routs = p*fe*ones
+${spherical ? "opacity = 0.0" : "opacity = 1.0 - alpha ** (1.0 / np.cos(ir))"}
+
+# Light curve
+flux_pp = LC_ringed(
+    rps, rins, routs, xs, ys,
+    ir, tilt, opacity,
+    0.0, 0.0, 0.0, 0.0
 )
 
+# Plot
 fig, ax = plt.subplots(figsize=(8, 3.6))
-ax.plot(t_hours, flux, color="#66dfd0", lw=2)
+ax.plot(ts_ppp, flux_pp, color="k")
 ax.set_xlabel("Time from mid-transit [hours]")
 ax.set_ylabel("Relative flux")
-ax.set_title("pyPplusS ringed transit")
+ax.set_title("${spherical ? "pyPplusS spherical transit" : "pyPplusS ringed transit (native sky-plane angles)"}")
 ax.grid(True, alpha=0.25)
 plt.show()
+`;
+}
 
-print(f"opacity = {opacity:.6f}, rin = {rin:.6f} R★, rout = {rout:.6f} R★")
-print("Rein & Ofir (2019), MNRAS, 490, 1111. Package: pip install pyppluss")
+function buildPrynglesColabCode(
+  configuration: UrlConfiguration,
+  model: TransitModel,
+  aInAu: number,
+) {
+  const { parameters, starMassSolar, starRadiusSolar, periodDays, planetMassJupiter } =
+    configuration;
+  const spherical = parameters.outerRingRadius <= 1;
+  const p = parameters.planetRadius;
+  const first = model.lightCurve[0];
+  const last = model.lightCurve[model.lightCurve.length - 1];
+  const aInRStar = aInAu / (starRadiusSolar * SOLAR_RADIUS_AU);
+
+  const ringDefinition = spherical
+    ? ""
+    : `
+ring = sys.add(
+    kind="Ring",
+    parent=planet,
+    name="Ring",
+    fi=fi,
+    fe=fe,
+    i=i_pr,
+    roll=roll_pr,
+    tau_gray_optical=tau,
+    nspangles=nspangles,
+)
+`;
+
+  const bodiesList = spherical ? "['Planet']" : "['Planet', 'Ring']";
+
+  return `# PhotoRing Simulator (https://seap-udea.github.io/apps/photoring-simulator) → Pryngles (Zuluaga et al. 2024)
+# Generated from the current photoring-simulator configuration.
+# Uncomment in Colab if pryngles is not installed yet:
+# %pip install -q "rebound>=4.0,<4.7" pryngles
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pryngles as pr
+if not hasattr(np, "NaN"):np.NaN = np.nan
+
+# Constants
+deg = np.pi / 180 # factor from degrees to radians
+rad = 1 / deg
+
+# System parameters
+p = ${pyNumber(p)} # planet radius [R*]
+fi = ${pyNumber(parameters.innerRingRadius)} # inner ring [Rp]
+fe = ${pyNumber(parameters.outerRingRadius)} # outer ring [Rp]
+tilt = ${pyNumber(parameters.tilt)}*deg # sky-plane position angle / tilt
+ir = ${pyNumber(parameters.inclination)}*deg # sky-plane inclination (0=face-on, 90=edge-on)
+b  = ${pyNumber(parameters.impact)} # impact parameter [R*]
+alpha = ${pyNumber(parameters.alpha)} # normal ring transmission exp(-tau_normal)
+mstar = ${pyNumber(starMassSolar)} # M* [M_sun]
+rstar = ${pyNumber(starRadiusSolar)} # R* [R_sun]
+mpjup = ${pyNumber(planetMassJupiter)} # Mp [Mjup]
+porb= ${pyNumber(periodDays)} # Porb [days]
+a_rs= ${pyNumber(aInRStar)} # a/R*
+
+# Define the system
+sys = pr.System(units=["au", "msun", "day"])
+
+# Properties in units of pryngles
+tau = -np.log(alpha)
+rstar_pr = rstar * pr.Consts.rsun / sys.ul # from Rsun to au
+a_pr = a_rs * rstar_pr
+rp_pr = p * rstar_pr
+iorb = np.arccos(b/a_rs)
+
+# Convert from projection angles to physical (pryngles) angles
+i_pr = np.arccos(np.sin(ir) * np.cos(tilt))
+roll_pr = np.arctan2(np.sin(ir) * np.sin(tilt), np.cos(ir))
+
+# Create system
+nspangles = 300
+star = sys.add(
+    kind="Star",
+    name="Star",
+    m=mstar,
+    radius=rstar_pr,
+    limb_coeffs=[0.0, 0.0],
+    nspangles=nspangles,
+)
+
+planet = sys.add(
+    kind="Planet",
+    parent=star,
+    name="Planet",
+    m=0,
+    a=a_pr,
+    e=0.0,
+    radius=rp_pr,
+    nspangles=nspangles,
+)
+${ringDefinition.trimEnd()}
+sys.initialize_simulation()
+sys.spangle_system()
+
+ts = np.linspace(${pyNumber(first.time)}, ${pyNumber(last.time)}, 100) / 24 # in days
+lc = sys.compute_lightcurve(ts, bodies=${bodiesList}, effects=['transit'], observer=[0, np.pi/2-iorb])
+
+fig, ax = plt.subplots(figsize=(8, 3.6))
+ax.plot(ts*24, lc['total_flux'], 'k-', label='Pryngles')
+ax.set_xlabel("Time from mid-transit [hours]")
+ax.set_ylabel("Relative flux")
+ax.set_title("${spherical ? "Pryngles transit" : "Pryngles ringed transit"}")
+ax.grid(True, alpha=0.25)
+plt.show()
 `;
 }
 
@@ -739,62 +817,62 @@ const SYSTEM_CONTROLS: {
   step: number;
   help: string;
 }[] = [
-  {
-    key: "starMassSolar",
-    symbol: "M★",
-    label: "Star mass",
-    min: 0.1,
-    max: 1.4,
-    unit: " M☉",
-    digits: 3,
-    step: 0.01,
-    help: "Host-star mass. The orbital period is updated from this mass and the semi-major axis so Kepler's third law still holds.",
-  },
-  {
-    key: "starRadiusSolar",
-    symbol: "R★",
-    label: "Star radius",
-    min: 0.05,
-    max: 3,
-    unit: " R☉",
-    digits: 3,
-    step: 0.01,
-    help: "Host-star radius. It changes the stellar density and the orbit size in stellar radii. The planet radius stays fixed in units of R★.",
-  },
-  {
-    key: "planetMassJupiter",
-    symbol: "Mₚ",
-    label: "Planet mass",
-    min: 0.001,
-    max: 10,
-    unit: " Mjup",
-    digits: 3,
-    step: 0.001,
-    help: "Planet mass used for the true planetary density. It does not change the transit shape.",
-  },
-  {
-    key: "semiMajorAxisAu",
-    symbol: "a",
-    label: "Semi-major axis",
-    min: 0.01,
-    max: 5,
-    unit: " AU",
-    digits: 3,
-    step: 0.01,
-    help: "Orbital semi-major axis. Changing it updates the orbital period through Kepler's third law, at fixed star mass.",
-  },
-  {
-    key: "periodDays",
-    symbol: "Porb",
-    label: "Orbital period",
-    min: 0.5,
-    max: 2000,
-    unit: " days",
-    digits: 2,
-    step: 0.1,
-    help: "Orbital period. Changing it updates the semi-major axis through Kepler's third law, at fixed star mass.",
-  },
-];
+    {
+      key: "starMassSolar",
+      symbol: "M★",
+      label: "Star mass",
+      min: 0.1,
+      max: 1.4,
+      unit: " M☉",
+      digits: 3,
+      step: 0.01,
+      help: "Host-star mass. The orbital period is updated from this mass and the semi-major axis so Kepler's third law still holds.",
+    },
+    {
+      key: "starRadiusSolar",
+      symbol: "R★",
+      label: "Star radius",
+      min: 0.05,
+      max: 3,
+      unit: " R☉",
+      digits: 3,
+      step: 0.01,
+      help: "Host-star radius. It changes the stellar density and the orbit size in stellar radii. The planet radius stays fixed in units of R★.",
+    },
+    {
+      key: "planetMassJupiter",
+      symbol: "Mₚ",
+      label: "Planet mass",
+      min: 0.001,
+      max: 10,
+      unit: " Mjup",
+      digits: 3,
+      step: 0.001,
+      help: "Planet mass used for the true planetary density. It does not change the transit shape.",
+    },
+    {
+      key: "semiMajorAxisAu",
+      symbol: "a",
+      label: "Semi-major axis",
+      min: 0.01,
+      max: 5,
+      unit: " AU",
+      digits: 3,
+      step: 0.01,
+      help: "Orbital semi-major axis. Changing it updates the orbital period through Kepler's third law, at fixed star mass.",
+    },
+    {
+      key: "periodDays",
+      symbol: "Porb",
+      label: "Orbital period",
+      min: 0.5,
+      max: 2000,
+      unit: " days",
+      digits: 2,
+      step: 0.1,
+      help: "Orbital period. Changing it updates the semi-major axis through Kepler's third law, at fixed star mass.",
+    },
+  ];
 
 function usePreciseStep() {
   const [precise, setPrecise] = useState(false);
@@ -2067,12 +2145,20 @@ function CalculatedHelp({
   );
 }
 
-function PypplussCodeDialog({
+function ColabCodeDialog({
   code,
   onClose,
+  title,
+  titleId,
+  packageName,
+  extraNote,
 }: {
   code: string;
   onClose: () => void;
+  title: string;
+  titleId: string;
+  packageName: string;
+  extraNote?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -2100,18 +2186,19 @@ function PypplussCodeDialog({
         className="code-dialog"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="pyppluss-dialog-title"
+        aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="code-dialog-heading">
           <div>
-            <h2 id="pyppluss-dialog-title">pyPplusS for Google Colab</h2>
+            <h2 id={titleId}>{title}</h2>
             <p>
               Copy this cell and paste it in{" "}
               <a href="https://colab.research.google.com/" target="_blank" rel="noreferrer">
                 Colab
               </a>
-              . The install line is commented out so the script also runs as a standalone file; uncomment it in Colab if <code>pyppluss</code> is missing.
+              . The install line is commented out so the script also runs as a standalone file; uncomment it in Colab if <code>{packageName}</code> is missing.
+              {extraNote ? ` ${extraNote}` : ""}
             </p>
           </div>
           <button type="button" className="code-dialog-close" aria-label="Close" onClick={onClose}>
@@ -2243,6 +2330,7 @@ export default function PhotoRingSimulator() {
   const [playing, setPlaying] = useState(true);
   const [copyLinkFeedback, setCopyLinkFeedback] = useState<string | null>(null);
   const [showPypplussCode, setShowPypplussCode] = useState(false);
+  const [showPrynglesCode, setShowPrynglesCode] = useState(false);
   const [radiusFollowsMass, setRadiusFollowsMass] = useState(false);
   const [massFollowsPlanetRadius, setMassFollowsPlanetRadius] = useState(false);
   const {
@@ -2416,14 +2504,14 @@ export default function PhotoRingSimulator() {
       }
       const planetMassJupiter =
         key === "planetRadius" &&
-        massFollowsPlanetRadius &&
-        current.planetRadius > 0
+          massFollowsPlanetRadius &&
+          current.planetRadius > 0
           ? Math.min(
             10,
             Math.max(
               0.001,
               currentConfiguration.planetMassJupiter *
-                (next.planetRadius / current.planetRadius) ** 3,
+              (next.planetRadius / current.planetRadius) ** 3,
             ),
           )
           : currentConfiguration.planetMassJupiter;
@@ -2578,50 +2666,87 @@ export default function PhotoRingSimulator() {
               onToggleRadiusScaling={toggleRadiusScaling}
               onToggleMassScaling={toggleMassScaling}
             />
-            <div className="controls-actions controls-actions--bottom">
-              <button
-                type="button"
-                className="config-link-button"
-                onClick={() => void handleCopyConfiguration()}
-              >
-                Copy configuration
-              </button>
-              <button
-                type="button"
-                className="reset-button"
-                onClick={() => setShowPypplussCode(true)}
-              >
-                pyPplusS / Colab
-              </button>
-              <button
-                type="button"
-                className="reset-button"
-                onClick={resetConfiguration}
-              >
-                Reset
-              </button>
-              {copyLinkFeedback && (
-                <span className="config-link-feedback" role="status">
-                  {copyLinkFeedback}
-                </span>
-              )}
-            </div>
-            <label className="preset-selector">
-              <span>Preset configuration</span>
-              <select
-                value={selectedPreset}
-                onChange={(event) => selectPreset(event.currentTarget.value)}
-              >
-                {selectedPreset === "custom" && (
-                  <option value="custom">Custom configuration</option>
+            <div className="controls-footer">
+              <div className="controls-actions controls-actions--bottom">
+                <button
+                  type="button"
+                  className="config-link-button"
+                  onClick={() => void handleCopyConfiguration()}
+                >
+                  Copy configuration
+                </button>
+                <button
+                  type="button"
+                  className="reset-button"
+                  onClick={resetConfiguration}
+                >
+                  Reset
+                </button>
+                {copyLinkFeedback && (
+                  <span className="config-link-feedback" role="status">
+                    {copyLinkFeedback}
+                  </span>
                 )}
-                {presetOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+              </div>
+              <label className="preset-selector">
+                <span>Preset configuration</span>
+                <select
+                  value={selectedPreset}
+                  onChange={(event) => selectPreset(event.currentTarget.value)}
+                >
+                  {selectedPreset === "custom" && (
+                    <option value="custom">Custom configuration</option>
+                  )}
+                  {presetOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="colab-export">
+                <div className="colab-export-actions">
+                  <button
+                    type="button"
+                    className="config-link-button"
+                    onClick={() => setShowPypplussCode(true)}
+                  >
+                    pyPplusS / Colab
+                  </button>
+                  <button
+                    type="button"
+                    className="config-link-button"
+                    onClick={() => setShowPrynglesCode(true)}
+                  >
+                    Pryngles / Colab
+                  </button>
+                </div>
+                <p className="colab-export-text">
+                  Copy ready-to-run Python for{" "}
+                  <a
+                    href="https://colab.research.google.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Google Colab
+                  </a>{" "}
+                  with{" "}
+                  <a
+                    href="https://github.com/EdanRein/pyPplusS"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    pyPplusS
+                  </a>{" "}
+                  or{" "}
+                  <a href="https://pypi.org/project/pryngles/" target="_blank" rel="noreferrer">
+                    Pryngles
+                  </a>{" "}
+                  (Zuluaga et al.) to simulate this configuration in specialized ring-transit
+                  software.
+                </p>
+              </div>
+            </div>
           </aside>
 
           <div className="visual-stack">
@@ -2809,9 +2934,22 @@ export default function PhotoRingSimulator() {
         </nav>
       </footer>
       {showPypplussCode && (
-        <PypplussCodeDialog
+        <ColabCodeDialog
+          title="pyPplusS for Google Colab"
+          titleId="pyppluss-dialog-title"
+          packageName="pyppluss"
           code={buildPypplussColabCode(configuration, model, aInAu)}
           onClose={() => setShowPypplussCode(false)}
+        />
+      )}
+      {showPrynglesCode && (
+        <ColabCodeDialog
+          title="Pryngles for Google Colab"
+          titleId="pryngles-dialog-title"
+          packageName="pryngles"
+          extraNote="Pryngles transit light curves can take a minute on first run (spangle integration)."
+          code={buildPrynglesColabCode(configuration, model, aInAu)}
+          onClose={() => setShowPrynglesCode(false)}
         />
       )}
     </div>

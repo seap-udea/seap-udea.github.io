@@ -330,6 +330,44 @@ main {
   border-bottom: 1px solid var(--line);
 }
 
+.controls-footer {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.colab-export {
+  margin-top: 4px;
+  margin-bottom: 0;
+  padding: 14px 12px;
+  border: 1px solid #66dfd033;
+  border-radius: 10px;
+  background: #66dfd00a;
+}
+
+.colab-export-text {
+  margin: 12px 0 0;
+  max-width: 36rem;
+  color: var(--ink-muted, var(--ink));
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.colab-export-text a {
+  color: var(--accent, #0d9488);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.colab-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .controls-actions {
   position: relative;
   display: flex;
@@ -340,9 +378,9 @@ main {
 }
 
 .controls-actions--bottom {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .controls-heading h2,

@@ -170,3 +170,10 @@ missing value (period, semi-major axis, or star mass) is filled in.
 Simply delete an object from the array, or reorder the array — no other code
 changes are needed. The `"default"` entry does not need to be first
 programmatically, but keeping it first matches the historical dropdown order.
+
+## Pryngles / Colab export
+
+Before changing `buildPrynglesColabCode` or `buildPypplussColabCode` in
+`PhotoRingSimulator.tsx`, edit and run the matching cell in
+[`dev/pryngles_colab_export.ipynb`](dev/pryngles_colab_export.ipynb) (one
+linear cell per package, no helper functions).
