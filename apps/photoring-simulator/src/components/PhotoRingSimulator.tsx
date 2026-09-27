@@ -803,6 +803,90 @@ fig = sys.sg.plot2d()
 `;
 }
 
+function buildGeotransColabCode(
+  configuration: UrlConfiguration,
+  _model: TransitModel,
+  _aInAu: number,
+) {
+  const { parameters, starMassSolar, starRadiusSolar, periodDays } =
+    configuration;
+  const spherical = parameters.outerRingRadius <= 1;
+  const p = parameters.planetRadius;
+
+  return `# PhotoRing Simulator (https://seap-udea.github.io/apps/photoring-simulator) → geotrans (Zuluaga et al. 2015, 2026)
+# Generated from the current photoring-simulator configuration.
+# Downloads geotrans.py from the PRisma pipeline if not already present.
+from urllib import request
+request.urlretrieve("https://raw.githubusercontent.com/seap-udea/PRisma/master/pipeline/geotrans/geotrans.py","geotrans.py")
+import geotrans as gt
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.constants import G
+
+# Constants
+deg = np.pi / 180 # factor from degrees to radians
+rad = 1 / deg
+HOUR = 3600.0  # seconds in an hour
+DAY = 86400.0 # seconds in a day
+
+# System parameters
+p  = ${pyNumber(p)} # planet radius [R*]
+fi = ${pyNumber(parameters.innerRingRadius)} # inner ring radius [Rp]
+fe = ${pyNumber(parameters.outerRingRadius)} # outer ring radius [Rp]
+tilt = ${pyNumber(parameters.tilt)} # sky-plane position angle / tilt [degrees]
+ir = ${pyNumber(parameters.inclination)} # sky-plane ring inclination [degrees]
+b = ${pyNumber(parameters.impact)} # impact parameter [R*]
+alpha = ${pyNumber(parameters.alpha)} # ring transmission; exp(-1) → tau_normal = 1
+mstar = ${pyNumber(starMassSolar)} # M* [M_sun]
+rstar = ${pyNumber(starRadiusSolar)} # R* [R_sun]
+porb = ${pyNumber(periodDays)}  # Porb [days]
+
+# Stellar density and derived orbital geometry
+rho_gcc = 1408.0 * mstar / rstar**3 / 1e3  # stellar density [g/cm³], 1408 kg/m³ is solar
+tau = ${spherical ? "0.0" : "-np.log(alpha)"} # normal optical depth
+a_rs = (G * rho_gcc * 1e3 * (porb * DAY)**2 / (3 * np.pi))**(1/3) # a/R*
+iorb = np.arccos(b / a_rs)
+
+# Sky-plane → intrinsic orbital frame conversion
+# geotrans uses intrinsic angles (ir_3d, phir_3d) relative to the orbital plane.
+# apparent_to_intrinsic converts sky-plane (ir, tilt) in degrees given iorb.
+ir_3d, phir_3d = gt.apparent_to_intrinsic(ir, tilt, iorb)
+
+# Initialize geotrans ringed system
+system = dict(
+    rhotrue=rho_gcc, P=porb, b=b, ep=0., wp=0.,
+    p=p, fp=0., fi=fi, fe=fe, ir=ir_3d, phir=phir_3d, tau=tau,
+    c1=0., c2=0. # c1=c2=0: uniform disk (no limb darkening)
+)
+S = gt.RingedSystem(system)  
+
+# Contact times from geotrans
+tcen, t1_raw, t2_raw, t3_raw, t4_raw = gt.contactTimes(S)
+t1 = -(t4_raw - tcen) / HOUR
+t2 = -(t3_raw - tcen) / HOUR
+t3 = -(t2_raw - tcen) / HOUR
+t4 = -(t1_raw - tcen) / HOUR
+
+# Transit depth and observed stellar density
+Ar_mid = gt.ringedPlanetArea(S)
+
+# Light curve
+ts_s = np.linspace(tcen + t1*HOUR - 0.1*abs(t1)*HOUR, tcen + t4*HOUR + 0.1*abs(t4)*HOUR, 120)
+flux = np.array([gt.fluxLimbTime(t, Ar_mid, S) for t in ts_s])
+ts_h = (ts_s - tcen) / HOUR # Times in hours relative to mid-transit
+
+# Plot
+fig, ax = plt.subplots(figsize=(8, 3.6))
+ax.plot(ts_h, flux, color="k", lw=2)
+ax.set_xlabel("Time from mid-transit [hours]")
+ax.set_ylabel("Relative flux")
+ax.set_title("${spherical ? "Geotrans spherical transit" : "Geotrans ringed transit"}")
+ax.grid(True, alpha=0.25)
+plt.tight_layout()
+plt.show()
+`;
+}
+
 function semiMajorAxisFromMassAndPeriod(starMassSolar: number, periodDays: number) {
   const periodSeconds = periodDays * 86400;
   const meters = Math.cbrt(
@@ -2359,6 +2443,7 @@ export default function PhotoRingSimulator() {
   const [copyLinkFeedback, setCopyLinkFeedback] = useState<string | null>(null);
   const [showPypplussCode, setShowPypplussCode] = useState(false);
   const [showPrynglesCode, setShowPrynglesCode] = useState(false);
+  const [showGeotransCode, setShowGeotransCode] = useState(false);
   const [radiusFollowsMass, setRadiusFollowsMass] = useState(false);
   const [massFollowsPlanetRadius, setMassFollowsPlanetRadius] = useState(false);
   const {
@@ -2739,14 +2824,21 @@ export default function PhotoRingSimulator() {
                     className="config-link-button"
                     onClick={() => setShowPypplussCode(true)}
                   >
-                    pyPplusS / Colab
+                    pyPplusS
                   </button>
                   <button
                     type="button"
                     className="config-link-button"
                     onClick={() => setShowPrynglesCode(true)}
                   >
-                    Pryngles / Colab
+                    Pryngles
+                  </button>
+                  <button
+                    type="button"
+                    className="config-link-button"
+                    onClick={() => setShowGeotransCode(true)}
+                  >
+                    Geotrans
                   </button>
                 </div>
                 <p className="colab-export-text">
@@ -2774,7 +2866,7 @@ export default function PhotoRingSimulator() {
                   >
                     Rein &amp; Ofir 2019
                   </a>
-                  ) or{" "}
+                  ),{" "}
                   <a
                     href="https://pypi.org/project/pryngles/"
                     target="_blank"
@@ -2789,6 +2881,30 @@ export default function PhotoRingSimulator() {
                     rel="noreferrer"
                   >
                     Zuluaga et al. 2022
+                  </a>
+                  ), or{" "}
+                  <a
+                    href="https://github.com/seap-udea/PRisma/tree/master/pipeline/geotrans"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Geotrans
+                  </a>{" "}
+                  (
+                  <a
+                    href="https://doi.org/10.1088/2041-8205/803/1/L14"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Zuluaga et al. 2015
+                  </a>
+                  ,{" "}
+                  <a
+                    href="https://arxiv.org/abs/2609.25234"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    2026
                   </a>
                   ) to simulate this configuration in specialized ring-transit
                   software.
@@ -2998,6 +3114,16 @@ export default function PhotoRingSimulator() {
           extraNote="Pryngles transit light curves can take a minute on first run (spangle integration)."
           code={buildPrynglesColabCode(configuration, model, aInAu)}
           onClose={() => setShowPrynglesCode(false)}
+        />
+      )}
+      {showGeotransCode && (
+        <ColabCodeDialog
+          title="Geotrans for Google Colab"
+          titleId="geotrans-dialog-title"
+          packageName="geotrans"
+          extraNote="The script automatically downloads geotrans.py from the PRisma pipeline if not already present in the working directory."
+          code={buildGeotransColabCode(configuration, model, aInAu)}
+          onClose={() => setShowGeotransCode(false)}
         />
       )}
     </div>
