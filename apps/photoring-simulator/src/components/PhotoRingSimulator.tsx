@@ -592,7 +592,7 @@ function pyNumber(value: number) {
 function buildPypplussColabCode(
   configuration: UrlConfiguration,
   model: TransitModel,
-  aInAu: number,
+  _aInAu: number,
 ) {
   const { parameters, starMassSolar, starRadiusSolar, periodDays, planetMassJupiter } =
     configuration;
@@ -600,7 +600,6 @@ function buildPypplussColabCode(
   const p = parameters.planetRadius;
   const first = model.lightCurve[0];
   const last = model.lightCurve[model.lightCurve.length - 1];
-  const aInRStar = aInAu / (starRadiusSolar * SOLAR_RADIUS_AU);
 
   return `# PhotoRing Simulator (https://seap-udea.github.io/apps/photoring-simulator) → pyPplusS (Rein & Ofir 2019)
 # Generated from the current photoring-simulator configuration.
@@ -610,7 +609,8 @@ function buildPypplussColabCode(
 import matplotlib.pyplot as plt
 from pyppluss.segment_models import LC_ringed
 import numpy as np
-if not hasattr(np, "NaN"):np.NaN = np.nan
+from scipy.constants import G
+if not hasattr(np, 'NaN'):np.NaN = np.nan
 
 # Constants
 deg = np.pi / 180 # factor from degrees to radians
@@ -628,11 +628,14 @@ mstar = ${pyNumber(starMassSolar)} # M* [M_sun]
 rstar = ${pyNumber(starRadiusSolar)} # R* [R_sun]
 mpjup = ${pyNumber(planetMassJupiter)} # Mp [Mjup]
 porb= ${pyNumber(periodDays)} # Porb [days]
-a_rs= ${pyNumber(aInRStar)} # a/R*
+
+# Scaled semi-major axis a/R* from porb
+density = 1408.0 * mstar / rstar**3 # stellar density [kg/m^3], 1408.0 is the solar density
+a_rs = ((G * density * (porb * 86400)**2) / (3.0 * np.pi))**(1/3) # a/R* [dimensionless]
 
 # Derivative properties
-iorb = np.arccos(b/a_rs)
-vorb = 2*np.pi*a_rs*np.sin(iorb) / (porb * 24)
+iorb = np.arccos(min(1.0, b / a_rs))
+vorb = 2 * np.pi * a_rs * np.sin(iorb) / (porb * 24)
 
 # Light curve parameters
 ts_ppp = np.linspace(${pyNumber(first.time)}, ${pyNumber(last.time)}, 100) # in hours
@@ -644,6 +647,8 @@ ys = b*ones
 rps = p*ones
 rins = p*fi*ones
 routs = p*fe*ones
+# opacity: fraction of light BLOCKED by the ring along the slant path.
+# alpha = exp(-tau_normal) => opacity = 1 - alpha^(1/cos(ir))
 ${spherical ? "opacity = 0.0" : "opacity = 1.0 - alpha ** (1.0 / np.cos(ir))"}
 
 # Light curve
@@ -658,7 +663,7 @@ fig, ax = plt.subplots(figsize=(8, 3.6))
 ax.plot(ts_ppp, flux_pp, color="k")
 ax.set_xlabel("Time from mid-transit [hours]")
 ax.set_ylabel("Relative flux")
-ax.set_title("${spherical ? "pyPplusS spherical transit" : "pyPplusS ringed transit (native sky-plane angles)"}")
+ax.set_title("${spherical ? "pyPplusS spherical transit" : "pyPplusS ringed transit"}")
 ax.grid(True, alpha=0.25)
 plt.show()
 `;
@@ -667,7 +672,7 @@ plt.show()
 function buildPrynglesColabCode(
   configuration: UrlConfiguration,
   model: TransitModel,
-  aInAu: number,
+  _aInAu: number,
 ) {
   const { parameters, starMassSolar, starRadiusSolar, periodDays, planetMassJupiter } =
     configuration;
@@ -675,7 +680,6 @@ function buildPrynglesColabCode(
   const p = parameters.planetRadius;
   const first = model.lightCurve[0];
   const last = model.lightCurve[model.lightCurve.length - 1];
-  const aInRStar = aInAu / (starRadiusSolar * SOLAR_RADIUS_AU);
 
   const ringDefinition = spherical
     ? ""
@@ -703,7 +707,7 @@ ring = sys.add(
 import numpy as np
 import matplotlib.pyplot as plt
 import pryngles as pr
-if not hasattr(np, "NaN"):np.NaN = np.nan
+from scipy.constants import G
 
 # Constants
 deg = np.pi / 180 # factor from degrees to radians
@@ -721,7 +725,10 @@ mstar = ${pyNumber(starMassSolar)} # M* [M_sun]
 rstar = ${pyNumber(starRadiusSolar)} # R* [R_sun]
 mpjup = ${pyNumber(planetMassJupiter)} # Mp [Mjup]
 porb= ${pyNumber(periodDays)} # Porb [days]
-a_rs= ${pyNumber(aInRStar)} # a/R*
+
+# Scaled semi-major axis a/R* from porb
+density = 1408.0 * mstar / rstar**3 # stellar density [kg/m^3]
+a_rs = ((G * density * (porb * 86400)**2) / (3.0 * np.pi))**(1/3) # a/R* [dimensionless]
 
 # Define the system
 sys = pr.System(units=["au", "msun", "day"])
@@ -729,13 +736,21 @@ sys = pr.System(units=["au", "msun", "day"])
 # Properties in units of pryngles
 tau = -np.log(alpha)
 rstar_pr = rstar * pr.Consts.rsun / sys.ul # from Rsun to au
-a_pr = a_rs * rstar_pr
-rp_pr = p * rstar_pr
-iorb = np.arccos(b/a_rs)
+a_pr = a_rs * rstar_pr  # semi-major axis in au (a/R* identical to app)
+rp_pr = p * rstar_pr    # planet radius in au
+iorb = np.arccos(min(1.0, b / a_rs))
 
-# Convert from projection angles to physical (pryngles) angles
+# Convert from sky-plane projection angles to physical (pryngles) 3D angles.
+# The ring normal in the sky plane: n = (sin(ir)*sin(tilt), -sin(ir)*cos(tilt), cos(ir))
+# Pryngles ring angles:
+#   i_pr    = angle between ring normal and orbital-plane normal (z-axis)
+#   roll_pr = azimuthal rotation of ring normal around z-axis
 i_pr = np.arccos(np.sin(ir) * np.cos(tilt))
 roll_pr = np.arctan2(np.sin(ir) * np.sin(tilt), np.cos(ir))
+# Note on perspective: The conversion from sky-plane (ir, tilt) to 3D physical angles (i_pr, roll_pr)
+# assumes the line of sight is in the orbital plane (elevation = 0). When the observer is at elevation beta > 0,
+# a slight perspective projection effect can shift the observed ring angles by a fraction of a degree
+# (e.g. ~0.4 deg for high impact parameter b=0.7), which produces differences of the order of a few tens of ppm
 
 # Create system
 nspangles = 300
@@ -762,9 +777,17 @@ ${ringDefinition.trimEnd()}
 sys.initialize_simulation()
 sys.spangle_system()
 
+# Integration times (t = 0 is midtransit)
 ts = np.linspace(${pyNumber(first.time)}, ${pyNumber(last.time)}, 100) / 24 # in days
-lc = sys.compute_lightcurve(ts, bodies=${bodiesList}, effects=['transit'], observer=[0, np.pi/2-iorb])
 
+# Observer spherical coordinates in DEGREES
+elev_deg = (np.pi/2 - iorb) * rad
+n_obs_ecl = (0, elev_deg)
+
+# Light-curve computation
+lc = sys.compute_lightcurve(ts, bodies=${bodiesList}, effects=['transit'], observer=n_obs_ecl)
+
+# Plot of the light curve
 fig, ax = plt.subplots(figsize=(8, 3.6))
 ax.plot(ts*24, lc['total_flux'], 'k-', label='Pryngles')
 ax.set_xlabel("Time from mid-transit [hours]")
@@ -772,6 +795,11 @@ ax.set_ylabel("Relative flux")
 ax.set_title("${spherical ? "Pryngles transit" : "Pryngles ringed transit"}")
 ax.grid(True, alpha=0.25)
 plt.show()
+
+# Preview of the system
+sys.integrate_perspective(0)
+sys.update_perspective(n_obs=pr.Science.direction(*n_obs_ecl))
+fig = sys.sg.plot2d()
 `;
 }
 
@@ -2738,11 +2766,31 @@ export default function PhotoRingSimulator() {
                   >
                     pyPplusS
                   </a>{" "}
-                  or{" "}
-                  <a href="https://pypi.org/project/pryngles/" target="_blank" rel="noreferrer">
+                  (
+                  <a
+                    href="https://academic.oup.com/mnras/article/490/1/1111/5568385"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Rein &amp; Ofir 2019
+                  </a>
+                  ) or{" "}
+                  <a
+                    href="https://pypi.org/project/pryngles/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     Pryngles
                   </a>{" "}
-                  (Zuluaga et al.) to simulate this configuration in specialized ring-transit
+                  (
+                  <a
+                    href="https://arxiv.org/abs/2207.08636"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Zuluaga et al. 2022
+                  </a>
+                  ) to simulate this configuration in specialized ring-transit
                   software.
                 </p>
               </div>
