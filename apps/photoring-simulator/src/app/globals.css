@@ -348,6 +348,16 @@ main {
   background: #66dfd00a;
 }
 
+.colab-export-title {
+  margin: 0 0 9px;
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .colab-export-text {
   margin: 12px 0 0;
   max-width: 36rem;

@@ -2818,6 +2818,7 @@ export default function PhotoRingSimulator() {
                 </select>
               </label>
               <div className="colab-export">
+                <div className="colab-export-title">Try in Python</div>
                 <div className="colab-export-actions">
                   <button
                     type="button"
