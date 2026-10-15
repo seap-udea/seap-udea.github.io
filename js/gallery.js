@@ -217,8 +217,62 @@
     el.innerHTML = imageNameLinkHtml(img);
   }
 
-  function loadImageList(repo, branch, path) {
-    var clean = normalizePath(path);
+  function toImageList(repo, branch, clean, entries) {
+    return entries
+      .filter(function (entry) {
+        return entry && IMAGE_EXT.test(entry.name || "");
+      })
+      .sort(function (a, b) {
+        return String(a.name).localeCompare(String(b.name), undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+      })
+      .map(function (entry) {
+        var filePath = clean ? clean + "/" + entry.name : entry.name;
+        var previewPath = previewPathFor(clean, entry.name);
+        return {
+          name: entry.name,
+          path: filePath,
+          url: entry.download_url || rawUrl(repo, branch, filePath),
+          previewUrl: rawUrl(repo, branch, previewPath),
+          githubUrl: githubBlobUrl(repo, branch, filePath),
+        };
+      });
+  }
+
+  /**
+   * Directory listing via the Git Trees API (handles up to 100k entries).
+   * The Contents API silently truncates directories to the first 1000 entries.
+   */
+  function loadTreeEntries(repo, branch, clean) {
+    var treeish =
+      encodeURIComponent(branch) +
+      (clean
+        ? ":" +
+          clean
+            .split("/")
+            .map(encodeURIComponent)
+            .join("/")
+        : "");
+    var url = apiUrl(
+      "repos/" + OWNER + "/" + encodeURIComponent(repo) + "/git/trees/" + treeish
+    );
+    return fetchJson(url).then(function (data) {
+      if (!data || !Array.isArray(data.tree)) {
+        throw new Error("Gallery path is not a directory: " + clean);
+      }
+      return data.tree
+        .filter(function (entry) {
+          return entry && entry.type === "blob";
+        })
+        .map(function (entry) {
+          return { name: entry.path };
+        });
+    });
+  }
+
+  function loadContentsEntries(repo, clean) {
     var url = apiUrl(
       "repos/" + OWNER + "/" + encodeURIComponent(repo) + "/contents/" + clean
     );
@@ -226,30 +280,21 @@
       if (!Array.isArray(entries)) {
         throw new Error("Gallery path is not a directory: " + clean);
       }
-      return entries
-        .filter(function (entry) {
-          return entry && entry.type === "file" && IMAGE_EXT.test(entry.name || "");
-        })
-        .sort(function (a, b) {
-          return String(a.name).localeCompare(String(b.name), undefined, {
-            numeric: true,
-            sensitivity: "base",
-          });
-        })
-        .map(function (entry) {
-          var filePath = entry.path || clean + "/" + entry.name;
-          var previewPath = previewPathFor(clean, entry.name);
-          return {
-            name: entry.name,
-            path: filePath,
-            url:
-              entry.download_url ||
-              rawUrl(repo, branch, filePath),
-            previewUrl: rawUrl(repo, branch, previewPath),
-            githubUrl: githubBlobUrl(repo, branch, filePath),
-          };
-        });
+      return entries.filter(function (entry) {
+        return entry && entry.type === "file";
+      });
     });
+  }
+
+  function loadImageList(repo, branch, path) {
+    var clean = normalizePath(path);
+    return loadTreeEntries(repo, branch, clean)
+      .catch(function () {
+        return loadContentsEntries(repo, clean);
+      })
+      .then(function (entries) {
+        return toImageList(repo, branch, clean, entries);
+      });
   }
 
   function openLightbox(index) {
