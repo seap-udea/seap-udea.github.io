@@ -41,6 +41,7 @@
   var fsClose = document.getElementById("fs-close");
   var fsPrev = document.getElementById("fs-prev");
   var fsNext = document.getElementById("fs-next");
+  var fsStar = document.getElementById("fs-star");
 
   var state = {
     images: [],
@@ -55,6 +56,8 @@
     repoUrl: "",
     branch: "main",
     startWith: null,
+    galleryId: "",
+    starred: {},
   };
 
   function escapeHtml(value) {
@@ -276,6 +279,7 @@
     if (fsCounter) {
       fsCounter.textContent = state.index + 1 + " / " + state.images.length;
     }
+    updateCurrentStarButtons();
   }
 
   function openFullscreen(index) {
@@ -332,6 +336,154 @@
       });
   }
 
+  /* —— Starred images (kept in sessionStorage, per repo + gallery id) —— */
+
+  function starStorageKey() {
+    return (
+      "seap-gallery-starred:" +
+      OWNER +
+      "/" +
+      state.repoName +
+      (state.galleryId ? "#" + state.galleryId : "")
+    );
+  }
+
+  function loadStars() {
+    state.starred = {};
+    try {
+      var raw = window.sessionStorage.getItem(starStorageKey());
+      var list = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(list)) {
+        list.forEach(function (path) {
+          state.starred[String(path)] = true;
+        });
+      }
+    } catch (e) {}
+  }
+
+  function saveStars() {
+    try {
+      window.sessionStorage.setItem(
+        starStorageKey(),
+        JSON.stringify(Object.keys(state.starred))
+      );
+    } catch (e) {}
+  }
+
+  function isStarred(img) {
+    return !!(img && state.starred[img.path]);
+  }
+
+  function starredImages() {
+    return state.images.filter(isStarred);
+  }
+
+  function toggleStar(index) {
+    var img = state.images[index];
+    if (!img) return;
+    if (state.starred[img.path]) delete state.starred[img.path];
+    else state.starred[img.path] = true;
+    saveStars();
+    updateStarUI();
+  }
+
+  function setStarButton(el, on, withLabel) {
+    if (!el) return;
+    var label = on ? "Unstar this image" : "Star this image";
+    el.classList.toggle("is-starred", on);
+    el.setAttribute("aria-pressed", on ? "true" : "false");
+    el.setAttribute("title", label);
+    if (withLabel) {
+      el.textContent = on ? "★ Starred" : "☆ Star";
+    } else {
+      el.setAttribute("aria-label", label);
+      el.textContent = on ? "★" : "☆";
+    }
+  }
+
+  function updateCurrentStarButtons() {
+    var on = isStarred(state.images[state.index]);
+    setStarButton(document.getElementById("gallery-star"), on, true);
+    setStarButton(fsStar, on, false);
+  }
+
+  function updateStarUI() {
+    var grid = document.getElementById("gallery-grid");
+    if (grid) {
+      grid.querySelectorAll(".gallery-grid-item").forEach(function (el) {
+        var on = isStarred(state.images[Number(el.getAttribute("data-index"))]);
+        el.classList.toggle("is-starred", on);
+        setStarButton(el.querySelector(".gallery-star-btn"), on, false);
+      });
+    }
+
+    var strip = document.getElementById("gallery-filmstrip");
+    if (strip) {
+      strip.querySelectorAll(".gallery-filmstrip-item").forEach(function (el) {
+        el.classList.toggle(
+          "is-starred",
+          isStarred(state.images[Number(el.getAttribute("data-index"))])
+        );
+      });
+    }
+
+    var count = starredImages().length;
+    document
+      .querySelectorAll('[data-action="get-starred"]')
+      .forEach(function (btn) {
+        btn.disabled = count === 0;
+        btn.title = count
+          ? "Download a .txt list of the " +
+            count +
+            (count === 1 ? " starred image" : " starred images")
+          : "Star some images first";
+        var countEl = btn.querySelector(".gallery-star-count");
+        if (countEl) countEl.textContent = String(count);
+      });
+
+    updateCurrentStarButtons();
+  }
+
+  function starredFileName() {
+    var base =
+      state.repoName + (state.galleryId ? "-" + state.galleryId : "") + "-starred";
+    return base.replace(/[^\w.-]+/g, "_") + ".txt";
+  }
+
+  function downloadStarred() {
+    var list = starredImages();
+    if (!list.length) return;
+    var text =
+      list
+        .map(function (img) {
+          return img.name;
+        })
+        .join("\n") + "\n";
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var objectUrl = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = starredFileName();
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    // Revoking too early makes some browsers save the file under the blob
+    // UUID (no .txt extension), so keep the URL alive for a while.
+    setTimeout(function () {
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    }, 10000);
+  }
+
+  function getStarredButtonHtml() {
+    return (
+      '<button type="button" class="gallery-action-btn gallery-get-starred" data-action="get-starred" disabled>' +
+      'Get starred <span class="gallery-star-count">0</span>' +
+      "</button>"
+    );
+  }
+
   function resolveStartIndex(startWith, images) {
     if (startWith == null || startWith === "" || startWith === "null") return 0;
     if (typeof startWith === "number" && isFinite(startWith)) {
@@ -384,6 +536,7 @@
     if (counter) {
       counter.textContent = state.index + 1 + " / " + state.images.length;
     }
+    updateCurrentStarButtons();
 
     var strip = document.getElementById("gallery-filmstrip");
     if (strip) {
@@ -460,6 +613,7 @@
         return (
           '<button type="button" class="gallery-filmstrip-item' +
           (i === state.index ? " is-active" : "") +
+          (isStarred(img) ? " is-starred" : "") +
           '" data-index="' +
           i +
           '" title="' +
@@ -486,10 +640,12 @@
       '<div class="gallery-preview-stage" id="gallery-preview-stage">' +
       '<img id="gallery-preview-image" alt="" decoding="async">' +
       '<div class="gallery-preview-actions">' +
+      '<button type="button" class="gallery-action-btn gallery-star-toggle" id="gallery-star" aria-pressed="false" title="Star this image">☆ Star</button>' +
       '<button type="button" class="gallery-action-btn" id="gallery-view" title="View large">View</button>' +
       '<button type="button" class="gallery-action-btn" id="gallery-download" title="Download">Download</button>' +
       '<button type="button" class="gallery-action-btn" id="gallery-fit" aria-pressed="false" title="Fit image to page width">Fit to width</button>' +
       '<button type="button" class="gallery-action-btn" id="gallery-fullscreen" title="Browse images in fullscreen">Fullscreen</button>' +
+      getStarredButtonHtml() +
       "</div>" +
       '<p class="gallery-preview-name" id="gallery-preview-name"></p>' +
       "</div>" +
@@ -522,6 +678,9 @@
           '" alt="' +
           escapeHtml(img.name) +
           '" loading="lazy" decoding="async">' +
+          '<span class="gallery-star-btn" role="button" tabindex="0" aria-pressed="false" aria-label="Star this image" title="Star this image" data-star-index="' +
+          i +
+          '">☆</span>' +
           "</span>" +
           '<span class="gallery-grid-name">' +
           imageNameLinkHtml(img) +
@@ -533,7 +692,12 @@
 
     return (
       '<section class="gallery-grid-section" aria-label="Image grid">' +
-      "<h2 class=\"gallery-section-heading\">All images</h2>" +
+      (state.showPreview
+        ? "<h2 class=\"gallery-section-heading\">All images</h2>"
+        : '<div class="gallery-grid-header">' +
+          "<h2 class=\"gallery-section-heading\">All images</h2>" +
+          getStarredButtonHtml() +
+          "</div>") +
       '<div class="gallery-grid" id="gallery-grid" style="--gallery-cols:' +
       cols +
       '">' +
@@ -667,6 +831,23 @@
         openFullscreen(state.index);
       });
     }
+    var starBtn = document.getElementById("gallery-star");
+    if (starBtn) {
+      starBtn.addEventListener("click", function () {
+        toggleStar(state.index);
+      });
+    }
+    document
+      .querySelectorAll('[data-action="get-starred"]')
+      .forEach(function (btn) {
+        btn.addEventListener("click", downloadStarred);
+      });
+    if (fsStar) {
+      fsStar.addEventListener("click", function (event) {
+        event.stopPropagation();
+        toggleStar(state.index);
+      });
+    }
     if (fsPrev) {
       fsPrev.addEventListener("click", function (event) {
         event.stopPropagation();
@@ -694,6 +875,12 @@
     }
     if (grid) {
       grid.addEventListener("click", function (event) {
+        var star = event.target.closest(".gallery-star-btn");
+        if (star) {
+          event.preventDefault();
+          toggleStar(Number(star.getAttribute("data-star-index")));
+          return;
+        }
         if (event.target.closest("a")) return;
         var item = event.target.closest("[data-index]");
         if (!item) return;
@@ -701,6 +888,15 @@
         var preview = document.querySelector(".gallery-preview");
         if (preview) {
           preview.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+      grid.addEventListener("keydown", function (event) {
+        var star = event.target.closest && event.target.closest(".gallery-star-btn");
+        if (!star) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          event.stopPropagation();
+          toggleStar(Number(star.getAttribute("data-star-index")));
         }
       });
     }
@@ -764,6 +960,7 @@
       applyFitWidth();
     }
     updateGridActive();
+    updateStarUI();
   }
 
   function boot() {
@@ -830,6 +1027,7 @@
               ? conf.columns
               : COLUMNS_DEFAULT;
           state.title = config.title || "";
+          state.galleryId = String(config.id || queryId() || "");
           // Prefer start_with; accept star_with typo for compatibility.
           state.startWith =
             config.start_with !== undefined
@@ -849,6 +1047,7 @@
           return loadImageList(repo, branch, config.path).then(function (images) {
             state.images = images;
             state.index = resolveStartIndex(state.startWith, images);
+            loadStars();
             if (!images.length) {
               setStatus(
                 "No images found in " + normalizePath(config.path) + ".",
