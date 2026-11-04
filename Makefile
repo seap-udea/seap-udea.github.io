@@ -19,7 +19,7 @@ help:
 	@echo "  make worker-deploy - Deploy analytics Cloudflare Worker"
 	@echo "  make cleanall      - Remove local build artifacts (node_modules, .next, out, _site, logs)"
 	@echo ""
-	@echo "  Gallery previews (run inside a target repo):"
+	@echo "  Gallapp previews (run inside a target repo):"
 	@echo "    ./bin/seap-udea-gallery.sh /path/to/repo"
 	@echo ""
 	@echo "  PORT=3000 make start   - Use another port"
@@ -61,6 +61,7 @@ sync-site:
 	@cp -r js $(SITE)/js
 	@cp -r assets $(SITE)/assets
 	@cp -r gallery $(SITE)/gallery
+	@cp -r gallapp $(SITE)/gallapp
 	@rm -rf $(SITE)/analytics && cp -r analytics $(SITE)/analytics
 	@cp -r apps/lighting-black-holes/out $(SITE)/apps/lighting-black-holes
 	@cp -r apps/cloud_academy/out $(SITE)/apps/cloud_academy
@@ -76,7 +77,7 @@ sync-site:
 	@echo "         http://$(HOST):$(PORT)/apps/star-trek/"
 	@echo "         http://$(HOST):$(PORT)/apps/photoring-simulator/"
 	@echo "   Book:  http://$(HOST):$(PORT)/books/Relatividad-Zuluaga/"
-	@echo "   Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"
+	@echo "   Gallapp: http://$(HOST):$(PORT)/gallapp/?repo=PRisma"
 	@echo "   Stats:   http://$(HOST):$(PORT)/stats.html"
 
 sync-books:
@@ -101,7 +102,7 @@ start: sync-site
 		echo "  App:  http://$(HOST):$(PORT)/apps/star-trek/"; \
 		echo "  App:  http://$(HOST):$(PORT)/apps/photoring-simulator/"; \
 		echo "  Book:  http://$(HOST):$(PORT)/books/Relatividad-Zuluaga/"; \
-		echo "  Gallery: http://$(HOST):$(PORT)/gallery/?repo=PRisma"; \
+		echo "  Gallapp: http://$(HOST):$(PORT)/gallapp/?repo=PRisma"; \
 		echo "  Stats:   http://$(HOST):$(PORT)/stats.html"; \
 	else \
 		echo "Failed to start server on port $(PORT)."; \

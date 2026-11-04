@@ -121,13 +121,13 @@
     else badges.push('<span class="repo-badge">Public</span>');
     if (repo.gallery) {
       badges.push(
-        '<a class="repo-gallery" href="gallery/?repo=' +
+        '<a class="repo-gallery" href="gallapp/?repo=' +
           encodeURIComponent(repo.name) +
           '" data-track="gallery_click" data-track-id="' +
           escapeHtml(repo.name) +
           '" data-track-name="' +
           escapeHtml(repo.name) +
-          ' gallery">Gallery</a>'
+          ' gallapp">Gallapp</a>'
       );
     }
     if (repo.site) {

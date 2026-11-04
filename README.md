@@ -9,7 +9,7 @@ Live site: [https://seap-udea.github.io](https://seap-udea.github.io)
 - Group overview
 - Featured open-source repositories
 - Interactive apps
-- Image gallery (per-repo `.seap-udea-gallery.json`)
+- Gallapp image browser/classifier (per-repo `.seap-udea-gallery.json`)
 - Click / pageview analytics (`/stats.html`)
 - Project contributors
 - Contact information
@@ -80,13 +80,15 @@ make build-apps   # npm ci && next build (all apps under apps/)
 make start        # serves _site including all apps listed above
 ```
 
-## Gallery
+## Gallapp
 
 Any SEAP repository can publish a gallery by adding `.seap-udea-gallery.json` at its root. The site page is:
 
 ```
-https://seap-udea.github.io/gallery?repo=PRisma
+https://seap-udea.github.io/gallapp/?repo=PRisma
 ```
+
+Legacy `/gallery/?repo=…` URLs redirect to `/gallapp/` and keep the query string. Likes and multi-class tags live in the browser session; use **Export sidecars** to download `.gallapp_*` files for commit.
 
 ### Config
 
@@ -106,7 +108,7 @@ https://seap-udea.github.io/gallery?repo=PRisma
 - `start_with` — filename to open first, or `null` for the first image
 - `configuration.preview` / `grid` — show the filmstrip and/or the grid
 
-On this site, mark the repo in `repos.json` with `"gallery": true` so a **Gallery** button appears next to Public on its card (the field is preserved by `make repos`).
+On this site, mark the repo in `repos.json` with `"gallery": true` so a **Gallapp** button appears next to Public on its card (the field is preserved by `make repos`).
 
 ### Generate lightweight previews
 

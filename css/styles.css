@@ -406,6 +406,7 @@ img {
   line-height: 18px;
 }
 
+/* Legacy class name; label in UI is now "Gallapp" */
 .repo-gallery {
   flex-shrink: 0;
   font-size: 12px;

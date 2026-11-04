@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gallapp — browse and classify figures from SEAP-UdeA repositories.">
+  <meta name="author" content="Jorge I. Zuluaga">
+  <title>Gallapp — SEAP-UdeA</title>
+  <link rel="icon" href="../assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="../assets/favicon.png" sizes="32x32">
+  <link rel="icon" type="image/webp" href="../assets/favicon-32.webp" sizes="32x32">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.webp">
+  <link rel="stylesheet" href="gallery.css">
+  <meta name="visitor-log-endpoint" content="https://seap-udea-visitor-log.drz-academy.workers.dev/log">
+</head>
+<body class="gallery-page" data-track-page="gallery" data-track-id="gallapp" data-track-name="SEAP Gallapp">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <a class="brand-mark" href="../">
+          <img class="brand-logo" src="../assets/logo-seap-banner.webp" alt="SEAP-UdeA" width="1627" height="200">
+        </a>
+        <a class="brand" href="./">Gallapp</a>
+      </div>
+      <form class="dir-form" id="dir-form" action="./" method="get">
+        <label for="dir-input">Repository</label>
+        <input id="dir-input" name="repo" type="text" spellcheck="false" autocomplete="off" placeholder="e.g. PRisma" enterkeyhint="go">
+        <input id="session-input" name="session" type="hidden" value="">
+        <button type="submit">Open</button>
+        <button type="button" class="dir-form-secondary" id="new-session-btn" title="Open this repository in a new review session">New session</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="gallery-main" id="gallery-root"></main>
+  <p class="gallery-status" id="gallery-status" hidden></p>
+  <div class="gallery-toast" id="gallery-toast" hidden role="status" aria-live="polite"></div>
+
+  <div class="gallery-modal" id="session-modal" hidden>
+    <div class="gallery-modal-backdrop" data-session-modal-dismiss></div>
+    <div
+      class="gallery-modal-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="session-modal-title"
+    >
+      <h2 class="gallery-modal-title" id="session-modal-title">New session</h2>
+      <p class="gallery-modal-copy">
+        Choose a name for this review session. Letters, digits, underscore and hyphen only — no spaces.
+      </p>
+      <label class="gallery-modal-label" for="session-modal-input">Session name</label>
+      <input
+        id="session-modal-input"
+        class="gallery-modal-input"
+        type="text"
+        spellcheck="false"
+        autocomplete="off"
+        maxlength="40"
+        placeholder="e.g. alice or review_1"
+        enterkeyhint="go"
+      >
+      <p class="gallery-modal-error" id="session-modal-error" hidden></p>
+      <div class="gallery-modal-actions">
+        <button type="button" class="gallery-modal-btn gallery-modal-btn-secondary" data-session-modal-dismiss>
+          Cancel
+        </button>
+        <button type="button" class="gallery-modal-btn" id="session-modal-confirm">
+          Open session
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery-modal" id="class-modal" hidden>
+    <div class="gallery-modal-backdrop" data-class-modal-dismiss></div>
+    <div
+      class="gallery-modal-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="class-modal-title"
+    >
+      <h2 class="gallery-modal-title" id="class-modal-title">Edit class label</h2>
+      <p class="gallery-modal-copy">
+        Map each class to a one-word name and a short glyph (letter or digit). After saving,
+        classify with <strong>Shift+glyph</strong> (for example Shift+c). Labels are stored as
+        temporary <code>.gallapp_classes</code> entities in this browser session (export to keep them).
+      </p>
+      <label class="gallery-modal-label" for="class-modal-slot">Class key</label>
+      <select id="class-modal-slot" class="gallery-modal-input"></select>
+      <label class="gallery-modal-label" for="class-modal-name">Class name</label>
+      <input
+        id="class-modal-name"
+        class="gallery-modal-input"
+        type="text"
+        spellcheck="false"
+        autocomplete="off"
+        maxlength="40"
+        placeholder="e.g. clean-fold"
+        enterkeyhint="next"
+      >
+      <label class="gallery-modal-label" for="class-modal-glyph">Glyph</label>
+      <input
+        id="class-modal-glyph"
+        class="gallery-modal-input"
+        type="text"
+        spellcheck="false"
+        autocomplete="off"
+        maxlength="1"
+        placeholder="e.g. c"
+        enterkeyhint="go"
+      >
+      <p class="gallery-modal-error" id="class-modal-error" hidden></p>
+      <ul class="gallery-class-def-list" id="class-modal-list" aria-label="Current class labels"></ul>
+      <div class="gallery-modal-actions">
+        <button type="button" class="gallery-modal-btn gallery-modal-btn-secondary" data-class-modal-dismiss>
+          Cancel
+        </button>
+        <button type="button" class="gallery-modal-btn" id="class-modal-confirm">
+          Save label
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery-lightbox" id="gallery-lightbox" hidden>
+    <button type="button" class="gallery-lightbox-close" id="lightbox-close" aria-label="Close">×</button>
+    <span class="gallery-liked-mark" hidden aria-hidden="true">★</span>
+    <span class="gallery-class-mark" hidden aria-hidden="true"></span>
+    <img id="lightbox-image" alt="">
+    <p class="gallery-lightbox-caption" id="lightbox-caption"></p>
+  </div>
+
+  <div class="gallery-fullscreen" id="gallery-fullscreen" hidden>
+    <div class="gallery-fs-chrome">
+      <button type="button" class="gallery-fs-nav" id="fs-prev" aria-label="Previous image">‹</button>
+      <span class="gallery-fs-counter" id="fs-counter"></span>
+      <button type="button" class="gallery-fs-nav" id="fs-next" aria-label="Next image">›</button>
+      <button type="button" class="gallery-fs-like" id="fs-like" aria-pressed="false" aria-label="Like" title="Like">☆</button>
+      <button type="button" class="gallery-fs-close" id="fs-close" aria-label="Exit fullscreen">×</button>
+    </div>
+    <div class="gallery-fs-stage">
+      <span class="gallery-liked-mark" hidden aria-hidden="true">★</span>
+      <span class="gallery-class-mark" hidden aria-hidden="true"></span>
+      <img class="gallery-fs-image" id="fs-image" alt="">
+    </div>
+    <p class="gallery-fs-caption" id="fs-caption"></p>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-bottom">
+      © <span id="year"></span> SEAP-UdeA ·
+      <a href="../">Home</a> ·
+      <a href="https://github.com/seap-udea/seap-udea.github.io">Site source</a> ·
+      Gallapp by <a href="https://jorgezuluaga.github.io/" target="_blank" rel="noopener noreferrer">Jorge I. Zuluaga</a>
+    </div>
+  </footer>
+
+  <template id="intro-template">
+    <section class="gallery-intro">
+      <h1>Gallapp</h1>
+      <p>
+        Browse figures published by SEAP repositories (via
+        <code>.seap-udea-gallery.json</code>), like or multi-classify them, and export your
+        <code>.gallapp_*</code> sidecars. Data is kept in this browser session until you export it.
+      </p>
+      <ol class="gallery-steps">
+        <li>Enter a repository name above (for example <code>PRisma</code>) and press <strong>Open</strong>.</li>
+        <li>Or open a direct link: <code>?repo=PRisma</code> · add <code>&amp;multi=true</code> for classification.</li>
+        <li>Use <strong>New session</strong> so several people can review with separate likes/classes.</li>
+        <li>Use <strong>Export sidecars</strong> to download <code>.gallapp_*</code> files before closing the tab.</li>
+      </ol>
+      <div id="gallery-recent"></div>
+    </section>
+  </template>
+
+  <script>
+    (function () {
+      var y = document.getElementById("year");
+      if (y) y.textContent = String(new Date().getFullYear());
+    })();
+  </script>
+  <script src="gallery.js"></script>
+  <script type="module" src="../js/site-analytics.js"></script>
+</body>
+</html>
