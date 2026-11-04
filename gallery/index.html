@@ -4,20 +4,44 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Redirecting to Gallapp…</title>
-  <link rel="canonical" href="../gallapp/">
+  <!--
+    Legacy /gallery/?repo=… links redirect to /gallapp/ and keep ?query and #hash.
+    Example: /gallery/?repo=PRisma&multi=true → /gallapp/?repo=PRisma&multi=true
+  -->
+  <link rel="canonical" id="canonical" href="/gallapp/">
   <script>
     (function () {
-      var q = window.location.search || "";
-      var hash = window.location.hash || "";
-      window.location.replace("../gallapp/" + q + hash);
+      var target =
+        "/gallapp/" +
+        (window.location.search || "") +
+        (window.location.hash || "");
+      var link = document.getElementById("canonical");
+      if (link) link.setAttribute("href", target);
+      // Immediate client redirect (keeps repo, session, multi, id, …).
+      window.location.replace(target);
     })();
   </script>
-  <meta http-equiv="refresh" content="0;url=../gallapp/">
+  <noscript>
+    <meta http-equiv="refresh" content="0;url=/gallapp/">
+  </noscript>
 </head>
 <body>
-  <p>Gallapp moved to <a id="link" href="../gallapp/">/gallapp/</a>.</p>
+  <p>
+    Gallapp moved to
+    <a id="link" href="/gallapp/">https://seap-udea.github.io/gallapp/</a>.
+  </p>
   <script>
-    document.getElementById("link").href = "../gallapp/" + (window.location.search || "") + (window.location.hash || "");
+    (function () {
+      var target =
+        "/gallapp/" +
+        (window.location.search || "") +
+        (window.location.hash || "");
+      var a = document.getElementById("link");
+      if (a) {
+        a.href = target;
+        a.textContent = "https://seap-udea.github.io" + target;
+      }
+    })();
   </script>
 </body>
 </html>
