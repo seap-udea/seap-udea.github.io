@@ -2,7 +2,6 @@
   "use strict";
 
   var IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|tiff?|avif)$/i;
-  var OWNER = "seap-udea";
   // Letters, digits, _ and - only; no spaces or other punctuation.
   var SESSION_NAME_RE = /^[A-Za-z0-9_-]+$/;
   var SESSION_NAME_MAX = 40;
@@ -329,15 +328,6 @@
     dir: "",
     session: "",
     multi: false,
-    source: "local", // "local" | "github"
-    repo: "",
-    branch: "main",
-    galleryPath: "",
-    galleryId: "",
-    repoUrl: "",
-    repoAbstract: "",
-    galleryTitle: "",
-    startWith: null,
     // persistForced: "auto" | "file" | "session" (from ?persist=)
     // persistMode: resolved "file" | "session" after probe
     persistForced: "auto",
@@ -582,8 +572,6 @@
   }
 
   function classDefsFileUrl() {
-    var remote = sidecarRemoteUrl(classDefsFileName());
-    if (remote) return remote;
     return directoryUrl(state.dir) + classDefsFileName();
   }
 
@@ -704,12 +692,7 @@
     var params = new URLSearchParams();
     var images = visibleImages();
     var multi = options && options.multi != null ? !!options.multi : !!state.multi;
-    if (isGithubSource()) {
-      params.set("repo", state.repo || "");
-      if (state.galleryId) params.set("id", state.galleryId);
-    } else {
-      params.set("dir", state.dir || "");
-    }
+    params.set("dir", state.dir || "");
     params.set("session", state.session || "");
     params.set("multi", multi ? "true" : "false");
     params.set("n", images.length ? String(state.index + 1) : "1");
@@ -837,20 +820,14 @@
   }
 
   function likesFileUrl() {
-    var remote = sidecarRemoteUrl(likesFileName());
-    if (remote) return remote;
     return directoryUrl(state.dir) + likesFileName();
   }
 
   function positionFileUrl() {
-    var remote = sidecarRemoteUrl(positionFileName());
-    if (remote) return remote;
     return directoryUrl(state.dir) + positionFileName();
   }
 
   function multiFileUrl() {
-    var remote = sidecarRemoteUrl(multiFileName());
-    if (remote) return remote;
     return directoryUrl(state.dir) + multiFileName();
   }
 
@@ -862,26 +839,9 @@
     return isSessionPersist() ? "browser session" : "folder files";
   }
 
-  function queryRepo() {
-    var params = new URLSearchParams(window.location.search);
-    return String(params.get("repo") || "").trim();
-  }
-
-  function queryGalleryId() {
-    var params = new URLSearchParams(window.location.search);
-    return String(params.get("id") || "").trim();
-  }
-
-  function galleryUrl(target, session) {
+  function galleryUrl(dir, session) {
     var params = new URLSearchParams();
-    if (isGithubSource()) {
-      params.set("repo", state.repo || target || "");
-      if (state.galleryId) params.set("id", state.galleryId);
-      params.set("persist", "session");
-    } else {
-      params.set("dir", target || "");
-      if (state.persistForced !== "auto") params.set("persist", state.persistForced);
-    }
+    params.set("dir", dir || "");
     if (session) params.set("session", session);
     if (state.multi) params.set("multi", "true");
     return (
@@ -890,306 +850,6 @@
       "?" +
       params.toString()
     );
-  }
-
-  function openGithubRepo(repo, session, options) {
-    var sid;
-    var url;
-    var win;
-    var params;
-    options = options || {};
-    repo = String(repo || "").trim();
-    if (!repo) {
-      setStatus("Enter a repository name (for example PRisma).", true);
-      return;
-    }
-    sid = parseSessionId(session);
-    if (sid === null) {
-      setStatus(
-        sessionNameError(session) ||
-          "Invalid session name. Use letters, digits, _ or - only.",
-        true
-      );
-      return;
-    }
-    params = new URLSearchParams();
-    params.set("repo", repo);
-    if (state.galleryId || queryGalleryId()) {
-      params.set("id", state.galleryId || queryGalleryId());
-    }
-    if (sid) params.set("session", sid);
-    if (state.multi) params.set("multi", "true");
-    params.set("persist", "session");
-    url =
-      window.location.origin +
-      window.location.pathname +
-      "?" +
-      params.toString();
-    if (options.newWindow) {
-      win = window.open(url, "_blank", "noopener,noreferrer");
-      if (!win) {
-        setStatus("Could not open a new window. Allow pop-ups for this site, or open: " + url, true);
-      }
-      return;
-    }
-    window.location.assign(url);
-  }
-
-
-  function isGithubSource() {
-    return state.source === "github";
-  }
-
-  function normalizeGalleryPath(path) {
-    return String(path || "")
-      .replace(/^\/+/, "")
-      .replace(/\/+$/, "");
-  }
-
-  function stemName(filename) {
-    var name = String(filename || "");
-    var dot = name.lastIndexOf(".");
-    return dot > 0 ? name.slice(0, dot) : name;
-  }
-
-  function previewPathFor(dirPath, filename) {
-    return normalizeGalleryPath(dirPath) + "/.gallery/" + stemName(filename) + ".webp";
-  }
-
-  function thumbUrl(img) {
-    return (img && (img.previewUrl || img.url)) || "";
-  }
-
-  function rawUrl(repo, branch, path) {
-    return (
-      "https://raw.githubusercontent.com/" +
-      OWNER +
-      "/" +
-      encodeURIComponent(repo) +
-      "/" +
-      encodeURIComponent(branch) +
-      "/" +
-      String(path || "")
-        .split("/")
-        .filter(Boolean)
-        .map(encodeURIComponent)
-        .join("/")
-    );
-  }
-
-  function apiUrl(path) {
-    return "https://api.github.com/" + String(path || "").replace(/^\//, "");
-  }
-
-  function githubBlobUrl(repo, branch, path) {
-    return (
-      "https://github.com/" +
-      OWNER +
-      "/" +
-      encodeURIComponent(repo) +
-      "/blob/" +
-      encodeURIComponent(branch) +
-      "/" +
-      String(path || "")
-        .split("/")
-        .filter(Boolean)
-        .map(encodeURIComponent)
-        .join("/")
-    );
-  }
-
-  function fetchJson(url) {
-    return fetch(url, { cache: "no-store" }).then(function (res) {
-      if (!res.ok) {
-        var err = new Error("HTTP " + res.status + " for " + url);
-        err.status = res.status;
-        throw err;
-      }
-      return res.json();
-    });
-  }
-
-  function fetchTextStrict(url) {
-    return fetch(url, { cache: "no-store" }).then(function (res) {
-      if (!res.ok) {
-        var err = new Error("HTTP " + res.status + " for " + url);
-        err.status = res.status;
-        throw err;
-      }
-      return res.text();
-    });
-  }
-
-  function parseGalleryJson(text) {
-    var cleaned = String(text).replace(/,\s*([}\]])/g, "$1");
-    return JSON.parse(cleaned);
-  }
-
-  function githubStorageDir(repo, galleryPath, galleryId) {
-    var base = "github:" + repo + ":" + normalizeGalleryPath(galleryPath);
-    if (galleryId) base += "#" + galleryId;
-    return base;
-  }
-
-  function joinRepoPath(dirPath, fileName) {
-    var clean = normalizeGalleryPath(dirPath);
-    return clean ? clean + "/" + fileName : fileName;
-  }
-
-  function sidecarRemoteUrl(fileName) {
-    if (!isGithubSource()) return null;
-    return rawUrl(state.repo, state.branch, joinRepoPath(state.galleryPath, fileName));
-  }
-
-  function loadDefaultBranch(repo) {
-    return fetchJson(apiUrl("repos/" + OWNER + "/" + encodeURIComponent(repo))).then(
-      function (data) {
-        return data.default_branch || "main";
-      }
-    );
-  }
-
-  function loadGalleryConfig(repo, branch) {
-    return fetchTextStrict(rawUrl(repo, branch, ".seap-udea-gallery.json")).then(
-      parseGalleryJson
-    );
-  }
-
-  function toGithubImageList(repo, branch, clean, entries) {
-    return entries
-      .filter(function (entry) {
-        return entry && IMAGE_EXT.test(entry.name || "");
-      })
-      .sort(function (a, b) {
-        return String(a.name).localeCompare(String(b.name), undefined, {
-          numeric: true,
-          sensitivity: "base",
-        });
-      })
-      .map(function (entry) {
-        var filePath = clean ? clean + "/" + entry.name : entry.name;
-        return {
-          name: entry.name,
-          path: filePath,
-          url: entry.download_url || rawUrl(repo, branch, filePath),
-          previewUrl: rawUrl(repo, branch, previewPathFor(clean, entry.name)),
-          githubUrl: githubBlobUrl(repo, branch, filePath),
-        };
-      });
-  }
-
-  function loadTreeEntries(repo, branch, clean) {
-    var treeish =
-      encodeURIComponent(branch) +
-      (clean
-        ? ":" +
-          clean
-            .split("/")
-            .map(encodeURIComponent)
-            .join("/")
-        : "");
-    var url = apiUrl(
-      "repos/" + OWNER + "/" + encodeURIComponent(repo) + "/git/trees/" + treeish
-    );
-    return fetchJson(url).then(function (data) {
-      if (!data || !Array.isArray(data.tree)) {
-        throw new Error("Gallery path is not a directory: " + clean);
-      }
-      return data.tree
-        .filter(function (entry) {
-          return entry && entry.type === "blob";
-        })
-        .map(function (entry) {
-          return { name: entry.path };
-        });
-    });
-  }
-
-  function loadContentsEntries(repo, clean) {
-    var url = apiUrl(
-      "repos/" + OWNER + "/" + encodeURIComponent(repo) + "/contents/" + clean
-    );
-    return fetchJson(url).then(function (entries) {
-      if (!Array.isArray(entries)) {
-        throw new Error("Gallery path is not a directory: " + clean);
-      }
-      return entries.filter(function (entry) {
-        return entry && entry.type === "file";
-      });
-    });
-  }
-
-  function loadGithubImageList(repo, branch, path) {
-    var clean = normalizeGalleryPath(path);
-    return loadTreeEntries(repo, branch, clean)
-      .catch(function () {
-        return loadContentsEntries(repo, clean);
-      })
-      .then(function (entries) {
-        return toGithubImageList(repo, branch, clean, entries);
-      });
-  }
-
-  function resolveGithubConfig(configData, targetId) {
-    var config = configData;
-    var i;
-    if (Array.isArray(configData)) {
-      if (targetId) {
-        config = null;
-        for (i = 0; i < configData.length; i++) {
-          if (configData[i] && configData[i].id === targetId) {
-            config = configData[i];
-            break;
-          }
-        }
-        if (!config) {
-          throw new Error(
-            'Gallery ID "' + targetId + '" not found in .seap-udea-gallery.json.'
-          );
-        }
-      } else {
-        config = configData[0];
-      }
-    }
-    if (!config || !config.path) {
-      throw new Error(
-        'Invalid .seap-udea-gallery.json: missing required field "path".'
-      );
-    }
-    return config;
-  }
-
-  function resolveStartWithIndex(startWith, images) {
-    var i;
-    var n;
-    if (startWith == null || startWith === "") return 0;
-    if (typeof startWith === "number" || /^[0-9]+$/.test(String(startWith))) {
-      n = parseInt(startWith, 10);
-      if (!isFinite(n)) return 0;
-      if (n >= 1 && n <= images.length) return n - 1;
-      if (n >= 0 && n < images.length) return n;
-      return 0;
-    }
-    for (i = 0; i < images.length; i++) {
-      if (images[i].name === startWith || images[i].path === startWith) return i;
-    }
-    return 0;
-  }
-
-  function imageNameHtml(img) {
-    if (!img) return "";
-    if (img.githubUrl) {
-      return (
-        '<a href="' +
-        escapeHtml(img.githubUrl) +
-        '" target="_blank" rel="noopener noreferrer" title="' +
-        escapeHtml(img.path || img.name) +
-        '">' +
-        escapeHtml(img.name) +
-        "</a>"
-      );
-    }
-    return escapeHtml(img.name);
   }
 
   async function putSidecar(url, body) {
@@ -1267,14 +927,6 @@
     var probeUrl;
     var existing;
     var res;
-    if (isGithubSource()) {
-      // Static hosts cannot PUT; keep .gallapp_* as browser-session entities.
-      state.persistMode = "session";
-      if (state.persistForced === "file") {
-        state.persistForced = "session";
-      }
-      return;
-    }
     if (state.persistForced === "session") {
       state.persistMode = "session";
       return;
@@ -1911,7 +1563,7 @@
       ) +
       '">' +
       '<img src="' +
-      escapeHtml(thumbUrl(img)) +
+      escapeHtml(img.url) +
       '" alt="" loading="lazy" decoding="async">' +
       '<span class="gallery-filmstrip-num" aria-hidden="true">' +
       escapeHtml(String(i + 1)) +
@@ -1971,9 +1623,9 @@
     if (!img) return "";
     return (
       '<a href="' +
-      escapeHtml(img.githubUrl || img.url || "#") +
+      escapeHtml(img.url) +
       '" target="_blank" rel="noopener noreferrer" title="' +
-      escapeHtml(img.path || img.name) +
+      escapeHtml(img.name) +
       '">' +
       escapeHtml(img.name) +
       "</a>"
@@ -2653,39 +2305,14 @@
   }
 
   function renderHeader() {
-    var eyebrow;
-    var title;
-    var pathLabel;
-    if (isGithubSource()) {
-      eyebrow =
-        '<a href="' +
-        escapeHtml(state.repoUrl || ("https://github.com/" + OWNER + "/" + state.repo)) +
-        '" target="_blank" rel="noopener noreferrer">' +
-        escapeHtml(OWNER + "/" + state.repo) +
-        "</a>";
-      title = state.repo;
-      pathLabel = state.galleryPath || "";
-    } else {
-      eyebrow = "Local directory";
-      title = basenameDir(state.dir);
-      pathLabel = state.dir;
-    }
     return (
       '<header class="gallery-hero">' +
-      '<p class="gallery-eyebrow">' +
-      eyebrow +
-      "</p>" +
+      '<p class="gallery-eyebrow">Local directory</p>' +
       "<h1 class=\"gallery-repo-name\">" +
-      escapeHtml(title) +
+      escapeHtml(basenameDir(state.dir)) +
       "</h1>" +
-      (state.repoAbstract
-        ? '<p class="gallery-abstract">' + escapeHtml(state.repoAbstract) + "</p>"
-        : "") +
-      (state.galleryTitle
-        ? '<h2 class="gallery-title">' + escapeHtml(state.galleryTitle) + "</h2>"
-        : "") +
       '<p class="gallery-meta"><span id="gallery-image-count"></span> · <code class="gallery-path">' +
-      escapeHtml(pathLabel) +
+      escapeHtml(state.dir) +
       "</code>" +
       (state.session
         ? ' · session <code class="gallery-session">' + escapeHtml(state.session) + "</code>"
@@ -2910,7 +2537,7 @@
           '">' +
           '<span class="gallery-grid-thumb">' +
           '<img src="' +
-          escapeHtml(thumbUrl(img)) +
+          escapeHtml(img.url) +
           '" alt="' +
           escapeHtml(img.name) +
           '" loading="lazy" decoding="async">' +
@@ -3395,67 +3022,25 @@
   function showIntro() {
     var recent = loadRecent();
     var slot;
-    document.title = "Gallapp — SEAP-UdeA";
+    document.title = "Gallery App";
     rootEl.innerHTML = "";
     if (introTemplate) rootEl.appendChild(introTemplate.content.cloneNode(true));
     slot = document.getElementById("gallery-recent");
-    if (slot) {
-      fetch("../repos.json", { cache: "no-store" })
-        .then(function (res) {
-          return res.ok ? res.json() : [];
-        })
-        .catch(function () {
-          return [];
-        })
-        .then(function (repos) {
-          var withGallery = (repos || []).filter(function (r) {
-            return r && r.gallery;
-          });
-          var html = "";
-          if (withGallery.length) {
-            html +=
-              "<h2>Repositories with a gallery</h2><ul>" +
-              withGallery
-                .map(function (r) {
-                  return (
-                    '<li><a href="?repo=' +
-                    encodeURIComponent(r.name) +
-                    '&persist=session">' +
-                    escapeHtml(r.name) +
-                    "</a></li>"
-                  );
-                })
-                .join("") +
-              "</ul>";
-          }
-          if (recent.length) {
-            html +=
-              "<h2>Recent</h2><ul>" +
-              recent
-                .map(function (item) {
-                  if (String(item).indexOf("repo:") === 0) {
-                    var name = String(item).slice(5);
-                    return (
-                      '<li><a href="?repo=' +
-                      encodeURIComponent(name) +
-                      '&persist=session">' +
-                      escapeHtml(name) +
-                      "</a></li>"
-                    );
-                  }
-                  return (
-                    '<li><a href="?dir=' +
-                    encodeURIComponent(item) +
-                    '">' +
-                    escapeHtml(item) +
-                    "</a></li>"
-                  );
-                })
-                .join("") +
-              "</ul>";
-          }
-          slot.innerHTML = html;
-        });
+    if (slot && recent.length) {
+      slot.innerHTML =
+        '<h2>Recent directories</h2><ul>' +
+        recent
+          .map(function (dir) {
+            return (
+              '<li><a href="?dir=' +
+              encodeURIComponent(dir) +
+              '">' +
+              escapeHtml(dir) +
+              "</a></li>"
+            );
+          })
+          .join("") +
+        "</ul>";
     }
   }
 
@@ -3741,25 +3326,8 @@
   }
 
   async function startNewSession() {
-    var repo = String(dirInput ? dirInput.value : state.repo || "").trim();
-    var dir;
+    var dir = normalizeDir(dirInput ? dirInput.value : "");
     var sid;
-    if (isGithubSource() || queryRepo() || repo) {
-      if (!repo) {
-        setStatus("Enter a repository name before creating a session.", true);
-        if (dirInput) dirInput.focus();
-        return;
-      }
-      sid = await askSessionName();
-      if (!sid) return;
-      if (newSessionBtn) newSessionBtn.disabled = true;
-      setStatus('Opening session "' + sid + '" for ' + OWNER + "/" + repo + "…");
-      openGithubRepo(repo, sid, { newWindow: true });
-      if (newSessionBtn) newSessionBtn.disabled = false;
-      setStatus("");
-      return;
-    }
-    dir = normalizeDir(dirInput ? dirInput.value : "");
     if (dir == null) {
       setStatus("The path cannot contain \"..\" or move above the server root.", true);
       return;
@@ -3772,161 +3340,10 @@
     sid = await askSessionName();
     if (!sid) return;
     if (newSessionBtn) newSessionBtn.disabled = true;
-    setStatus('Opening session "' + sid + '" for ' + dir + "…");
+    setStatus("Opening session \"" + sid + "\" for " + dir + "…");
     openDir(dir, sid, { newWindow: true });
     if (newSessionBtn) newSessionBtn.disabled = false;
     setStatus("");
-  }
-
-
-  async function loadGithubGallery(repo) {
-    var branch;
-    var repos;
-    var repoMeta;
-    var configData;
-    var config;
-    var conf;
-    var images;
-    var targetId;
-    repo = String(repo || "").trim();
-    if (!repo) {
-      showIntro();
-      setStatus("Missing repository. Open as /gallapp/?repo=PRisma", true);
-      return;
-    }
-    state.source = "github";
-    state.repo = repo;
-    state.persistForced =
-      state.persistForced === "auto" ? "session" : state.persistForced;
-    if (dirInput) dirInput.value = repo;
-    syncSessionInput();
-    setStatus("Loading gallery for " + OWNER + "/" + repo + "…");
-    document.title =
-      repo +
-      (state.session ? " · " + state.session : "") +
-      " — Gallapp";
-
-    try {
-      repos = await fetch("../repos.json", { cache: "no-store" })
-        .then(function (res) {
-          return res.ok ? res.json() : [];
-        })
-        .catch(function () {
-          return [];
-        });
-      branch = await loadDefaultBranch(repo);
-      state.branch = branch;
-      repoMeta = null;
-      (repos || []).forEach(function (r) {
-        if (r && String(r.name).toLowerCase() === repo.toLowerCase()) repoMeta = r;
-      });
-      state.repoUrl =
-        (repoMeta && repoMeta.url) ||
-        "https://github.com/" + OWNER + "/" + repo;
-      state.repoAbstract =
-        (repoMeta && (repoMeta.abstract || repoMeta.description)) || "";
-
-      configData = await loadGalleryConfig(repo, branch);
-      targetId = queryGalleryId();
-      config = resolveGithubConfig(configData, targetId);
-      conf = config.configuration || {};
-      state.showGrid = conf.grid !== false;
-      state.galleryTitle = config.title || "";
-      state.galleryId = String(config.id || targetId || "");
-      state.galleryPath = normalizeGalleryPath(config.path);
-      state.dir = githubStorageDir(repo, state.galleryPath, state.galleryId);
-      state.startWith =
-        config.start_with !== undefined
-          ? config.start_with
-          : config.star_with !== undefined
-            ? config.star_with
-            : conf.start_with !== undefined
-              ? conf.start_with
-              : null;
-
-      await detectPersistMode();
-      setStatus("Loading images from " + state.galleryPath + "…");
-      images = await loadGithubImageList(repo, branch, state.galleryPath);
-      state.images = images;
-      invalidateVisible();
-      state.index = 0;
-      state.filmstripStart = -1;
-      state.filmstripEnd = -1;
-
-      if (state.multi) {
-        await loadClassDefs();
-        await loadMulti();
-      } else {
-        await loadLikes();
-      }
-      invalidateVisible();
-
-      if (state.startFromQuery != null) {
-        (function applyStartFromQuery() {
-          var vis = visibleImages();
-          var idx = state.startFromQuery - 1;
-          if (!vis.length) {
-            state.index = 0;
-            return;
-          }
-          if (idx < 0) idx = 0;
-          if (idx >= vis.length) idx = vis.length - 1;
-          state.index = idx;
-        })();
-        state.startFromQuery = null;
-      } else if (state.startWith != null) {
-        state.index = resolveStartWithIndex(state.startWith, visibleImages());
-      } else {
-        (function restorePosition(savedName) {
-          var visible = visibleImages();
-          var idx = indexOfName(savedName, visible);
-          if (idx < 0 && savedName) {
-            if (state.multi && state.classFilter !== "all") {
-              state.classFilter = "all";
-              invalidateVisible();
-              visible = visibleImages();
-              idx = indexOfName(savedName, visible);
-            } else if (!state.multi && state.likeFilter !== "all") {
-              state.likeFilter = "all";
-              invalidateVisible();
-              visible = visibleImages();
-              idx = indexOfName(savedName, visible);
-            }
-          }
-          state.index = idx >= 0 ? idx : 0;
-        })(await loadPosition());
-      }
-
-      if (state.session) {
-        if (!(await ensureSessionSidecars())) {
-          showIntro();
-          return;
-        }
-      }
-      rememberDir("repo:" + repo);
-      if (!images.length) {
-        rootEl.innerHTML = renderHeader();
-        updateCurrentLikeUI();
-        setStatus("No images found in " + state.galleryPath + ".", true);
-        return;
-      }
-      render();
-      syncUrlState();
-      savePositionNow();
-      setStatus("");
-    } catch (err) {
-      var msg = err && err.message ? err.message : String(err);
-      if (err && err.status === 404) {
-        msg =
-          "Could not find .seap-udea-gallery.json (or the image path) in " +
-          OWNER +
-          "/" +
-          repo +
-          ".";
-      }
-      showIntro();
-      setStatus(msg, true);
-    }
   }
 
   async function loadDirectory(dir) {
@@ -4041,14 +3458,13 @@
 
   function boot() {
     var dir;
-    var repo;
     bindGlobals();
     applyQueryOptions();
     if (dirForm) {
       dirForm.addEventListener("submit", function (event) {
         event.preventDefault();
-        openGithubRepo(
-          String(dirInput ? dirInput.value : "").trim() || state.repo,
+        openDir(
+          normalizeDir(dirInput ? dirInput.value : ""),
           sessionInput ? sessionInput.value : state.session
         );
       });
@@ -4061,22 +3477,9 @@
     if (window.location.protocol === "file:") {
       showIntro();
       setStatus(
-        "Open Gallapp through the SEAP site (or a local HTTP server), not as a file.",
+        "This page was opened as a file. Start the server with python3 gallapp/server.py and open http://localhost:8000/gallapp/.",
         true
       );
-      return;
-    }
-    repo = queryRepo();
-    if (repo) {
-      // Tracking meta for site-analytics.js
-      try {
-        if (document.body) {
-          document.body.dataset.trackPage = "gallery";
-          document.body.dataset.trackId = repo;
-          document.body.dataset.trackName = repo + " gallapp";
-        }
-      } catch (err) {}
-      loadGithubGallery(repo);
       return;
     }
     dir = normalizeDir(queryDir());
@@ -4090,7 +3493,6 @@
       if (dirInput) dirInput.focus();
       return;
     }
-    state.source = "local";
     loadDirectory(dir);
   }
 

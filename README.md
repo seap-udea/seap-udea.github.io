@@ -90,6 +90,14 @@ https://seap-udea.github.io/gallapp/?repo=PRisma
 
 Legacy `/gallery/?repo=…` URLs redirect to `/gallapp/` and keep the query string. Likes and multi-class tags live in the browser session; use **Export sidecars** to download `.gallapp_*` files for commit.
 
+Update the published Gallapp files from the latest default branch on GitHub with:
+
+```bash
+make update-gallapp
+```
+
+This syncs the app files into `gallapp/`, removes stale app files, and preserves this site's `gallapp/README.md`. The local-only `server.py` is not copied.
+
 ### Config
 
 ```json

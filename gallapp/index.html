@@ -3,31 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Gallapp — browse and classify figures from SEAP-UdeA repositories.">
-  <meta name="author" content="Jorge I. Zuluaga">
-  <title>Gallapp — SEAP-UdeA</title>
-  <link rel="icon" href="../assets/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" href="../assets/favicon.png" sizes="32x32">
-  <link rel="icon" type="image/webp" href="../assets/favicon-32.webp" sizes="32x32">
-  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.webp">
+  <meta name="description" content="Local gallery: view images in a directory, like them, and download them.">
+  <title>Gallery App</title>
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/favicon.png" sizes="32x32">
+  <link rel="icon" type="image/webp" href="assets/favicon-32.webp" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.webp">
   <link rel="stylesheet" href="gallery.css">
-  <meta name="visitor-log-endpoint" content="https://seap-udea-visitor-log.drz-academy.workers.dev/log">
 </head>
-<body class="gallery-page" data-track-page="gallery" data-track-id="gallapp" data-track-name="SEAP Gallapp">
+<body class="gallery-page">
   <header class="site-header">
     <div class="header-inner">
       <div class="brand-group">
-        <a class="brand-mark" href="../">
-          <img class="brand-logo" src="../assets/logo-seap-banner.webp" alt="SEAP-UdeA" width="1627" height="200">
+        <a class="brand-mark" href="https://seap-udea.github.io/" target="_blank" rel="noopener noreferrer">
+          <img class="brand-logo" src="assets/logo-seap-banner.webp" alt="SEAP-UdeA" width="1627" height="200">
         </a>
-        <a class="brand" href="./">Gallapp</a>
+        <a class="brand" href="https://github.com/seap-udea/gallapp" target="_blank" rel="noopener noreferrer">Gallery App</a>
       </div>
       <form class="dir-form" id="dir-form" action="./" method="get">
-        <label for="dir-input">Repository</label>
-        <input id="dir-input" name="repo" type="text" spellcheck="false" autocomplete="off" placeholder="e.g. PRisma" enterkeyhint="go">
+        <label for="dir-input">Directory</label>
+        <input id="dir-input" name="dir" type="text" spellcheck="false" autocomplete="off" placeholder="path/relative/to/the/directory" enterkeyhint="go">
         <input id="session-input" name="session" type="hidden" value="">
         <button type="submit">Open</button>
-        <button type="button" class="dir-form-secondary" id="new-session-btn" title="Open this repository in a new review session">New session</button>
+        <button type="button" class="dir-form-secondary" id="new-session-btn" title="Open this directory in a new review session">New session</button>
       </form>
     </div>
   </header>
@@ -82,8 +80,8 @@
       <h2 class="gallery-modal-title" id="class-modal-title">Edit class label</h2>
       <p class="gallery-modal-copy">
         Map each class to a one-word name and a short glyph (letter or digit). After saving,
-        classify with <strong>Shift+glyph</strong> (for example Shift+c). Labels are stored as
-        temporary <code>.gallapp_classes</code> entities in this browser session (export to keep them).
+        classify with <strong>Shift+glyph</strong> (for example Shift+c). Labels are stored in
+        <code>.gallapp_classes</code> in this directory.
       </p>
       <label class="gallery-modal-label" for="class-modal-slot">Class key</label>
       <select id="class-modal-slot" class="gallery-modal-input"></select>
@@ -148,38 +146,24 @@
 
   <footer class="site-footer">
     <div class="footer-bottom">
-      © <span id="year"></span> SEAP-UdeA ·
-      <a href="../">Home</a> ·
-      <a href="https://github.com/seap-udea/seap-udea.github.io">Site source</a> ·
-      Gallapp by <a href="https://jorgezuluaga.github.io/" target="_blank" rel="noopener noreferrer">Jorge I. Zuluaga</a>
+      Developed by <a href="https://jorgezuluaga.github.io/" target="_blank" rel="noopener noreferrer">Jorge I. Zuluaga</a> with the assistance of AI
     </div>
   </footer>
 
   <template id="intro-template">
     <section class="gallery-intro">
-      <h1>Gallapp</h1>
-      <p>
-        Browse figures published by SEAP repositories (via
-        <code>.seap-udea-gallery.json</code>), like or multi-classify them, and export your
-        <code>.gallapp_*</code> sidecars. Data is kept in this browser session until you export it.
-      </p>
+      <h1>Local gallery</h1>
+      <p>Browse the images in a directory, like the ones you want, and download them when you are done choosing.</p>
       <ol class="gallery-steps">
-        <li>Enter a repository name above (for example <code>PRisma</code>) and press <strong>Open</strong>.</li>
-        <li>Or open a direct link: <code>?repo=PRisma</code> · add <code>&amp;multi=true</code> for classification.</li>
-        <li>Use <strong>New session</strong> so several people can review with separate likes/classes.</li>
-        <li>Use <strong>Export sidecars</strong> to download <code>.gallapp_*</code> files before closing the tab.</li>
+        <li>In the site root (the folder that contains <code>gallapp/</code>), start a server: <code>python3 gallapp/server.py</code></li>
+        <li>Open <code>http://localhost:8000/gallapp/</code></li>
+        <li>Enter a directory path relative to that root. For example <code>images/my-folder</code></li>
       </ol>
+      <p>One liked image downloads as itself. Several liked images are packed into a <code>.zip</code>. Likes are written to <code>.gallapp_likes</code> in that image folder (or <code>.gallapp_likes_&lt;session&gt;</code> when using a session). Use <strong>New session</strong> so several people can review the same directory with separate likes. If the directory contains an <code>index.html</code>, Python’s server shows that page and Gallery App cannot see the file list.</p>
       <div id="gallery-recent"></div>
     </section>
   </template>
 
-  <script>
-    (function () {
-      var y = document.getElementById("year");
-      if (y) y.textContent = String(new Date().getFullYear());
-    })();
-  </script>
   <script src="gallery.js"></script>
-  <script type="module" src="../js/site-analytics.js"></script>
 </body>
 </html>

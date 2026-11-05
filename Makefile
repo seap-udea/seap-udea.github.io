@@ -1,4 +1,4 @@
-.PHONY: help repos build-apps sync-books sync-site start stop restart status cleanall worker-deploy
+.PHONY: help repos build-apps sync-books sync-site update-gallapp start stop restart status cleanall worker-deploy
 
 PORT ?= 8000
 HOST ?= 127.0.0.1
@@ -12,6 +12,7 @@ help:
 	@echo "  make build-apps    - Build Next.js apps under apps/"
 	@echo "  make sync-books    - Fetch book HTML (e.g. Relatividad) into $(SITE)/books/"
 	@echo "  make sync-site     - Assemble public files into $(SITE)/"
+	@echo "  make update-gallapp - Update the published Gallapp files from GitHub"
 	@echo "  make start         - Build apps (if needed), assemble $(SITE)/, start server"
 	@echo "  make stop          - Stop the server on port $(PORT)"
 	@echo "  make restart       - Restart the local server"
@@ -82,6 +83,18 @@ sync-site:
 
 sync-books:
 	@./bin/sync_books.sh $(SITE)
+
+update-gallapp:
+	@set -eu; \
+	tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	git clone --depth 1 https://github.com/seap-udea/gallapp.git "$$tmp/gallapp"; \
+	rsync -a --delete \
+		--exclude='.git/' \
+		--exclude='README.md' \
+		--exclude='server.py' \
+		"$$tmp/gallapp/" gallapp/; \
+	echo "✓  Gallapp updated from https://github.com/seap-udea/gallapp"
 
 start: sync-site
 	@if lsof -tiTCP:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \

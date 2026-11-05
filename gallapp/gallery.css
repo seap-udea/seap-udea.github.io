@@ -278,20 +278,6 @@ code {
   line-height: 1.25;
 }
 
-.gallery-abstract {
-  margin: 0 0 16px;
-  font-size: 15px;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-
-.gallery-title {
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-}
-
 .gallery-meta {
   margin: 0;
   font-size: 13px;
