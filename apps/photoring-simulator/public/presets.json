@@ -27,8 +27,10 @@
         "showPlanetToScale": true,
         "zoomIn": false,
         "flipPlanet": false,
-        "autoScaleDepth": false,
-        "showEquivalentCurve": true
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
       }
     },
     {
@@ -57,8 +59,10 @@
         "showPlanetToScale": true,
         "zoomIn": false,
         "flipPlanet": false,
-        "autoScaleDepth": false,
-        "showEquivalentCurve": true
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
       }
     },
     {
@@ -81,7 +85,7 @@
         "aau": 0.45
       },
       "planet": {
-        "mpjup": 0.70
+        "mpjup": 0.7
       },
       "display": {
         "showEquivalentPlanet": false,
@@ -89,7 +93,9 @@
         "zoomIn": false,
         "flipPlanet": false,
         "autoScaleDepth": true,
-        "showEquivalentCurve": true
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
       }
     },
     {
@@ -119,8 +125,10 @@
         "showPlanetToScale": true,
         "zoomIn": false,
         "flipPlanet": false,
-        "autoScaleDepth": false,
-        "showEquivalentCurve": true
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
       }
     },
     {
@@ -150,21 +158,23 @@
         "showPlanetToScale": true,
         "zoomIn": false,
         "flipPlanet": false,
-        "autoScaleDepth": false,
-        "showEquivalentCurve": true
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
       }
     },
     {
-      "id": "ringless-saturn-demo",
-      "label": "Ringless saturn (demo.)",
+      "id": "ringless-saturn-solar",
+      "label": "Ringless saturn solar star (demo.)",
       "parameters": {
         "pjup": 0.84,
         "fi": 1,
         "fe": 1,
         "tilt": 0,
-        "ir": 60,
-        "b": 0.25,
-        "alpha": 0.36787944117144233
+        "ir": 0,
+        "b": 0,
+        "alpha": 0
       },
       "star": {
         "mstar": 1,
@@ -181,8 +191,75 @@
         "showPlanetToScale": true,
         "zoomIn": false,
         "flipPlanet": false,
-        "autoScaleDepth": false,
-        "showEquivalentCurve": true
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
+      }
+    },
+    {
+      "id": "ringless-saturn-Mdwarf",
+      "label": "Ringless saturn M dwarf (demo.)",
+      "parameters": {
+        "pjup": 0.84,
+        "fi": 1,
+        "fe": 1,
+        "tilt": 0,
+        "ir": 0,
+        "b": 0,
+        "alpha": 0
+      },
+      "star": {
+        "mstar": 0.2
+      },
+      "orbit": {
+        "porb": 10
+      },
+      "planet": {
+        "mpjup": 0.2994
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": false,
+        "flipPlanet": false,
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
+      }
+    },
+    {
+      "id": "ringless-kepler37d",
+      "label": "Ringless Kepler-37d (demo.)",
+      "parameters": {
+        "pjup": 0.181,
+        "fi": 1,
+        "fe": 1,
+        "tilt": 0,
+        "ir": 0,
+        "b": 0.67,
+        "alpha": 0
+      },
+      "star": {
+        "mstar": 0.79,
+        "rstar": 0.789
+      },
+      "orbit": {
+        "aau": 0.2109
+      },
+      "planet": {
+        "mpjup": 0.017
+      },
+      "display": {
+        "showEquivalentPlanet": false,
+        "showPlanetToScale": true,
+        "zoomIn": true,
+        "flipPlanet": false,
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "lightCurveInPpm": true,
+        "autoScaleTime": true
       }
     },
     {
@@ -212,8 +289,10 @@
         "showPlanetToScale": true,
         "zoomIn": false,
         "flipPlanet": false,
-        "autoScaleDepth": false,
-        "showEquivalentCurve": true
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
       }
     },
     {
@@ -243,10 +322,11 @@
         "showPlanetToScale": true,
         "zoomIn": false,
         "flipPlanet": false,
-        "autoScaleDepth": false,
-        "showEquivalentCurve": true
+        "autoScaleDepth": true,
+        "showEquivalentCurve": true,
+        "autoScaleTime": true,
+        "lightCurveInPpm": true
       }
     }
   ]
 }
-

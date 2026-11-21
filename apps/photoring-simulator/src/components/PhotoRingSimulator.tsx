@@ -3,9 +3,13 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
 import {
   computeTransit,
+  photoEccentricDurationFactor,
   type RingParameters,
   type TransitModel,
 } from "../lib/photoring";
+
+/** Horizontal LC window baseline: longest mid-transit for this e (apoapsis, ω=270°). */
+const LIGHT_CURVE_REFERENCE_ECCENTRICITY = 0.2;
 
 const DEFAULTS: RingParameters = {
   planetRadius: 0.084,
@@ -47,8 +51,8 @@ const CONTROLS: {
       key: "planetRadius",
       symbol: "p",
       label: "Planet radius",
-      min: 0.03,
-      max: 0.16,
+      min: 0.01,
+      max: 0.65,
       step: 0.001,
       unit: " R★",
       help: "Planet radius relative to the star. A larger planet blocks more light during transit.",
@@ -130,6 +134,8 @@ const URL_ASSUMPTION_KEYS = {
   starRadius: "rstar",
   semiMajorAxisAu: "aau",
   periodDays: "porb",
+  eccentricity: "e",
+  argumentOfPeriapsis: "w",
 } as const;
 
 const URL_OPTION_KEYS = {
@@ -138,8 +144,10 @@ const URL_OPTION_KEYS = {
   zoomIn: "zoom2",
   flipPlanet: "flipPlanet",
   autoScaleDepth: "autoDepth",
+  autoScaleTime: "autoTime",
   showEquivalentCurve: "showEquivalent",
   residualsInAbsoluteUnits: "residualsAbs",
+  lightCurveInPpm: "lcPpm",
 } as const;
 
 type UrlConfiguration = {
@@ -150,13 +158,17 @@ type UrlConfiguration = {
   periodDays: number;
   densityKgM3: number;
   planetMassJupiter: number;
+  eccentricity: number;
+  argumentOfPeriapsisDeg: number;
   showEquivalentPlanet: boolean;
   showPlanetToScale: boolean;
   zoomIn: boolean;
   flipPlanet: boolean;
   autoScaleDepth: boolean;
+  autoScaleTime: boolean;
   showEquivalentCurve: boolean;
   residualsInAbsoluteUnits: boolean;
+  lightCurveInPpm: boolean;
 };
 
 function estimateMainSequenceRadiusSolar(massSolar: number) {
@@ -171,13 +183,17 @@ const DEFAULT_CONFIGURATION: UrlConfiguration = {
   periodDays: DEFAULT_PERIOD_DAYS,
   densityKgM3: SOLAR_DENSITY_KG_M3,
   planetMassJupiter: SATURN_MASS_JUPITER,
+  eccentricity: 0,
+  argumentOfPeriapsisDeg: 90,
   showEquivalentPlanet: false,
   showPlanetToScale: true,
   zoomIn: false,
   flipPlanet: false,
-  autoScaleDepth: false,
+  autoScaleDepth: true,
+  autoScaleTime: true,
   showEquivalentCurve: true,
   residualsInAbsoluteUnits: false,
+  lightCurveInPpm: true,
 };
 
 type PresetEntry = {
@@ -185,7 +201,7 @@ type PresetEntry = {
   label: string;
   parameters?: Record<string, number>;
   star?: { mstar?: number; rstar?: number };
-  orbit?: { aau?: number; porb?: number };
+  orbit?: { aau?: number; porb?: number; e?: number; w?: number };
   planet?: Record<string, number>;
   display?: Partial<
     Pick<
@@ -195,8 +211,10 @@ type PresetEntry = {
       | "zoomIn"
       | "flipPlanet"
       | "autoScaleDepth"
+      | "autoScaleTime"
       | "showEquivalentCurve"
       | "residualsInAbsoluteUnits"
+      | "lightCurveInPpm"
     >
   >;
 };
@@ -248,7 +266,7 @@ function resolvePresetRingParameters(
 }
 
 // Orbit/planet mass: same aau/porb/mpjup derivation rules as readConfigurationFromUrl
-// (mass+aau derives the period, period+aau derives the mass, period-only assumes a = 1 AU).
+// (mass+aau derives the period, period+aau derives the mass, period-only derives a from Kepler).
 // `mpjup` (Jupiter masses) is the canonical planet-mass field; `mplanet` is accepted as a legacy alias.
 function resolvePresetOrbitAndPlanet(
   entry: PresetEntry,
@@ -280,8 +298,8 @@ function resolvePresetOrbitAndPlanet(
     resolvedMassSolar =
       (4 * Math.PI ** 2 * (semiMajorAxisAu * AU_METERS) ** 3) /
       (GRAVITATIONAL_CONSTANT * (periodDays * 86400) ** 2 * SOLAR_MASS_KG);
-  } else if (hasPeriod && !hasAu) {
-    semiMajorAxisAu = 1;
+  } else if (hasPeriod && !hasAu && hasMass) {
+    semiMajorAxisAu = semiMajorAxisFromMassAndPeriod(starMassSolar, periodDays);
   }
 
   const densityKgM3 = SOLAR_DENSITY_KG_M3 * resolvedMassSolar / starRadiusSolar ** 3;
@@ -291,12 +309,25 @@ function resolvePresetOrbitAndPlanet(
       ? rawPlanetMass
       : DEFAULT_PLANET_DENSITY_G_CM3 * planetRadiusJupiter ** 3 / JUPITER_DENSITY_G_CM3;
 
+  const rawE = entry.orbit?.e;
+  const rawW = entry.orbit?.w;
+  const eccentricity =
+    typeof rawE === "number" && Number.isFinite(rawE)
+      ? Math.min(0.9, Math.max(0, rawE))
+      : DEFAULT_CONFIGURATION.eccentricity;
+  const argumentOfPeriapsisDeg =
+    typeof rawW === "number" && Number.isFinite(rawW)
+      ? ((rawW % 360) + 360) % 360
+      : DEFAULT_CONFIGURATION.argumentOfPeriapsisDeg;
+
   return {
     starMassSolar: resolvedMassSolar,
     semiMajorAxisAu,
     periodDays,
     densityKgM3,
     planetMassJupiter,
+    eccentricity,
+    argumentOfPeriapsisDeg,
   };
 }
 
@@ -309,6 +340,8 @@ function buildConfigurationFromPresetEntry(entry: PresetEntry): UrlConfiguration
     periodDays,
     densityKgM3,
     planetMassJupiter,
+    eccentricity,
+    argumentOfPeriapsisDeg,
   } = resolvePresetOrbitAndPlanet(entry, parameters, starMassSolar, starRadiusSolar, hasMass);
   const display = entry.display ?? {};
   return {
@@ -319,14 +352,18 @@ function buildConfigurationFromPresetEntry(entry: PresetEntry): UrlConfiguration
     periodDays,
     densityKgM3,
     planetMassJupiter,
+    eccentricity,
+    argumentOfPeriapsisDeg,
     showEquivalentPlanet: display.showEquivalentPlanet ?? DEFAULT_CONFIGURATION.showEquivalentPlanet,
     showPlanetToScale: display.showPlanetToScale ?? DEFAULT_CONFIGURATION.showPlanetToScale,
     zoomIn: display.zoomIn ?? DEFAULT_CONFIGURATION.zoomIn,
     flipPlanet: display.flipPlanet ?? DEFAULT_CONFIGURATION.flipPlanet,
     autoScaleDepth: display.autoScaleDepth ?? DEFAULT_CONFIGURATION.autoScaleDepth,
+    autoScaleTime: display.autoScaleTime ?? DEFAULT_CONFIGURATION.autoScaleTime,
     showEquivalentCurve: display.showEquivalentCurve ?? DEFAULT_CONFIGURATION.showEquivalentCurve,
     residualsInAbsoluteUnits:
       display.residualsInAbsoluteUnits ?? DEFAULT_CONFIGURATION.residualsInAbsoluteUnits,
+    lightCurveInPpm: display.lightCurveInPpm ?? DEFAULT_CONFIGURATION.lightCurveInPpm,
   };
 }
 
@@ -456,8 +493,11 @@ function readConfigurationFromUrl(
     resolvedMassSolar =
       (4 * Math.PI ** 2 * (semiMajorAxisAu * AU_METERS) ** 3) /
       (GRAVITATIONAL_CONSTANT * (periodDays * 86400) ** 2 * SOLAR_MASS_KG);
-  } else if (hasPeriod && !hasAu && !hasRStarAxis && !searchParams.has("preset")) {
-    semiMajorAxisAu = 1;
+  } else if (hasPeriod && !hasAu && !hasRStarAxis && resolvedMassSolar > 0) {
+    semiMajorAxisAu = semiMajorAxisFromMassAndPeriod(
+      resolvedMassSolar,
+      periodDays,
+    );
   }
 
   const densityKgM3 =
@@ -471,6 +511,17 @@ function readConfigurationFromUrl(
   const planetMassJupiter = hasExplicitPlanetMass
     ? rawPlanetMass
     : baseConfiguration.planetMassJupiter;
+
+  const rawE = Number(searchParams.get(URL_ASSUMPTION_KEYS.eccentricity));
+  const rawW = Number(searchParams.get(URL_ASSUMPTION_KEYS.argumentOfPeriapsis));
+  const eccentricity =
+    searchParams.has(URL_ASSUMPTION_KEYS.eccentricity) && Number.isFinite(rawE)
+      ? Math.min(0.9, Math.max(0, rawE))
+      : baseConfiguration.eccentricity;
+  const argumentOfPeriapsisDeg =
+    searchParams.has(URL_ASSUMPTION_KEYS.argumentOfPeriapsis) && Number.isFinite(rawW)
+      ? ((rawW % 360) + 360) % 360
+      : baseConfiguration.argumentOfPeriapsisDeg;
 
   if (next.outerRingRadius <= 1) {
     next.outerRingRadius = 1;
@@ -489,6 +540,8 @@ function readConfigurationFromUrl(
     periodDays,
     densityKgM3,
     planetMassJupiter,
+    eccentricity,
+    argumentOfPeriapsisDeg,
     showEquivalentPlanet: searchParams.has(URL_OPTION_KEYS.showEquivalentPlanet)
       ? readBooleanParameter(
         searchParams,
@@ -524,6 +577,13 @@ function readConfigurationFromUrl(
         baseConfiguration.autoScaleDepth,
       )
       : baseConfiguration.autoScaleDepth,
+    autoScaleTime: searchParams.has(URL_OPTION_KEYS.autoScaleTime)
+      ? readBooleanParameter(
+        searchParams,
+        URL_OPTION_KEYS.autoScaleTime,
+        baseConfiguration.autoScaleTime,
+      )
+      : baseConfiguration.autoScaleTime,
     showEquivalentCurve: searchParams.has(URL_OPTION_KEYS.showEquivalentCurve)
       ? readBooleanParameter(
         searchParams,
@@ -538,6 +598,13 @@ function readConfigurationFromUrl(
         baseConfiguration.residualsInAbsoluteUnits,
       )
       : baseConfiguration.residualsInAbsoluteUnits,
+    lightCurveInPpm: searchParams.has(URL_OPTION_KEYS.lightCurveInPpm)
+      ? readBooleanParameter(
+        searchParams,
+        URL_OPTION_KEYS.lightCurveInPpm,
+        baseConfiguration.lightCurveInPpm,
+      )
+      : baseConfiguration.lightCurveInPpm,
   };
 }
 
@@ -559,6 +626,14 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
   url.searchParams.delete(URL_ASSUMPTION_KEYS.periodDays);
   url.searchParams.delete("aRstar");
   url.searchParams.set(
+    URL_ASSUMPTION_KEYS.eccentricity,
+    String(configuration.eccentricity),
+  );
+  url.searchParams.set(
+    URL_ASSUMPTION_KEYS.argumentOfPeriapsis,
+    String(configuration.argumentOfPeriapsisDeg),
+  );
+  url.searchParams.set(
     URL_OPTION_KEYS.showEquivalentPlanet,
     configuration.showEquivalentPlanet ? "1" : "0",
   );
@@ -573,12 +648,20 @@ function buildConfigurationUrl(configuration: UrlConfiguration, aInAu: number) {
     configuration.autoScaleDepth ? "1" : "0",
   );
   url.searchParams.set(
+    URL_OPTION_KEYS.autoScaleTime,
+    configuration.autoScaleTime ? "1" : "0",
+  );
+  url.searchParams.set(
     URL_OPTION_KEYS.showEquivalentCurve,
     configuration.showEquivalentCurve ? "1" : "0",
   );
   url.searchParams.set(
     URL_OPTION_KEYS.residualsInAbsoluteUnits,
     configuration.residualsInAbsoluteUnits ? "1" : "0",
+  );
+  url.searchParams.set(
+    URL_OPTION_KEYS.lightCurveInPpm,
+    configuration.lightCurveInPpm ? "1" : "0",
   );
   return url.toString();
 }
@@ -674,8 +757,14 @@ function buildPrynglesColabCode(
   model: TransitModel,
   _aInAu: number,
 ) {
-  const { parameters, starMassSolar, starRadiusSolar, periodDays, planetMassJupiter } =
-    configuration;
+  const {
+    parameters,
+    starMassSolar,
+    starRadiusSolar,
+    periodDays,
+    planetMassJupiter,
+    eccentricity,
+  } = configuration;
   const spherical = parameters.outerRingRadius <= 1;
   const p = parameters.planetRadius;
   const first = model.lightCurve[0];
@@ -769,7 +858,7 @@ planet = sys.add(
     name="Planet",
     m=0,
     a=a_pr,
-    e=0.0,
+    e=${pyNumber(eccentricity)},
     radius=rp_pr,
     nspangles=nspangles,
 )
@@ -808,10 +897,18 @@ function buildGeotransColabCode(
   _model: TransitModel,
   _aInAu: number,
 ) {
-  const { parameters, starMassSolar, starRadiusSolar, periodDays } =
-    configuration;
+  const {
+    parameters,
+    starMassSolar,
+    starRadiusSolar,
+    periodDays,
+    eccentricity,
+    argumentOfPeriapsisDeg,
+  } = configuration;
   const spherical = parameters.outerRingRadius <= 1;
   const p = parameters.planetRadius;
+  // geotrans uses f_cen = 270° − wp; match app Winn convention (f_t = 90° − ω) via wp = −ω.
+  const geotransWpDeg = -argumentOfPeriapsisDeg;
 
   return `# PhotoRing Simulator (https://seap-udea.github.io/apps/photoring-simulator) → geotrans (Zuluaga et al. 2015, 2026)
 # Generated from the current photoring-simulator configuration.
@@ -840,6 +937,8 @@ alpha = ${pyNumber(parameters.alpha)} # ring transmission; exp(-1) → tau_norma
 mstar = ${pyNumber(starMassSolar)} # M* [M_sun]
 rstar = ${pyNumber(starRadiusSolar)} # R* [R_sun]
 porb = ${pyNumber(periodDays)}  # Porb [days]
+ep = ${pyNumber(eccentricity)} # eccentricity
+wp = ${pyNumber(geotransWpDeg)}*deg # geotrans periapsis arg (wp = -ω_Winn)
 
 # Stellar density and derived orbital geometry
 rho_gcc = 1408.0 * mstar / rstar**3 / 1e3  # stellar density [g/cm³], 1408 kg/m³ is solar
@@ -854,7 +953,7 @@ ir_3d, phir_3d = gt.apparent_to_intrinsic(ir, tilt, iorb)
 
 # Initialize geotrans ringed system
 system = dict(
-    rhotrue=rho_gcc, P=porb, b=b, ep=0., wp=0.,
+    rhotrue=rho_gcc, P=porb, b=b, ep=ep, wp=wp,
     p=p, fp=0., fi=fi, fe=fe, ir=ir_3d, phir=phir_3d, tau=tau,
     c1=0., c2=0. # c1=c2=0: uniform disk (no limb darkening)
 )
@@ -911,12 +1010,48 @@ function stellarDensityKgM3(starMassSolar: number, starRadiusSolar: number) {
   return SOLAR_DENSITY_KG_M3 * starMassSolar / starRadiusSolar ** 3;
 }
 
+function planetRadiusJupiterFromP(planetRadius: number, starRadiusSolar: number) {
+  return (planetRadius * starRadiusSolar) / JUPITER_TO_SUN_RADIUS;
+}
+
+function planetRadiusFromJupiter(planetRadiusJupiter: number, starRadiusSolar: number) {
+  const control = CONTROLS.find((item) => item.key === "planetRadius");
+  const converted = (planetRadiusJupiter * JUPITER_TO_SUN_RADIUS) / starRadiusSolar;
+  if (!control) return converted;
+  return Math.min(control.max, Math.max(control.min, converted));
+}
+
+/** Keep absolute Rp (Rjup) fixed when the host-star radius changes. */
+function rescalePlanetRadiusForStar(
+  parameters: RingParameters,
+  previousStarRadiusSolar: number,
+  nextStarRadiusSolar: number,
+): RingParameters {
+  if (
+    !(previousStarRadiusSolar > 0) ||
+    !(nextStarRadiusSolar > 0) ||
+    Math.abs(nextStarRadiusSolar - previousStarRadiusSolar) < 1e-12
+  ) {
+    return parameters;
+  }
+  const planetRadiusJupiter = planetRadiusJupiterFromP(
+    parameters.planetRadius,
+    previousStarRadiusSolar,
+  );
+  return {
+    ...parameters,
+    planetRadius: planetRadiusFromJupiter(planetRadiusJupiter, nextStarRadiusSolar),
+  };
+}
+
 type SystemControlKey =
   | "starMassSolar"
   | "starRadiusSolar"
   | "planetMassJupiter"
   | "semiMajorAxisAu"
-  | "periodDays";
+  | "periodDays"
+  | "eccentricity"
+  | "argumentOfPeriapsisDeg";
 
 const SYSTEM_CONTROLS: {
   key: SystemControlKey;
@@ -938,7 +1073,7 @@ const SYSTEM_CONTROLS: {
       unit: " M☉",
       digits: 3,
       step: 0.01,
-      help: "Host-star mass. The orbital period is updated from this mass and the semi-major axis so Kepler's third law still holds.",
+      help: "Host-star mass. The orbital period is updated from this mass and the semi-major axis so Kepler's third law still holds. With ∝ M★ on, R★ follows the main sequence and p is rescaled so the absolute planet radius (Rjup) stays fixed.",
     },
     {
       key: "starRadiusSolar",
@@ -949,7 +1084,7 @@ const SYSTEM_CONTROLS: {
       unit: " R☉",
       digits: 3,
       step: 0.01,
-      help: "Host-star radius. It changes the stellar density and the orbit size in stellar radii. The planet radius stays fixed in units of R★.",
+      help: "Host-star radius. It changes the stellar density and the orbit size in stellar radii. The absolute planet radius (Rjup) is held fixed, so p in R★ scales inversely with R★.",
     },
     {
       key: "planetMassJupiter",
@@ -983,6 +1118,28 @@ const SYSTEM_CONTROLS: {
       digits: 2,
       step: 0.1,
       help: "Orbital period. Changing it updates the semi-major axis through Kepler's third law, at fixed star mass.",
+    },
+    {
+      key: "eccentricity",
+      symbol: "e",
+      label: "Eccentricity",
+      min: 0,
+      max: 0.9,
+      unit: "",
+      digits: 3,
+      step: 0.01,
+      help: "Orbital eccentricity. It shortens or lengthens the transit through the photoeccentric effect and therefore changes the stellar density inferred by a circular fit (and the PR anomaly).",
+    },
+    {
+      key: "argumentOfPeriapsisDeg",
+      symbol: "ω",
+      label: "Arg. of periapsis",
+      min: 0,
+      max: 360,
+      unit: "°",
+      digits: 1,
+      step: 1,
+      help: "Argument of periapsis. With mid-transit at true anomaly π/2 − ω, sin ω > 0 means a periapsis-side transit (faster, shorter, higher ρobs) and sin ω < 0 an apoapsis-side transit.",
     },
   ];
 
@@ -1027,11 +1184,16 @@ function svgNum(value: number) {
   return value.toFixed(4);
 }
 
-function formatControlValue(key: ParameterKey, value: number, unit: string) {
+function formatControlValue(
+  key: ParameterKey,
+  value: number,
+  unit: string,
+  starRadiusSolar: number,
+) {
   const step = CONTROLS.find((control) => control.key === key)?.step ?? 0.01;
   const formattedValue = `${formatSteppedValue(value, step)}${unit}`;
   return key === "planetRadius"
-    ? `${formattedValue} (${(value / JUPITER_TO_SUN_RADIUS).toFixed(2)} Rjup)`
+    ? `${formattedValue} (${((value * starRadiusSolar) / JUPITER_TO_SUN_RADIUS).toFixed(2)} Rjup)`
     : formattedValue;
 }
 
@@ -1105,9 +1267,11 @@ function getSpectralAppearance(starMassSolar: number) {
 
 function ParameterControls({
   parameters,
+  starRadiusSolar,
   onChange,
 }: {
   parameters: RingParameters;
+  starRadiusSolar: number;
   onChange: (key: ParameterKey, value: number) => void;
 }) {
   const [openHelp, setOpenHelp] = useState<ParameterKey | null>(null);
@@ -1153,6 +1317,7 @@ function ParameterControls({
                   control.key,
                   parameters[control.key],
                   control.unit,
+                  starRadiusSolar,
                 )}
               </output>
             </span>
@@ -1203,6 +1368,8 @@ function OptionalSystemControls({
   planetMassJupiter,
   semiMajorAxisAu,
   periodDays,
+  eccentricity,
+  argumentOfPeriapsisDeg,
   radiusFollowsMass,
   massFollowsPlanetRadius,
   onChange,
@@ -1214,6 +1381,8 @@ function OptionalSystemControls({
   planetMassJupiter: number;
   semiMajorAxisAu: number;
   periodDays: number;
+  eccentricity: number;
+  argumentOfPeriapsisDeg: number;
   radiusFollowsMass: boolean;
   massFollowsPlanetRadius: boolean;
   onChange: (key: SystemControlKey, value: number) => void;
@@ -1226,6 +1395,8 @@ function OptionalSystemControls({
     planetMassJupiter,
     semiMajorAxisAu,
     periodDays,
+    eccentricity,
+    argumentOfPeriapsisDeg,
   };
   const [openHelp, setOpenHelp] = useState<SystemControlKey | null>(null);
   const precise = usePreciseStep();
@@ -1234,7 +1405,8 @@ function OptionalSystemControls({
     <details className="system-controls">
       <summary>Star, planet and orbit</summary>
       <p className="system-controls-note">
-        Optional. Semi-major axis and orbital period stay tied by Kepler's third law.
+        Optional. Semi-major axis and orbital period stay tied by Kepler&apos;s third law.
+        Eccentricity and ω change transit duration (photoeccentric effect) and the PR anomaly.
       </p>
       <div className="parameter-list">
         {SYSTEM_CONTROLS.map((control) => {
@@ -1385,7 +1557,8 @@ function TransitScene({
   const equivalentPlanetR = showPlanetToScale
     ? starR * model.equivalentPlanetRadius
     : Math.max(8, starR * model.equivalentPlanetRadius * visualScale);
-  const equivalentPlanetY = starY - parameters.impact * starR;
+  // Equivalent ringless planet follows b_obs, drawn on the opposite side of the true planet.
+  const equivalentPlanetY = starY - model.observedB * starR;
   const theta = (parameters.tilt * Math.PI) / 180;
   const limbX = Math.sqrt(Math.max(0, 1 - parameters.impact ** 2));
   const hLeft = ellipseSupport(
@@ -1772,26 +1945,34 @@ function LightCurve({
   model,
   phase,
   autoScaleDepth,
+  autoScaleTime,
   showEquivalent,
   flipPlanet,
   residualsInAbsoluteUnits,
+  lightCurveInPpm,
   onAutoScaleDepthChange,
+  onAutoScaleTimeChange,
   onShowEquivalentChange,
   onResidualsInAbsoluteUnitsChange,
+  onLightCurveInPpmChange,
 }: {
   model: TransitModel;
   phase: number;
   autoScaleDepth: boolean;
+  autoScaleTime: boolean;
   showEquivalent: boolean;
   flipPlanet: boolean;
   residualsInAbsoluteUnits: boolean;
+  lightCurveInPpm: boolean;
   onAutoScaleDepthChange: (value: boolean) => void;
+  onAutoScaleTimeChange: (value: boolean) => void;
   onShowEquivalentChange: (value: boolean) => void;
   onResidualsInAbsoluteUnitsChange: (value: boolean) => void;
+  onLightCurveInPpmChange: (value: boolean) => void;
 }) {
   const width = 900;
-  const height = 270;
-  const margin = { left: 80, right: 28, top: 22, bottom: 42 };
+  const height = 286;
+  const margin = { left: 80, right: 28, top: 34, bottom: 48 };
   const plotW = width - margin.left - margin.right;
   const plotH = height - margin.top - margin.bottom;
   // The x/time sampling grid is symmetric around mid-transit, so a specular
@@ -1804,15 +1985,40 @@ function LightCurve({
     : model.lightCurve;
   const first = displayedLightCurve[0];
   const last = displayedLightCurve[displayedLightCurve.length - 1];
-  const tMin = first.time;
-  const tMax = last.time;
-  const yMin = 1 - (autoScaleDepth
+  // Fixed window: longest transit at e_ref=0.2 (apoapsis), expanding if the
+  // current transit is longer. Auto scale time: always fit the sampled curve.
+  const dataHalf = Math.max(Math.abs(first.time), Math.abs(last.time), 1e-9);
+  const tauActual = Math.max(model.photoEccentricFactor, 1e-9);
+  const tauMaxReference = photoEccentricDurationFactor(
+    LIGHT_CURVE_REFERENCE_ECCENTRICITY,
+    270,
+  );
+  const referenceHalf = dataHalf * (tauMaxReference / tauActual);
+  const plotHalf = autoScaleTime
+    ? dataHalf
+    : Math.max(referenceHalf, dataHalf);
+  const tMin = -plotHalf;
+  const tMax = plotHalf;
+  const depthSpan = autoScaleDepth
     ? Math.max(model.depth * 1.08, 1e-6)
-    : Math.max(model.verticalScaleDepth, model.depth * 1.08));
+    : Math.max(model.verticalScaleDepth, model.depth * 1.08);
+  // Relative flux: continuum at 1, floor at yMinFlux.
+  // ppm mode: continuum at 0 (top), positive depth downward as (1 − F)·10⁶.
+  const yTop = lightCurveInPpm ? 0 : 1;
+  const yBottom = lightCurveInPpm ? depthSpan * 1e6 : 1 - depthSpan;
+  const toPlotY = (flux: number) =>
+    lightCurveInPpm ? (1 - flux) * 1e6 : flux;
+  const formatFluxTick = (value: number) =>
+    lightCurveInPpm
+      ? Math.abs(value) < 1e-9
+        ? "0"
+        : value.toFixed(0)
+      : value.toFixed(4);
   const xScale = (time: number) =>
     margin.left + ((time - tMin) / (tMax - tMin)) * plotW;
   const yScale = (flux: number) =>
-    margin.top + ((1 - flux) / (1 - yMin)) * plotH;
+    margin.top +
+    ((yTop - toPlotY(flux)) / (yTop - yBottom)) * plotH;
   const path = displayedLightCurve
     .map(
       (point, index) =>
@@ -1910,7 +2116,7 @@ function LightCurve({
       >
         {[0, 0.25, 0.5, 0.75, 1].map((fraction) => {
           const y = margin.top + fraction * plotH;
-          const flux = 1 - fraction * (1 - yMin);
+          const tickValue = yTop - fraction * (yTop - yBottom);
           return (
             <g key={fraction}>
               <line
@@ -1918,14 +2124,37 @@ function LightCurve({
                 x2={width - margin.right}
                 y1={y}
                 y2={y}
-                className="chart-grid"
+                className={
+                  lightCurveInPpm && fraction === 0
+                    ? "chart-grid chart-grid-zero"
+                    : "chart-grid"
+                }
               />
               <text x={margin.left - 10} y={y + 4} className="axis-label" textAnchor="end">
-                {flux.toFixed(4)}
+                {formatFluxTick(tickValue)}
               </text>
             </g>
           );
         })}
+        {model.durations.full > 0 && (() => {
+          const troughY = yScale(1 - model.depth);
+          // SVG text y is the baseline, so offset by ~font size to clear the floor.
+          const labelY = Math.min(height - 4, troughY + 22);
+          return (
+            <text
+              x={xScale(
+                (model.timeAtX(displayedContacts[1]) +
+                  model.timeAtX(displayedContacts[2])) /
+                  2,
+              )}
+              y={labelY}
+              className="curve-duration-t23"
+              textAnchor="middle"
+            >
+              T₂₃ = {model.durations.full.toFixed(2)} h
+            </text>
+          );
+        })()}
         {events.map((event) => {
           const time = model.timeAtX(event.x);
           const x = xScale(time);
@@ -1994,6 +2223,18 @@ function LightCurve({
         )}
         <path d={path} className="curve-path curve-glow" />
         <path d={path} className="curve-path" />
+        <text
+          x={xScale(
+            (model.timeAtX(displayedContacts[0]) +
+              model.timeAtX(displayedContacts[3])) /
+              2,
+          )}
+          y={yScale(1) - 8}
+          className="curve-duration-t14"
+          textAnchor="middle"
+        >
+          T₁₄ = {model.durations.total.toFixed(2)} h
+        </text>
         <line
           x1={svgNum(xScale(current.time))}
           x2={svgNum(xScale(current.time))}
@@ -2025,7 +2266,7 @@ function LightCurve({
           textAnchor="middle"
           transform={`rotate(-90 14 ${height / 2})`}
         >
-          Relative flux
+          {lightCurveInPpm ? "Flux [ppm]" : "Relative flux"}
         </text>
       </svg>
       <div className="residuals-heading">
@@ -2156,7 +2397,7 @@ function LightCurve({
         <label className="simulation-option">
           <input
             type="checkbox"
-            checked={autoScaleDepth}
+            checked={Boolean(autoScaleDepth)}
             onChange={(event) => onAutoScaleDepthChange(event.currentTarget.checked)}
           />
           <span>Auto scale depth</span>
@@ -2164,13 +2405,276 @@ function LightCurve({
         <label className="simulation-option">
           <input
             type="checkbox"
+            id="auto-scale-time-toggle"
+            checked={Boolean(autoScaleTime)}
+            onChange={(event) => onAutoScaleTimeChange(event.currentTarget.checked)}
+          />
+          <span>Auto scale time</span>
+        </label>
+        <label className="simulation-option">
+          <input
+            type="checkbox"
+            id="light-curve-ppm-toggle"
+            checked={Boolean(lightCurveInPpm)}
+            onChange={(event) => onLightCurveInPpmChange(event.currentTarget.checked)}
+          />
+          <span>Light curve in ppm</span>
+        </label>
+        <label className="simulation-option">
+          <input
+            type="checkbox"
             id="residuals-absolute-toggle"
-            checked={residualsInAbsoluteUnits}
+            checked={Boolean(residualsInAbsoluteUnits)}
             onChange={(event) => onResidualsInAbsoluteUnitsChange(event.currentTarget.checked)}
           />
           <span>Residuals in absolute units</span>
         </label>
       </div>
+    </section>
+  );
+}
+
+/**
+ * Face-on orbital sketch with a fixed observer (LOS along +y / top of the
+ * plot). The ellipse is built in the perifocal frame and then rotated by ω so
+ * that mid-transit (f_t = π/2 − ω) always sits at the top; changing ω moves
+ * periapsis around the fixed line of sight.
+ */
+function OrbitDiagram({
+  eccentricity,
+  argumentOfPeriapsisDeg,
+  starMassSolar,
+  photoEccentricFactor,
+}: {
+  eccentricity: number;
+  argumentOfPeriapsisDeg: number;
+  starMassSolar: number;
+  photoEccentricFactor: number;
+}) {
+  const width = 900;
+  const height = 340;
+  const margin = 36;
+  const e = Math.min(0.9, Math.max(0, eccentricity));
+  const a = 1;
+  const bEllipse = a * Math.sqrt(Math.max(0, 1 - e * e));
+  const c = a * e;
+  const omega = (((argumentOfPeriapsisDeg % 360) + 360) % 360) * (Math.PI / 180);
+  const fTransit = Math.PI / 2 - omega;
+  const cosO = Math.cos(omega);
+  const sinO = Math.sin(omega);
+  // Rotate perifocal (x,y) into the observer frame so transit lands on +y.
+  const toObserver = (x: number, y: number) => ({
+    x: x * cosO - y * sinO,
+    y: x * sinO + y * cosO,
+  });
+  const radiusAt = (f: number) => (a * (1 - e * e)) / (1 + e * Math.cos(f));
+  const perifocalAt = (f: number) => {
+    const r = radiusAt(f);
+    return { x: r * Math.cos(f), y: r * Math.sin(f) };
+  };
+  const peri = toObserver(perifocalAt(0).x, perifocalAt(0).y);
+  const apo = toObserver(perifocalAt(Math.PI).x, perifocalAt(Math.PI).y);
+  const transit = toObserver(perifocalAt(fTransit).x, perifocalAt(fTransit).y);
+  const star = getSpectralAppearance(starMassSolar);
+
+  const orbitPoints = Array.from({ length: 181 }, (_, index) => {
+    const theta = (2 * Math.PI * index) / 180;
+    return toObserver(-c + a * Math.cos(theta), bEllipse * Math.sin(theta));
+  });
+  const xs = orbitPoints.map((p) => p.x);
+  const ys = orbitPoints.map((p) => p.y);
+  const xMin = Math.min(...xs, transit.x, peri.x, apo.x) - 0.18;
+  const xMax = Math.max(...xs, transit.x, peri.x, apo.x) + 0.18;
+  const yMin = Math.min(...ys, transit.y, peri.y, apo.y) - 0.18;
+  const yMax = Math.max(...ys, transit.y, peri.y, apo.y) + 0.18;
+  const span = Math.max(xMax - xMin, yMax - yMin, 1e-6);
+  const plotSize = Math.min(width, height) - 2 * margin;
+  const scale = plotSize / span;
+  const cx = width / 2;
+  const cy = height / 2 + 6;
+  const midX = (xMin + xMax) / 2;
+  const midY = (yMin + yMax) / 2;
+  const toSvg = (x: number, y: number) => ({
+    x: cx + (x - midX) * scale,
+    y: cy - (y - midY) * scale,
+  });
+
+  const orbitPath = orbitPoints
+    .map((point, index) => {
+      const p = toSvg(point.x, point.y);
+      return `${index ? "L" : "M"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
+    })
+    .join(" ");
+
+  const starSvg = toSvg(0, 0);
+  const periSvg = toSvg(peri.x, peri.y);
+  const apoSvg = toSvg(apo.x, apo.y);
+  const transitSvg = toSvg(transit.x, transit.y);
+  // Fixed LOS: observer always looks from the top (+y) toward the star.
+  const losLength = 0.55 + 0.25 * e;
+  const losOuter = toSvg(0, transit.y + losLength);
+  const starRadiusPx = Math.max(7, 0.07 * scale);
+  const planetRadiusPx = Math.max(4, 0.028 * scale);
+
+  const chordHalf = starRadiusPx * 0.95;
+  const chordA = { x: starSvg.x - chordHalf, y: starSvg.y };
+  const chordB = { x: starSvg.x + chordHalf, y: starSvg.y };
+
+  const labelOffset = (point: { x: number; y: number }, angle: number, dist = 14) => ({
+    x: point.x + Math.cos(angle) * dist,
+    y: point.y - Math.sin(angle) * dist,
+  });
+  const labelSep = 28;
+  const periTransitClose =
+    Math.hypot(periSvg.x - transitSvg.x, periSvg.y - transitSvg.y) < labelSep;
+  const apoTransitClose =
+    Math.hypot(apoSvg.x - transitSvg.x, apoSvg.y - transitSvg.y) < labelSep;
+  // Keep "transit" above the planet; push a coincident apsis label sideways.
+  const transitLabel = labelOffset(transitSvg, Math.PI / 2, 18);
+  const periLabel = periTransitClose
+    ? { x: periSvg.x + 36, y: periSvg.y + 4 }
+    : labelOffset(periSvg, omega);
+  const apoLabel = apoTransitClose
+    ? { x: apoSvg.x + 36, y: apoSvg.y + 4 }
+    : labelOffset(apoSvg, omega + Math.PI);
+  const observerLabel = toSvg(0, transit.y + losLength + 0.12);
+
+  return (
+    <section className="curve-card orbit-card" aria-label="Orbital geometry">
+      <div className="card-heading curve-heading">
+        <div>
+          <h2>Orbit</h2>
+          <p className="orbit-subtitle">
+            Observer fixed at top · periapsis rotates with ω · mid-transit at fₜ = 90° − ω · τ ={" "}
+            {photoEccentricFactor.toFixed(3)}
+          </p>
+        </div>
+        <div className="curve-legend">
+          <span className="legend-item">
+            <i className="orbit-swatch orbit-swatch--path" /> Orbit
+          </span>
+          <span className="legend-item">
+            <i className="orbit-swatch orbit-swatch--apsides" /> Line of apsides
+          </span>
+          <span className="legend-item">
+            <i className="orbit-swatch orbit-swatch--los" /> Line of sight
+          </span>
+          <span className="legend-item">
+            <i className="orbit-swatch orbit-swatch--transit" /> Mid-transit
+          </span>
+        </div>
+      </div>
+      <svg
+        className="orbit-diagram"
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={`Orbital ellipse with eccentricity ${e.toFixed(2)} and argument of periapsis ${argumentOfPeriapsisDeg.toFixed(0)} degrees`}
+      >
+        <defs>
+          <radialGradient id="orbit-star-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={star.core} stopOpacity="0.95" />
+            <stop offset="55%" stopColor={star.middle} stopOpacity="0.7" />
+            <stop offset="100%" stopColor={star.edge} stopOpacity="0" />
+          </radialGradient>
+          <marker
+            id="orbit-los-arrow"
+            viewBox="0 0 10 10"
+            refX="9"
+            refY="5"
+            markerWidth="7"
+            markerHeight="7"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1.5 L 9 5 L 0 8.5 Z" fill="var(--amber)" />
+          </marker>
+        </defs>
+
+        <line
+          x1={periSvg.x}
+          y1={periSvg.y}
+          x2={apoSvg.x}
+          y2={apoSvg.y}
+          className="orbit-apsides"
+        />
+        <path d={`${orbitPath} Z`} className="orbit-path-glow" />
+        <path d={`${orbitPath} Z`} className="orbit-path" />
+
+        <line
+          x1={losOuter.x}
+          y1={losOuter.y}
+          x2={starSvg.x}
+          y2={starSvg.y}
+          className="orbit-los"
+          markerStart="url(#orbit-los-arrow)"
+        />
+        <line
+          x1={chordA.x}
+          y1={chordA.y}
+          x2={chordB.x}
+          y2={chordB.y}
+          className="orbit-transit-chord"
+        />
+
+        <circle
+          cx={starSvg.x}
+          cy={starSvg.y}
+          r={starRadiusPx * 2.4}
+          fill="url(#orbit-star-glow)"
+          opacity="0.55"
+        />
+        <circle
+          cx={starSvg.x}
+          cy={starSvg.y}
+          r={starRadiusPx}
+          fill={star.middle}
+          stroke={star.glow}
+          strokeWidth="1.5"
+        />
+
+        <circle cx={periSvg.x} cy={periSvg.y} r="3.2" className="orbit-apsis-dot" />
+        <circle cx={apoSvg.x} cy={apoSvg.y} r="3.2" className="orbit-apsis-dot" />
+        <circle
+          cx={transitSvg.x}
+          cy={transitSvg.y}
+          r={planetRadiusPx}
+          className="orbit-planet"
+        />
+        <circle
+          cx={transitSvg.x}
+          cy={transitSvg.y}
+          r={planetRadiusPx + 4}
+          className="orbit-planet-ring"
+        />
+
+        <text x={periLabel.x} y={periLabel.y} className="orbit-label" textAnchor="middle">
+          periapsis
+        </text>
+        <text x={apoLabel.x} y={apoLabel.y} className="orbit-label" textAnchor="middle">
+          apoapsis
+        </text>
+        <text
+          x={transitLabel.x}
+          y={transitLabel.y}
+          className="orbit-label orbit-label--transit"
+          textAnchor="middle"
+        >
+          transit
+        </text>
+        <text
+          x={observerLabel.x}
+          y={observerLabel.y}
+          className="orbit-label orbit-label--los"
+          textAnchor="middle"
+        >
+          observer
+        </text>
+
+        <text x={margin} y={height - 14} className="orbit-readout">
+          e = {e.toFixed(2)} · ω = {argumentOfPeriapsisDeg.toFixed(0)}° · fₜ ={" "}
+          {(((fTransit * 180) / Math.PI + 360) % 360).toFixed(0)}° · rₜ/a ={" "}
+          {(radiusAt(fTransit) / a).toFixed(3)}
+        </text>
+      </svg>
     </section>
   );
 }
@@ -2364,7 +2868,7 @@ function PhotoRingSummaryCard({
             <span className="summary-metric-label">
               PR Anomaly
               <CalculatedHelp
-                help="PR anomaly = 10 log10(rho_obs / rho★). It is the logarithmic difference between the stellar density inferred from the ringed transit and the true stellar density."
+                help="PR anomaly = 10 log10(rho_obs / rho★). It is the logarithmic difference between the stellar density inferred from a circular ringless fit to the transit and the true stellar density. Rings and the photoeccentric effect (e, ω) both enter ρobs."
                 helpId="help-pr-anomaly"
                 label="PR anomaly"
               />
@@ -2453,17 +2957,28 @@ export default function PhotoRingSimulator() {
     periodDays,
     densityKgM3,
     planetMassJupiter,
+    eccentricity,
+    argumentOfPeriapsisDeg,
     showEquivalentPlanet,
     showPlanetToScale,
     zoomIn,
     flipPlanet,
-    autoScaleDepth,
-    showEquivalentCurve,
-    residualsInAbsoluteUnits,
+    autoScaleDepth = true,
+    autoScaleTime = true,
+    showEquivalentCurve = true,
+    residualsInAbsoluteUnits = false,
+    lightCurveInPpm = true,
   } = configuration;
   const model = useMemo(
-    () => computeTransit(parameters, periodDays, densityKgM3),
-    [parameters, periodDays, densityKgM3],
+    () =>
+      computeTransit(
+        parameters,
+        periodDays,
+        densityKgM3,
+        eccentricity,
+        argumentOfPeriapsisDeg,
+      ),
+    [parameters, periodDays, densityKgM3, eccentricity, argumentOfPeriapsisDeg],
   );
 
   useEffect(() => {
@@ -2568,6 +3083,16 @@ export default function PhotoRingSimulator() {
       if (key === "starMassSolar" && radiusFollowsMass) {
         next.starRadiusSolar = estimateMainSequenceRadiusSolar(next.starMassSolar);
       }
+      if (
+        key === "starRadiusSolar" ||
+        (key === "starMassSolar" && radiusFollowsMass)
+      ) {
+        next.parameters = rescalePlanetRadiusForStar(
+          current.parameters,
+          current.starRadiusSolar,
+          next.starRadiusSolar,
+        );
+      }
       next.densityKgM3 = stellarDensityKgM3(next.starMassSolar, next.starRadiusSolar);
       if (key === "periodDays") {
         next.semiMajorAxisAu = semiMajorAxisFromMassAndPeriod(
@@ -2594,6 +3119,11 @@ export default function PhotoRingSimulator() {
           return {
             ...current,
             starRadiusSolar,
+            parameters: rescalePlanetRadiusForStar(
+              current.parameters,
+              current.starRadiusSolar,
+              starRadiusSolar,
+            ),
             densityKgM3: stellarDensityKgM3(current.starMassSolar, starRadiusSolar),
           };
         });
@@ -2688,7 +3218,7 @@ export default function PhotoRingSimulator() {
       <header className="hero">
         <div>
           <p className="hero-kicker">INTERACTIVE ASTERODENSITY LAB</p>
-          <h1><strong>PhotoRing Effect Simulator</strong></h1>
+          <h1><strong>Asterodensity Profiling Simulator</strong></h1>
           <p className="byline">
             By{" "}
             <a
@@ -2708,7 +3238,7 @@ export default function PhotoRingSimulator() {
             </a>
           </p>
           <p className="hero-description">
-            This app lets you explore the PhotoRing effect, introduced in the paper{" "}
+            This app lets you explore Asterodensity Profiling, especially the so-called PhotoRing effect, introduced in the paper{" "}
             <a
               href="https://doi.org/10.1088/2041-8205/803/1/L14"
               target="_blank"
@@ -2758,13 +3288,15 @@ export default function PhotoRingSimulator() {
                 <p className="parameter-assumptions">
                   M★ = {starMassSolar.toFixed(2)} M☉ · R★ ={" "}
                   {starRadiusSolar.toFixed(2)} R☉ · Mp = {planetMassJupiter.toFixed(3)} Mjup · a = {aInAu.toFixed(3)} AU ={" "}
-                  {aInRStar.toFixed(1)} R★ · Porb = {periodDays.toFixed(2)} days · ρ★ ={" "}
+                  {aInRStar.toFixed(1)} R★ · Porb = {periodDays.toFixed(2)} days · e ={" "}
+                  {eccentricity.toFixed(2)} · ω = {argumentOfPeriapsisDeg.toFixed(0)}° · ρ★ ={" "}
                   {(densityKgM3 / 1000).toFixed(3)} g/cm³
                 </p>
               </div>
             </div>
             <ParameterControls
               parameters={parameters}
+              starRadiusSolar={starRadiusSolar}
               onChange={changeParameter}
             />
             <OptionalSystemControls
@@ -2773,6 +3305,8 @@ export default function PhotoRingSimulator() {
               planetMassJupiter={planetMassJupiter}
               semiMajorAxisAu={configuration.semiMajorAxisAu}
               periodDays={periodDays}
+              eccentricity={eccentricity}
+              argumentOfPeriapsisDeg={argumentOfPeriapsisDeg}
               radiusFollowsMass={radiusFollowsMass}
               massFollowsPlanetRadius={massFollowsPlanetRadius}
               onChange={changeSystemParameter}
@@ -2967,14 +3501,22 @@ export default function PhotoRingSimulator() {
             <LightCurve
               model={model}
               phase={phase}
-              autoScaleDepth={autoScaleDepth}
-              showEquivalent={showEquivalentCurve}
+              autoScaleDepth={Boolean(autoScaleDepth)}
+              autoScaleTime={Boolean(autoScaleTime)}
+              showEquivalent={Boolean(showEquivalentCurve)}
               flipPlanet={flipPlanet}
-              residualsInAbsoluteUnits={residualsInAbsoluteUnits}
+              residualsInAbsoluteUnits={Boolean(residualsInAbsoluteUnits)}
+              lightCurveInPpm={Boolean(lightCurveInPpm)}
               onAutoScaleDepthChange={(value) =>
                 setConfiguration((current) => ({
                   ...current,
                   autoScaleDepth: value,
+                }))
+              }
+              onAutoScaleTimeChange={(value) =>
+                setConfiguration((current) => ({
+                  ...current,
+                  autoScaleTime: value,
                 }))
               }
               onShowEquivalentChange={(value) =>
@@ -2989,6 +3531,18 @@ export default function PhotoRingSimulator() {
                   residualsInAbsoluteUnits: value,
                 }))
               }
+              onLightCurveInPpmChange={(value) =>
+                setConfiguration((current) => ({
+                  ...current,
+                  lightCurveInPpm: value,
+                }))
+              }
+            />
+            <OrbitDiagram
+              eccentricity={eccentricity}
+              argumentOfPeriapsisDeg={argumentOfPeriapsisDeg}
+              starMassSolar={starMassSolar}
+              photoEccentricFactor={model.photoEccentricFactor}
             />
           </div>
         </div>
@@ -2997,6 +3551,20 @@ export default function PhotoRingSimulator() {
           Other observables
         </h2>
         <section className="metrics" aria-labelledby="other-observables-title">
+          <Metric
+            label={<>T<sub>med</sub></>}
+            value={`${((model.durations.total + model.durations.full) / 2).toFixed(2)} h`}
+            note="mean transit duration · (T₁₄ + T₂₃) / 2"
+            help="Tmed = (T14 + T23) / 2 is the mean of the total and full transit durations."
+            helpId="help-tmed"
+          />
+          <Metric
+            label={<>t<sub>in</sub></>}
+            value={`${(Math.max(0, model.durations.total - model.durations.full) / 2).toFixed(2)} h`}
+            note="mean ingress time · (T₁₄ − T₂₃) / 2"
+            help="tin = (T14 − T23) / 2 is the average ingress/egress duration for a symmetric transit chord."
+            helpId="help-tin"
+          />
           <Metric
             label="T₁₄"
             value={`${model.durations.total.toFixed(2)} h`}

@@ -304,8 +304,12 @@ The physical parameters are:
 | `mstar`, `rstar` | Stellar mass and radius in solar units |
 | `aau` | Semimajor axis in AU |
 | `porb` | Orbital period in days |
+| `e` | Orbital eccentricity (default `0`) |
+| `w` | Argument of periapsis in degrees (default `90`; mid-transit at $f_t=\pi/2-\omega$) |
 
 For the orbital quantities, the simulator accepts equivalent pairs such as `mstar+aau`, `mstar+porb`, `porb+aau`, or `porb+aRstar`. If redundant values are supplied, `mstar+aau` takes priority. When a configuration is copied, the link uses the canonical `mstar+rstar+aau` representation and omits redundant `porb` and `aRstar` values.
+
+Eccentricity enters the PhotoRing anomaly through the photoeccentric duration factor $\tau=\sqrt{1-e^2}/(1+e\sin\omega)$. Contact times and the light-curve time axis are scaled by $\tau$; the circular Kipping inversion of those durations then yields $\rho_{\mathrm{obs}}$ (and PR) that include both rings and orbit shape.
 
 The planet mass `mpjup` is used with the physical planet radius to calculate the true planetary density. If `mpjup` is omitted, the simulator derives it by assuming a mean planetary density of $1 \mathrm{g cm^{-3}}$. The legacy parameter name `mplanet` is still accepted for backward compatibility with previously shared links.
 
@@ -317,8 +321,10 @@ Visualization options are also shareable. Set them to `1` or `0`:
 | `planetToScale` | Draw the planet at its physical scale |
 | `zoom2` | Zoom the Transit geometry preview by two |
 | `autoDepth` | Scale the synthetic light curve to the current transit depth |
+| `autoTime` | Fit the horizontal time axis to the current transit duration (off: fixed window based on the longest e=0.2 transit, expanding if longer) |
 | `showEquivalent` | Show the equivalent ringless curve and contact markers |
 | `residualsAbs` | Display residuals in absolute units (flux difference) instead of ppm |
+| `lcPpm` | Plot the synthetic light curve with continuum at 0 and positive depth in ppm |
 
 ### Saved Configurations
 
@@ -348,11 +354,19 @@ The links below open the simulator with reproducible configurations. The first c
 
 The presets labeled **(demo.)** are teaching configurations. They share one Saturn-like planet ($p=0.84\,R_{\mathrm{Jup}}$, $M_p=0.2994\,M_{\mathrm{Jup}}$) on the same orbit around a solar-like star, with the same impact parameter $b=0.25$. Only the ring changes. That isolation is the point: a student can watch one control move the light curve, the contacts, and the residuals, and see which part of the transit that control is responsible for.
 
-1. **Ringless saturn (demo.)** — $f_i=f_e=1$. The outer edge sits on the planetary limb, so the simulator drops the ring and integrates a spherical planet. The curve, the depth, and the equivalent ringless planet all describe the same body, and the residual is zero. This is the baseline.
+1. **Ringless saturn solar star (demo.)** — $f_i=f_e=1$, $b=0$, $i_R=0^\circ$, $\alpha=0$. The outer edge sits on the planetary limb, so the simulator drops the ring and integrates a spherical planet. The curve, the depth, and the equivalent ringless planet all describe the same body, and the residual is zero. This is the baseline around a solar-like star.
 
-	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=ringless-saturn-demo)
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=ringless-saturn-solar)
 
-	From here, raise $f_e$. A ring grows outside the planet. The transit deepens, ingress and egress lengthen, and the residual against the equivalent ringless planet leaves zero. Those changes are the photometric signature of ring area, read off a system the student already understands as an ordinary sphere.
+	**Ringless saturn M dwarf (demo.)** uses the same ringless Saturn ($0.84\,R_{\mathrm{Jup}}$, $0.2994\,M_{\mathrm{Jup}}$) around a $0.2\,M_\odot$ host with $P_{\mathrm{orb}}=10$ days, so the planet is much larger relative to the star.
+
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=ringless-saturn-Mdwarf)
+
+	**Ringless Kepler-37d (demo.)** is a real shallow transit without rings: $R_p\simeq0.181\,R_{\mathrm{Jup}}$ ($\sim2\,R_\oplus$), $M_p\simeq0.017\,M_{\mathrm{Jup}}$ ($5.4\,M_\oplus$), $b\simeq0.67$, around Kepler-37 ($M_\star=0.79\,M_\odot$, $R_\star=0.789\,R_\odot$, $a=0.2109\,\mathrm{AU}$, $P\simeq39.8$ days). Auto-scaled depth and ppm mode are on by default so the $\sim500\,\mathrm{ppm}$ signal is readable.
+
+	[Open via preset](https://seap-udea.github.io/apps/photoring-simulator/?preset=ringless-kepler37d)
+
+	From the solar ringless case, raise $f_e$. A ring grows outside the planet. The transit deepens, ingress and egress lengthen, and the residual against the equivalent ringless planet leaves zero. Those changes are the photometric signature of ring area, read off a system the student already understands as an ordinary sphere.
 
 2. **Face-on ringed saturn (demo.)** — $f_i=1$, $f_e=2$, $i_R=0^\circ$, $\theta_R=0^\circ$, $\alpha=0.37$. At $i_R=0^\circ$ the projected ring is a circle ($B=A\cos i_R=A$). The ring is partly transmitting. Compare it with the ringless case, then with the opaque case below, to separate the effect of extra area from the effect of how much starlight the ring removes.
 

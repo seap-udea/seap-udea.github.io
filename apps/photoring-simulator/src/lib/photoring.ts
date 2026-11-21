@@ -21,6 +21,10 @@ export type TransitModel = {
   observedB: number;
   observedDensityRatio: number;
   prAnomaly: number;
+  /** √(1−e²)/(1+e sin ω): scales circular durations to an eccentric mid-transit. */
+  photoEccentricFactor: number;
+  eccentricity: number;
+  argumentOfPeriapsisDeg: number;
   ringDepth: number;
   verticalScaleDepth: number;
   lightCurve: {
@@ -31,6 +35,24 @@ export type TransitModel = {
   }[];
   timeAtX: (x: number) => number;
 };
+
+/**
+ * Photoeccentric duration factor in the standard transit convention
+ * (mid-transit true anomaly f_t = π/2 − ω):
+ *   τ = √(1−e²) / (1 + e sin ω).
+ * Circular Kipping inversion of the scaled durations then yields the usual
+ * ρ_obs/ρ_true ≈ (1 + e sin ω)³ / (1−e²)^{3/2} for a ringless planet.
+ */
+export function photoEccentricDurationFactor(
+  eccentricity: number,
+  argumentOfPeriapsisDeg: number,
+) {
+  const e = Math.min(0.999, Math.max(0, eccentricity));
+  const omega = argumentOfPeriapsisDeg * DEG;
+  const denominator = 1 + e * Math.sin(omega);
+  if (!(denominator > 1e-9)) return 1;
+  return Math.sqrt(1 - e * e) / denominator;
+}
 
 const PERIOD_DAYS = 365.25;
 const TRUE_DENSITY_KG_M3 = 1408;
@@ -184,6 +206,8 @@ export function computeTransit(
   parameters: RingParameters,
   periodDays = PERIOD_DAYS,
   trueDensityKgM3 = TRUE_DENSITY_KG_M3,
+  eccentricity = 0,
+  argumentOfPeriapsisDeg = 90,
 ): TransitModel {
   const p = parameters.planetRadius;
   const b = parameters.impact;
@@ -191,6 +215,9 @@ export function computeTransit(
   const cosI = Math.max(0, Math.cos(parameters.inclination * DEG));
   const blocking = ringBlockingFactor(parameters.alpha, cosI);
   const outer = parameters.outerRingRadius * p;
+  const e = Math.min(0.999, Math.max(0, eccentricity));
+  const omegaDeg = ((argumentOfPeriapsisDeg % 360) + 360) % 360;
+  const photoEccentricFactor = photoEccentricDurationFactor(e, omegaDeg);
   const aOverR =
     ((G * trueDensityKgM3 * (periodDays * DAY_SECONDS) ** 2) /
       (3 * Math.PI)) **
@@ -239,16 +266,22 @@ export function computeTransit(
       ]
     : planetContacts;
 
+  // Circular sky-plane speed, then scaled by the photoeccentric factor so
+  // eccentric mid-transit is faster (periapsis, τ<1) or slower (apoapsis, τ>1).
   const orbitalSpeedRPerHour =
     (2 * Math.PI * aOverR * Math.sin(orbitalInclination)) /
-    (periodDays * 24);
+    (periodDays * 24) /
+    photoEccentricFactor;
   const timeAtX = (x: number) => x / orbitalSpeedRPerHour;
   const durationFromSpan = (span: number) => {
     const argument = Math.min(
       1,
       Math.max(0, span / (aOverR * Math.sin(orbitalInclination))),
     );
-    return (periodDays * 24 * Math.asin(argument)) / (2 * Math.PI);
+    return (
+      (photoEccentricFactor * periodDays * 24 * Math.asin(argument)) /
+      (2 * Math.PI)
+    );
   };
   const totalDuration = durationFromSpan(contacts[3] - contacts[0]);
   const fullDuration = durationFromSpan(Math.max(0, contacts[2] - contacts[1]));
@@ -343,6 +376,9 @@ export function computeTransit(
     observedB,
     observedDensityRatio,
     prAnomaly,
+    photoEccentricFactor,
+    eccentricity: e,
+    argumentOfPeriapsisDeg: omegaDeg,
     ringDepth,
     verticalScaleDepth,
     lightCurve,

@@ -14,30 +14,30 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://seap-udea.github.io"),
-  title: "PRisma Simulator: PhotoRing Effect Simulator",
+  title: "PRisma Simulator: Asterodensity Profiling Simulator",
   description:
-    "Interactive simulator for exploring how planetary rings alter transit light curves and inferred stellar density.",
+    "Interactive simulator for exploring Asterodensity Profiling, especially the PhotoRing effect on transit light curves and inferred stellar density.",
   openGraph: {
     type: "website",
     url: "https://seap-udea.github.io/apps/photoring-simulator/",
-    title: "PRisma Simulator: PhotoRing Effect Simulator",
+    title: "PRisma Simulator: Asterodensity Profiling Simulator",
     description:
-      "Explore how exoplanetary rings alter transit light curves and inferred stellar density.",
+      "Explore Asterodensity Profiling, especially the PhotoRing effect on transit light curves and inferred stellar density.",
     images: [
       {
         url: "/apps/photoring-simulator/photoring-simulator-screenshot.webp",
         width: 1013,
         height: 869,
-        alt: "PhotoRing Effect Simulator screenshot",
+        alt: "Asterodensity Profiling Simulator screenshot",
         type: "image/webp",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PRisma Simulator: PhotoRing Effect Simulator",
+    title: "PRisma Simulator: Asterodensity Profiling Simulator",
     description:
-      "Explore how exoplanetary rings alter transit light curves and inferred stellar density.",
+      "Explore Asterodensity Profiling, especially the PhotoRing effect on transit light curves and inferred stellar density.",
     images: ["/apps/photoring-simulator/photoring-simulator-screenshot.webp"],
   },
 };
