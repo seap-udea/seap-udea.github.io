@@ -156,14 +156,28 @@ main {
 .visual-stack {
   display: grid;
   min-width: 0;
-  gap: 18px;
+  gap: 18px 16px;
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 16vw, 205px);
+  grid-template-areas:
+    "scene summary"
+    "curve curve"
+    "orbit orbit";
 }
 
-.simulation-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(180px, 16vw, 205px);
-  align-items: stretch;
-  gap: 16px;
+.visual-stack > .scene-card {
+  grid-area: scene;
+}
+
+.visual-stack > .simulation-summary-card {
+  grid-area: summary;
+}
+
+.visual-stack > .curve-card:not(.orbit-card) {
+  grid-area: curve;
+}
+
+.visual-stack > .orbit-card {
+  grid-area: orbit;
 }
 
 .controls-card,
@@ -340,12 +354,13 @@ main {
 }
 
 .colab-export {
-  margin-top: 4px;
+  margin-top: 22px;
   margin-bottom: 0;
-  padding: 14px 12px;
-  border: 1px solid #66dfd033;
-  border-radius: 10px;
-  background: #66dfd00a;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(16, 24, 32, 0.97), rgba(7, 12, 17, 0.97));
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.25);
 }
 
 .colab-export-title {
@@ -360,7 +375,7 @@ main {
 
 .colab-export-text {
   margin: 12px 0 0;
-  max-width: 36rem;
+  max-width: 52rem;
   color: var(--ink-muted, var(--ink));
   font-size: 0.82rem;
   line-height: 1.5;
@@ -1493,12 +1508,6 @@ footer a:hover {
   color: var(--aqua);
 }
 
-@media (max-width: 980px) {
-  .simulation-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 1050px) {
   .workspace {
     grid-template-columns: 1fr;
@@ -1507,14 +1516,24 @@ footer a:hover {
   .visual-stack {
     display: flex;
     flex-direction: column;
+    grid-template-columns: none;
+    grid-template-areas: none;
   }
 
-  .curve-card {
+  .visual-stack > .scene-card {
     order: 1;
   }
 
-  .simulation-row {
+  .visual-stack > .curve-card:not(.orbit-card) {
     order: 2;
+  }
+
+  .visual-stack > .orbit-card {
+    order: 3;
+  }
+
+  .visual-stack > .simulation-summary-card {
+    order: 4;
   }
 
   .parameter-list {

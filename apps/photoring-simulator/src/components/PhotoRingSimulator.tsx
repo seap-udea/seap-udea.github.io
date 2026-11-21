@@ -3351,153 +3351,57 @@ export default function PhotoRingSimulator() {
                   ))}
                 </select>
               </label>
-              <div className="colab-export">
-                <div className="colab-export-title">Try in Python</div>
-                <div className="colab-export-actions">
-                  <button
-                    type="button"
-                    className="config-link-button"
-                    onClick={() => setShowPypplussCode(true)}
-                  >
-                    pyPplusS
-                  </button>
-                  <button
-                    type="button"
-                    className="config-link-button"
-                    onClick={() => setShowPrynglesCode(true)}
-                  >
-                    Pryngles
-                  </button>
-                  <button
-                    type="button"
-                    className="config-link-button"
-                    onClick={() => setShowGeotransCode(true)}
-                  >
-                    Geotrans
-                  </button>
-                </div>
-                <p className="colab-export-text">
-                  Copy ready-to-run Python for{" "}
-                  <a
-                    href="https://colab.research.google.com/"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Google Colab
-                  </a>{" "}
-                  with{" "}
-                  <a
-                    href="https://github.com/EdanRein/pyPplusS"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    pyPplusS
-                  </a>{" "}
-                  (
-                  <a
-                    href="https://academic.oup.com/mnras/article/490/1/1111/5568385"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Rein &amp; Ofir 2019
-                  </a>
-                  ),{" "}
-                  <a
-                    href="https://pypi.org/project/pryngles/"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Pryngles
-                  </a>{" "}
-                  (
-                  <a
-                    href="https://arxiv.org/abs/2207.08636"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Zuluaga et al. 2022
-                  </a>
-                  ), or{" "}
-                  <a
-                    href="https://github.com/seap-udea/PRisma/tree/master/pipeline/geotrans"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Geotrans
-                  </a>{" "}
-                  (
-                  <a
-                    href="https://doi.org/10.1088/2041-8205/803/1/L14"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Zuluaga et al. 2015
-                  </a>
-                  ,{" "}
-                  <a
-                    href="https://arxiv.org/abs/2609.25234"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    2026
-                  </a>
-                  ) to simulate this configuration in specialized ring-transit
-                  software.
-                </p>
-              </div>
             </div>
           </aside>
 
           <div className="visual-stack">
-            <div className="simulation-row">
-              <TransitScene
-                parameters={parameters}
-                model={model}
-                starMassSolar={starMassSolar}
-                phase={phase}
-                playing={playing}
-                showEquivalentPlanet={showEquivalentPlanet}
-                showPlanetToScale={showPlanetToScale}
-                zoomIn={zoomIn}
-                flipPlanet={flipPlanet}
-                onShowEquivalentPlanetChange={(value) =>
-                  setConfiguration((current) => ({
-                    ...current,
-                    showEquivalentPlanet: value,
-                  }))
-                }
-                onShowPlanetToScaleChange={(value) =>
-                  setConfiguration((current) => ({
-                    ...current,
-                    showPlanetToScale: value,
-                  }))
-                }
-                onZoomInChange={(value) =>
-                  setConfiguration((current) => ({
-                    ...current,
-                    zoomIn: value,
-                  }))
-                }
-                onFlipPlanetChange={(value) =>
-                  setConfiguration((current) => ({
-                    ...current,
-                    flipPlanet: value,
-                  }))
-                }
-                onPhase={(value) => {
-                  setPhase(value);
-                  setPlaying(false);
-                }}
-                onToggle={() => setPlaying((current) => !current)}
-              />
-              <PhotoRingSummaryCard
-                model={model}
-                observedPlanetDensityRatio={observedPlanetDensityRatio}
-                observedPlanetDensityGcm3={observedPlanetDensityGcm3}
-                planetTrueDensityGcm3={planetTrueDensityGcm3}
-                densityClass={densityClass}
-              />
-            </div>
+            <TransitScene
+              parameters={parameters}
+              model={model}
+              starMassSolar={starMassSolar}
+              phase={phase}
+              playing={playing}
+              showEquivalentPlanet={showEquivalentPlanet}
+              showPlanetToScale={showPlanetToScale}
+              zoomIn={zoomIn}
+              flipPlanet={flipPlanet}
+              onShowEquivalentPlanetChange={(value) =>
+                setConfiguration((current) => ({
+                  ...current,
+                  showEquivalentPlanet: value,
+                }))
+              }
+              onShowPlanetToScaleChange={(value) =>
+                setConfiguration((current) => ({
+                  ...current,
+                  showPlanetToScale: value,
+                }))
+              }
+              onZoomInChange={(value) =>
+                setConfiguration((current) => ({
+                  ...current,
+                  zoomIn: value,
+                }))
+              }
+              onFlipPlanetChange={(value) =>
+                setConfiguration((current) => ({
+                  ...current,
+                  flipPlanet: value,
+                }))
+              }
+              onPhase={(value) => {
+                setPhase(value);
+                setPlaying(false);
+              }}
+              onToggle={() => setPlaying((current) => !current)}
+            />
+            <PhotoRingSummaryCard
+              model={model}
+              observedPlanetDensityRatio={observedPlanetDensityRatio}
+              observedPlanetDensityGcm3={observedPlanetDensityGcm3}
+              planetTrueDensityGcm3={planetTrueDensityGcm3}
+              densityClass={densityClass}
+            />
             <LightCurve
               model={model}
               phase={phase}
@@ -3607,6 +3511,101 @@ export default function PhotoRingSimulator() {
             help="Radius of a ringless planet that would block the same total amount of light as the ringed planet."
             helpId="help-equivalent-radius"
           />
+        </section>
+
+        <section className="colab-export" aria-label="Try in Python">
+          <div className="colab-export-title">Try in Python</div>
+          <div className="colab-export-actions">
+            <button
+              type="button"
+              className="config-link-button"
+              onClick={() => setShowPypplussCode(true)}
+            >
+              pyPplusS
+            </button>
+            <button
+              type="button"
+              className="config-link-button"
+              onClick={() => setShowPrynglesCode(true)}
+            >
+              Pryngles
+            </button>
+            <button
+              type="button"
+              className="config-link-button"
+              onClick={() => setShowGeotransCode(true)}
+            >
+              Geotrans
+            </button>
+          </div>
+          <p className="colab-export-text">
+            Copy ready-to-run Python for{" "}
+            <a
+              href="https://colab.research.google.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Google Colab
+            </a>{" "}
+            with{" "}
+            <a
+              href="https://github.com/EdanRein/pyPplusS"
+              target="_blank"
+              rel="noreferrer"
+            >
+              pyPplusS
+            </a>{" "}
+            (
+            <a
+              href="https://academic.oup.com/mnras/article/490/1/1111/5568385"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Rein &amp; Ofir 2019
+            </a>
+            ),{" "}
+            <a
+              href="https://pypi.org/project/pryngles/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Pryngles
+            </a>{" "}
+            (
+            <a
+              href="https://arxiv.org/abs/2207.08636"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Zuluaga et al. 2022
+            </a>
+            ), or{" "}
+            <a
+              href="https://github.com/seap-udea/PRisma/tree/master/pipeline/geotrans"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Geotrans
+            </a>{" "}
+            (
+            <a
+              href="https://doi.org/10.1088/2041-8205/803/1/L14"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Zuluaga et al. 2015
+            </a>
+            ,{" "}
+            <a
+              href="https://arxiv.org/abs/2609.25234"
+              target="_blank"
+              rel="noreferrer"
+            >
+              2026
+            </a>
+            ) to simulate this configuration in specialized ring-transit
+            software.
+          </p>
         </section>
       </main>
 
