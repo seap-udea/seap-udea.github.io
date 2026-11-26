@@ -583,9 +583,23 @@
     ) {
       return "none";
     }
+    if (
+      value === "classified" ||
+      value === "any" ||
+      value === "some" ||
+      value === "x" ||
+      value === "yes"
+    ) {
+      return "classified";
+    }
     n = parseInt(value.replace(/^class-?/, ""), 10);
     if (isFinite(n) && n >= 1 && n <= CLASS_LIMIT) return String(n);
     return "all";
+  }
+
+  function isNumericClassFilter(filter) {
+    var n = parseInt(filter, 10);
+    return String(n) === String(filter) && isFinite(n) && n >= 1 && n <= CLASS_LIMIT;
   }
 
   function normalizeClassList(value) {
@@ -1540,7 +1554,9 @@
         list = list.filter(function (img) {
           return !isClassified(img);
         });
-      } else if (state.classFilter !== "all") {
+      } else if (state.classFilter === "classified") {
+        list = list.filter(isClassified);
+      } else if (isNumericClassFilter(state.classFilter)) {
         list = list.filter(function (img) {
           return hasClass(img, parseInt(state.classFilter, 10));
         });
@@ -1568,7 +1584,7 @@
 
   function classifiedImages() {
     var list = nameFilteredImages().filter(isClassified);
-    if (state.classFilter !== "all" && state.classFilter !== "none") {
+    if (isNumericClassFilter(state.classFilter)) {
       list = list.filter(function (img) {
         return hasClass(img, parseInt(state.classFilter, 10));
       });
@@ -1624,6 +1640,7 @@
       var slot = el.getAttribute("data-class-slot");
       var count;
       if (slot === "none") count = nameFilteredUnclassifiedCount();
+      else if (slot === "classified") count = nameFilteredClassifiedCount();
       else count = classSlotCount(slot);
       el.textContent = "[" + count + "]";
     });
@@ -1934,9 +1951,9 @@
         placeLikedMarks();
         updateClassFilterCounts();
         updateLikedActions(
-          state.classFilter !== "all" && state.classFilter !== "none"
-            ? classifiedImages().length
-            : classifiedCount()
+          state.classFilter === "all" || state.classFilter === "none"
+            ? classifiedCount()
+            : classifiedImages().length
         );
       })();
       return;
@@ -2502,7 +2519,10 @@
       if (state.classFilter === "none") {
         return "Every matching image is classified. Choose All to browse them.";
       }
-      if (state.classFilter !== "all") {
+      if (state.classFilter === "classified") {
+        return "No images have been classified yet. Choose All to browse and classify with Shift+<glyph>.";
+      }
+      if (isNumericClassFilter(state.classFilter)) {
         return (
           "No images in class " +
           state.classFilter +
@@ -2533,6 +2553,11 @@
         (state.classFilter === "none" ? " checked" : "") +
         '> No class <span class="gallery-filter-count" data-class-slot="none">[' +
         nameFilteredUnclassifiedCount() +
+        "]</span></label>" +
+        '<label class="gallery-filter"><input type="radio" name="gallery-class-filter" value="classified"' +
+        (state.classFilter === "classified" ? " checked" : "") +
+        '> Classified <span class="gallery-filter-count" data-class-slot="classified">[' +
+        nameFilteredClassifiedCount() +
         "]</span></label>";
       for (i = 1; i <= classCount(); i++) {
         html +=
@@ -3512,8 +3537,7 @@
     }
 
     initialSlot =
-      state.classFilter !== "all" &&
-      state.classFilter !== "none" &&
+      isNumericClassFilter(state.classFilter) &&
       parseInt(state.classFilter, 10) <= classCount()
         ? parseInt(state.classFilter, 10)
         : 1;
